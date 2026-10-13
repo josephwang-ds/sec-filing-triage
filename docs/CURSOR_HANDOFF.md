@@ -1,7 +1,7 @@
 # Cursor Handoff — Company Lens Phase 3.5
 
 Updated: 2026-08-25
-Repository: `ai-quant-signal-platform`
+Repository: `sec-filing-triage`
 Current branch: `claude/ai-quant-project-missing-lxcwzp`
 Observed base commit: `7c41880`
 
