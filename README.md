@@ -47,7 +47,7 @@ the public page rather than quietly not shipping.
 A point-in-time event dataset built from SEC timestamps; a reusable audit library
 that fails the build rather than logging a warning; a ranker; and a
 source-backed company page with a controlled AI question-answering box that
-refuses to answer beyond its evidence. 671 tests. No price predictions, no
+refuses to answer beyond its evidence. 673 tests. No price predictions, no
 trading strategy, no buy or sell recommendations anywhere — the model predicts
 *how big* a reaction will be, never which direction, because direction is a bet
 against desks with faster data and more capital.
@@ -521,7 +521,7 @@ embargo sweep, and writes a self-contained HTML report.
 
 ```bash
 make quick           # smaller, no leakage study, ~30s
-make test            # 671 tests (~12 min; the nested model selection dominates)
+make test            # 673 tests (~12 min; the nested model selection dominates)
 make audit           # the leakage checks as an exit code
 make llm-eval        # frozen English/Chinese grounded-output scorecard
 make llm-eval-openai-dry-run  # inspect 20-case paid benchmark scope; sends nothing
@@ -728,7 +728,7 @@ src/filing_triage/
                    and hyperparameter sensitivity grid
   report.py        self-contained HTML
   synth.py         the offline corpus
-tests/             671 tests; test_guards, test_pipeline, test_uncertainty
+tests/             673 tests; test_guards, test_pipeline, test_uncertainty
                    and test_ingest_integration are the ones that matter
 docs/              METHODOLOGY.md, LEAKAGE.md, COMPANY_LENS.md
 ```
