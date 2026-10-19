@@ -1,0 +1,169 @@
+name: Refresh
+
+# The scheduled refresh, moved off the Vultr worker that used to run it through
+# ops/systemd/company-lens-refresh.timer. That box is gone and the roughly
+# 336 MB accession/price cache under /opt/company-lens went with it, which is
+# what makes a hosted runner a reasonable target now: the worker's one real
+# advantage was holding that cache, and there is no longer a cache to hold.
+#
+# What this does is the same chain the systemd unit ran, in the same order:
+# refresh the mutable SEC submission heads, download only unseen accession
+# documents, refresh prices and configured fundamentals, rebuild the 193 static
+# company pages, package the public HTML, and deploy the prebuilt output to
+# Vercel. scripts/run_scheduled_refresh.sh is the single source of that order --
+# this workflow sets the environment it expects and calls it, rather than
+# restating the steps and letting the two drift.
+
+on:
+  # 23:35 UTC on weekdays: after the US close in both EDT and EST, and
+  # deliberately not on the hour. GitHub queues `schedule` events on a
+  # best-effort basis and the top of the hour is its worst load window, where
+  # runs are delayed and queued jobs can be dropped outright.
+  schedule:
+    - cron: "35 23 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      full_ingest:
+        description: "Crawl from scratch instead of refreshing (needed once, after a cache loss)"
+        type: boolean
+        default: false
+
+# The systemd unit used flock so a manual run could not overlap the scheduled
+# one. This is that guarantee: a second run waits rather than fetching the same
+# accessions twice and racing the same cache.
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write  # only to commit the refresh receipt below
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # a cold crawl is ~30-60 min; an incremental one, a few
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # Core dependencies only. requirements.lock is the right install for
+      # reproducing committed evidence, but it carries the optional [nlp] and
+      # [ts] stacks -- torch, transformers, chronos -- and no step below touches
+      # a transformer or a forecaster. Installing them here would add gigabytes
+      # to every nightly run to import nothing.
+      - run: pip install -e .
+
+      # The cache is what makes this incremental, and losing it is the only
+      # expensive failure here: edgar.py skips any accession document already on
+      # disk, so a restored cache turns a 12,000-request crawl into a handful of
+      # requests for what was filed since the last run.
+      #
+      # Restored by prefix because a cache entry is immutable once written -- the
+      # run below saves under a new key every time and restore-keys picks up the
+      # most recent of them.
+      - name: Restore the SEC and price cache
+        uses: actions/cache/restore@v4
+        with:
+          # universe.csv is in here because it lives under the gitignored
+          # data/build/ and every refresh script reads it. Cached rather than
+          # rebuilt each run so the page set stays stable: it is scraped from a
+          # live listing, and a universe that quietly changes membership
+          # overnight changes which 193 companies the site is about.
+          path: |
+            data/cache
+            data/build/universe.csv
+          key: company-lens-cache-${{ github.run_id }}
+          restore-keys: |
+            company-lens-cache-
+
+      - name: Refresh, rebuild and deploy
+        env:
+          # The SEC requires a real name and address; a run without it gets
+          # refused, and edgar.py raises rather than crawling anonymously.
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_DEPLOY_ENABLED: "1"
+          # The script defaults these to paths under /opt/company-lens via its
+          # environment file. On a runner they belong in the workspace.
+          COMPANY_LENS_PYTHON: python
+          COMPANY_LENS_LOCK_FILE: ${{ runner.temp }}/company-lens-refresh.lock
+          COMPANY_LENS_HEADLINE_INDEX: ${{ github.workspace }}/data/build/headlines.json
+          COMPANY_LENS_FUNDAMENTALS_TICKERS: AAPL
+          VERCEL_BUNDLE_ROOT: ${{ github.workspace }}/data/build/vercel_frontend
+          VERCEL_GLOBAL_CONFIG: ${{ runner.temp }}/vercel-cli
+        run: |
+          set -euo pipefail
+          # Unpinned, matching docs/DEPLOYMENT.md. Pin it here if a CLI release
+          # ever breaks `deploy --prebuilt`; nothing else depends on the version.
+          npm install --global vercel
+
+          # Everything a real pull needs, checked in seconds. A rejected
+          # User-Agent discovered at minute fifty of a crawl wastes an hour and
+          # the SEC's patience; this is the same check `make doctor` runs.
+          PYTHONPATH=src python -m filing_triage.cli doctor
+
+          # Self-healing on a cache miss: without the universe the refresh
+          # scripts have no issuer list to refresh.
+          if [ ! -f data/build/universe.csv ]; then
+            echo "::notice::no universe.csv in the cache; rebuilding it"
+            mkdir -p data/build
+            PYTHONPATH=src python scripts/build_demo_universe.py --out data/build/universe.csv
+          fi
+
+          # A cache miss leaves nothing for an incremental refresh to be
+          # incremental against, so the crawl has to happen whether or not it
+          # was asked for. edgar.py skips documents already on disk, so this is
+          # a no-op against a warm cache and ~30-60 minutes against a cold one.
+          if [ "${{ inputs.full_ingest }}" = "true" ] || [ ! -d data/cache/edgar ]; then
+            echo "::notice::crawling from scratch"
+            PYTHONPATH=src python -m filing_triage.cli ingest
+          fi
+
+          scripts/run_scheduled_refresh.sh
+
+      # Saved even when the step above failed. A crawl that died at request
+      # 9,000 of 12,000 has 9,000 documents on disk, and throwing that away
+      # means the next run pays for them again -- the resumability the cache
+      # provides is only real if a failed run still writes it.
+      - name: Save the cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/cache
+            data/build/universe.csv
+          key: company-lens-cache-${{ github.run_id }}
+
+      # Two jobs in one commit. It is the audit trail the Vultr timer never had
+      # -- the reason nobody noticed it had stopped on 2026-08-27 is that a run
+      # that does not happen leaves no trace anywhere in this repository.
+      #
+      # And it is a keepalive: GitHub disables scheduled workflows in a public
+      # repository after 60 days with no repository activity, which is exactly
+      # how a portfolio project's cron dies quietly. A commit per run resets
+      # that clock. [skip ci] because the test suite has nothing to say about a
+      # timestamp.
+      - name: Record the refresh
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          cat > data/last-refresh.json <<JSON
+          {
+            "finished_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "status": "${{ job.status }}",
+            "run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          JSON
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/last-refresh.json
+          git diff --staged --quiet || git commit -m "Refresh: ${{ job.status }} [skip ci]"
+          git push
