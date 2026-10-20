@@ -16,7 +16,7 @@ PYTHON ?= $(shell   test -x .venv/bin/python && echo .venv/bin/python ||   comma
 # the project.
 export PYTHONPATH := $(CURDIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
 
-.PHONY: help install lock install-locked demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-all vercel-bundle vercel-deploy run site company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
+.PHONY: help install lock install-locked demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-all vercel-bundle vercel-deploy run company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
 
 help:
 	@echo "make install   install the package and dev dependencies"
@@ -36,7 +36,6 @@ help:
 	@echo "make vercel-bundle  package public HTML as Vercel prebuilt output"
 	@echo "make vercel-deploy  deploy the prebuilt frontend to Vercel production"
 	@echo "make run       run the pipeline over whatever make ingest produced"
-	@echo "make site      publish the latest report to web/ for the static site"
 	@echo "make company   build an AAPL Company Lens snapshot from local data"
 	@echo "make company-featured  quickly build AAPL/MSFT/NVDA pages"
 	@echo "make company-pages  build all locally available company pages"
@@ -226,15 +225,6 @@ vercel-deploy: vercel-bundle
 
 run: check-python
 	$(PYTHON) -m filing_triage.cli run
-
-site: check-python
-	@test -f data/build/report.html || { \
-	  echo "data/build/report.html not found -- run 'make demo' or 'make run' first"; \
-	  exit 1; }
-	@cp data/build/report.html web/report.html
-	@echo "web/report.html updated from the latest run."
-	@echo "Commit it to publish: the site is served statically, with no build step,"
-	@echo "so what is in git is what goes live."
 
 company: check-python
 	PYTHONPATH=src $(PYTHON) -m company_lens.cli AAPL

@@ -668,34 +668,27 @@ Details in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## The published site
 
-`web/` is a static site published to GitHub Pages with no build step — what is
-committed is what goes live, so there is nothing that can fail to build.
+One site, one way of publishing it: `scripts/build_vercel_output.py` packages
+what a refresh generated and the Vercel CLI deploys it. There is no second copy
+and no second path.
 
 | | |
 |---|---|
-| `lens.josephjwang.com/research.html` | the audited findings, generated from `evidence/real_run` so they cannot drift |
-| `lens.josephjwang.com/earnings.html` | expected reporting dates, inferred from each issuer's own cadence |
-| `web/index.html` | a short landing page |
-| `web/report.html` | the generated report from a run |
+| [`lens.josephjwang.com`](https://lens.josephjwang.com) | the company pages, one per issuer in the current universe |
+| [`/research.html`](https://lens.josephjwang.com/research.html) | the audited findings, generated from `evidence/real_run` so they cannot drift |
+| [`/overview.html`](https://lens.josephjwang.com/overview.html) | the same result in plain words, for a reader with no finance or ML background |
+| [`/earnings.html`](https://lens.josephjwang.com/earnings.html) | expected reporting dates, inferred from each issuer's own cadence |
 
 ```bash
-make run     # or make demo
-make site    # copies data/build/report.html -> web/report.html
+gh workflow run refresh.yml   # refresh, rebuild, deploy
 ```
 
-Then commit `web/report.html`. Reports carry their own provenance banner, so a
-synthetic run published by accident says so on its own face rather than passing
-as a real one.
+Deployment, the schedule and the secrets it needs are in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-**Pages is not currently enabled**, so `web/` is committed but not served. The
-workflow is manual-only for that reason: `configure-pages` cannot find a Pages
-site and fails, and a job that goes red on every push trains everyone to ignore
-red. To publish, enable it under **Settings → Pages → Source: GitHub Actions**,
-run the Pages workflow once from the Actions tab, then restore the push trigger
-commented at the top of [`pages.yml`](.github/workflows/pages.yml).
-
-The live Company Lens site is a separate Vercel deployment and is unaffected by
-any of this.
+`make run` still writes a self-contained `data/build/report.html`, and reports
+carry their own provenance banner so a synthetic run says so on its own face.
+It is a local artifact: nothing publishes it.
 
 ## Layout
 
