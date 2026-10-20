@@ -10,9 +10,12 @@ name: Freshness
 # and compares one date, which is what a hosted runner is actually good at, and
 # it stays useful whether the refresh runs here, on a VPS, or by hand.
 
+# Weekly, now that the refresh is on demand. A daily check against a six-day
+# limit made sense against a weekday cron; against a site refreshed when its
+# author decides to, it would just send mail about a staleness that was chosen.
 on:
   schedule:
-    - cron: "15 12 * * *"
+    - cron: "15 12 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -22,10 +25,11 @@ jobs:
       - name: The live site should not be serving a stale cache
         env:
           PAGE: https://lens.josephjwang.com/aapl.html
-          # Weekday refreshes mean a healthy site is at most three days behind
-          # over a weekend. Six is "something has been broken since before the
-          # weekend", which is the point at which it is worth an email.
-          MAX_AGE_DAYS: "6"
+          # Not "is it current" any more -- on demand means stale by choice --
+          # but "has it rotted". A month is past the point where a reader who
+          # followed the README link would notice, and well short of the 53 days
+          # the last arrangement managed before anyone did.
+          MAX_AGE_DAYS: "30"
         run: |
           set -euo pipefail
           # Every company page tags its freshness markers with
@@ -43,8 +47,8 @@ jobs:
             exit 1
           fi
           age=$(( ( $(date -u +%s) - $(date -u -d "$collected" +%s) ) / 86400 ))
-          echo "SEC cache collected $collected, $age day(s) ago"
+          echo "published data is from $collected, $age day(s) ago"
           if [ "$age" -gt "$MAX_AGE_DAYS" ]; then
-            echo "::error::the published SEC cache is $age days old (limit $MAX_AGE_DAYS); the refresh has stopped"
+            echo "::error::the published site is $age days old (limit $MAX_AGE_DAYS); run the Refresh workflow"
             exit 1
           fi

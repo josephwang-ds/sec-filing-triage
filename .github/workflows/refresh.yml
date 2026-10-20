@@ -14,13 +14,14 @@ name: Refresh
 # this workflow sets the environment it expects and calls it, rather than
 # restating the steps and letting the two drift.
 
+# On demand only. A weekday cron was the original shape, copied from the systemd
+# timer it replaced, and it is the wrong shape for this: the site is a portfolio
+# piece that wants to be current when someone is about to look at it, not a
+# service with readers at 07:35 every morning. Crawling 12,000 filings nightly
+# to publish a page nobody opened that day is rude to the SEC and buys nothing.
+#
+# Run it from the Actions tab, or:  gh workflow run refresh.yml
 on:
-  # 23:35 UTC on weekdays: after the US close in both EDT and EST, and
-  # deliberately not on the hour. GitHub queues `schedule` events on a
-  # best-effort basis and the top of the hour is its worst load window, where
-  # runs are delayed and queued jobs can be dropped outright.
-  schedule:
-    - cron: "35 23 * * 1-5"
   workflow_dispatch:
     inputs:
       full_ingest:
@@ -28,9 +29,9 @@ on:
         type: boolean
         default: false
 
-# The systemd unit used flock so a manual run could not overlap the scheduled
-# one. This is that guarantee: a second run waits rather than fetching the same
-# accessions twice and racing the same cache.
+# The systemd unit used flock so two runs could not overlap. This is that
+# guarantee: a second run waits rather than fetching the same accessions twice
+# and racing the same cache.
 concurrency:
   group: refresh
   cancel-in-progress: false
@@ -164,15 +165,11 @@ jobs:
             data/build/*.json
           key: company-lens-cache-${{ github.run_id }}
 
-      # Two jobs in one commit. It is the audit trail the Vultr timer never had
-      # -- the reason nobody noticed it had stopped on 2026-08-27 is that a run
-      # that does not happen leaves no trace anywhere in this repository.
-      #
-      # And it is a keepalive: GitHub disables scheduled workflows in a public
-      # repository after 60 days with no repository activity, which is exactly
-      # how a portfolio project's cron dies quietly. A commit per run resets
-      # that clock. [skip ci] because the test suite has nothing to say about a
-      # timestamp.
+      # The audit trail the Vultr timer never had -- the reason nobody noticed it
+      # had stopped on 2026-08-27 is that a run which does not happen leaves no
+      # trace anywhere in this repository. This one records every run, including
+      # the failures, with a link to its log. [skip ci] because the test suite
+      # has nothing to say about a timestamp.
       - name: Record the refresh
         if: always()
         run: |

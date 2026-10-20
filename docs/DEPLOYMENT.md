@@ -175,28 +175,38 @@ Add the production domain under Vercel **Project -> Domains**, then create the D
 record Vercel shows. TLS is issued and renewed by Vercel. Nothing in this
 architecture should point the public domain anywhere else.
 
-## The schedule
+## Running it
 
-`refresh.yml` runs `35 23 * * 1-5`: weekdays at 23:35 UTC, after the US market
-close in both EDT and EST, which is 07:35 the next morning in China. The minute
-is deliberately not on the hour -- GitHub queues `schedule` events on a
-best-effort basis and the top of the hour is its worst load window, where runs
-are delayed and queued jobs can be dropped outright. A `concurrency` group gives
-what the worker's file lock gave: a manual run waits rather than racing the cache
-of a scheduled one.
+`refresh.yml` has no schedule. It runs when you run it, from the Actions tab or:
 
-`freshness.yml` runs `15 12 * * *` and does no work at all. It fetches one
-company page, reads the collection date the page already prints, and fails when
-it is more than six days old. Weekday refreshes put a healthy site at most three
-days behind over a weekend; six means something broke before the weekend.
+```bash
+gh workflow run refresh.yml
+```
 
-Each run commits `data/last-refresh.json`. That is the audit trail -- a run that
-does not happen otherwise leaves no trace in this repository -- and it is also a
-keepalive, because GitHub disables scheduled workflows in a public repository
-after 60 days with no repository activity, which is precisely how an unattended
-cron dies quietly.
+A weekday cron was the first shape, inherited from the systemd timer it
+replaced, and it was the wrong one. This site is a portfolio piece: it wants to
+be current when someone is about to look at it, not at 07:35 every morning.
+Crawling 12,000 filings nightly to publish a page nobody opened is rude to the
+SEC and buys nothing. `full_ingest` forces a crawl from scratch; leave it off
+and a warm cache makes the run incremental.
 
-Inspect runs from the Actions tab, or:
+A `concurrency` group gives what the worker's file lock gave: a second run waits
+rather than fetching the same accessions twice and racing the same cache.
+
+Every run commits `data/last-refresh.json`, success or failure, with a link to
+its log. A run that does not happen leaves no trace in this repository, which is
+exactly why the previous arrangement could stop for 53 days unnoticed.
+
+`freshness.yml` runs weekly and does no work at all: it fetches one company
+page, reads the `data-freshness-date` the page already carries, and fails when
+the newest is more than 30 days old. On demand means stale by choice, so this is
+not asking "is it current" but "has it rotted past the point a reader following
+the README link would notice".
+
+One limitation worth knowing: GitHub disables scheduled workflows in a public
+repository after 60 days with no repository activity. The refresh no longer
+commits on a schedule, so the watchdog's own survival now depends on this
+repository seeing commits.
 
 ```bash
 gh run list --workflow refresh.yml
