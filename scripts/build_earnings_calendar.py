@@ -60,10 +60,10 @@ def render(table: pd.DataFrame, as_of: pd.Timestamp, horizon: int) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Expected earnings</title>
 <style>
-:root{{--paper:#fcfcfb;--panel:#fff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;
---rule:#e6e5e1;--accent:#2a78d6;--warn:#c8392f;--ok:#2f7a55;--amber:#a8781f}}
-@media(prefers-color-scheme:dark){{:root{{--paper:#1a1a19;--panel:#222221;--ink:#f7f7f4;
---ink2:#c3c2b7;--rule:#33322f;--accent:#5b9ceb;--warn:#e88079;--ok:#6bbd92;--amber:#d6a94a}}}}
+:root{{--paper:#f5f4ec;--panel:#fff;--ink:#183c35;--ink2:#526558;--muted:#657567;
+--rule:#d8ddd3;--accent:#426b50;--warn:#c8392f;--ok:#2f7a55;--amber:#a8781f}}
+@media(prefers-color-scheme:dark){{:root{{--paper:#101e19;--panel:#172c23;--ink:#f7f7f4;
+--ink2:#c3c2b7;--rule:#33322f;--accent:#b4cd8c;--warn:#e88079;--ok:#6bbd92;--amber:#d6a94a}}}}
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--paper);color:var(--ink);
 font:400 15px/1.6 -apple-system,"Segoe UI",sans-serif}}

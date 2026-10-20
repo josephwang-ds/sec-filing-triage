@@ -8,8 +8,9 @@ This ranks them, so the five they read are the right five. It runs on 11,716 rea
 filings from 193 companies over four years, and there is a live site built on top
 of it: **[lens.josephjwang.com](https://lens.josephjwang.com)**.
 
-Reading the top five each morning finds a market-moving filing **19.8%** of the
-time. Reading five at random finds one 11.6% of the time. A perfect ranker would
+Across 766 eligible sessions, **19.8%** of the top five filings are material on
+average (daily precision@5), versus 11.6% under random selection. This is not
+the probability of finding at least one material filing in a session. A perfect ranker would
 reach 28.3% — most days simply do not contain five important filings — so this
 captures about **half of everything there is to capture**.
 
@@ -77,7 +78,7 @@ error bar deleted: average precision **0.397 [0.365, 0.430]**, ROC AUC
 **0.764 [0.745, 0.781]**, 95% cluster bootstrap over 957 sessions.
 
 Two rows move the wrong way or not at all, and the impossible-entry column is why
-that is not a contradiction. Purged CV *raises* the score slightly here, and the
+that is not a contradiction. Purged CV lowers average precision slightly here (0.597 to 0.590), and the
 universe row does not move at all — a metric is not the thing being fixed. The
 count is: 11,224 entries that used a price printed before the filing existed,
 reduced to zero. That column is an invariant, comparable across rows in a way the
@@ -145,7 +146,7 @@ is answerable.
 Two rows in the table at the top deserve their explanation, because both look
 wrong.
 
-**The universe row does not move at all** — 0.423916 before and after, to six
+**The universe row does not move at all** — 0.438913 before and after, to six
 decimals. That is the survivor sample confessing: when every issuer in the file
 still exists, switching on a point-in-time membership filter has nothing to
 remove. The pipeline is reporting its own blind spot rather than hiding it.

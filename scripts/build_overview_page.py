@@ -166,7 +166,7 @@ person can check for themselves.</p>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>What this project is &middot; Company Lens</title>
 <style>
-:root{{--ink:#14202b;--muted:#5f6f7a;--blue:#2258c9;--paper:#f5f4ef;--panel:#fff;
+:root{{--ink:#183c35;--muted:#657567;--blue:#426b50;--paper:#f5f4ec;--panel:#fff;
 --line:#dde1e2;--warm:#f0ece2;--alarm:#a8382c}}
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--paper);color:var(--ink);
@@ -184,7 +184,7 @@ h3{{margin:0 0 6px;font:500 19px/1.3 Georgia,serif}}
 p{{max-width:36em}}
 section{{padding:60px 0;border-top:1px solid var(--line)}}
 .band{{background:var(--panel)}}
-.dark{{background:#14202b;color:#eef2f4;border-top:0}}
+.dark{{background:#183c35;color:#f5f4ec;border-top:0}}
 .dark h2{{color:#fff}}
 .dark p{{color:#c2ceD5}}
 .dark strong{{color:#fff}}
@@ -197,7 +197,7 @@ gap:1px;background:var(--line);border:1px solid var(--line);margin:34px 0 0}}
 line-height:1.5}}
 .swing{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
 gap:20px;margin:34px 0 0;max-width:520px}}
-.swing div{{padding:20px;background:#1d2b38;border-radius:4px}}
+.swing div{{padding:20px;background:#234a40;border-radius:4px}}
 .swing b{{display:block;font:500 40px/1 Georgia,serif}}
 .swing .bad b{{color:#e8897c}}
 .swing .good b{{color:#7fb3ff}}
@@ -214,7 +214,7 @@ border-left:3px solid var(--blue);font-size:16px}}
 border-radius:4px;text-decoration:none;font-weight:650;font-size:15px}}
 .cta a.primary{{background:var(--blue);border-color:var(--blue);color:#fff}}
 footer{{padding:40px 0 70px;color:var(--muted);font-size:13.5px}}
-@media(prefers-color-scheme:dark){{:root{{--paper:#11171b;--panel:#1a2126;
+@media(prefers-color-scheme:dark){{:root{{--paper:#101e19;--panel:#172c23;
 --ink:#e9eef0;--muted:#93a1a9;--line:#2a343a;--blue:#6ea4f7;--warm:#1f2a30;
 --alarm:#e0857a}}}}
 @media(max-width:560px){{.swing{{grid-template-columns:1fr;gap:12px}}
