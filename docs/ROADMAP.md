@@ -67,8 +67,8 @@ Purpose: preserve Filing Triage as the quantitative and data-quality foundation.
 ## Phase 1 — Single-company overview ✅
 
 Completed 2026-08-24. Snapshot v1.2 now includes a bounded company profile and
-observable evidence coverage. The self-contained entry searches all 193 companies
-in the current local evidence universe, reports genuinely unavailable companies
+observable evidence coverage. The self-contained entry searches every company in
+the current local evidence universe, reports genuinely unavailable companies
 honestly, and keeps AAPL/MSFT/NVDA as featured examples. Every local company page
 uses four selectable periods, complete declared risk metrics, five recent 8-Ks,
 source passages, and deterministic fallback explanations.

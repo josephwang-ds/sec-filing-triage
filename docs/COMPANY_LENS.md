@@ -48,8 +48,10 @@ had was a caller. Nothing in the repository selected it, so it was carrying four
 environment variables, a SQL migration, a page of operating documentation and a
 credential class that must never reach a browser — all for a path no run took.
 Unused code with a security surface is not free.
-The entry searches all 193 companies in the current local evidence universe while
-keeping AAPL/MSFT/NVDA as featured examples. It states when a company is genuinely
+The entry searches every company in the current local evidence universe while
+keeping AAPL/MSFT/NVDA as featured examples. The count is not written down here:
+`universe.csv` is screened live, so it moves between refreshes, and the page
+states its own figure. It states when a company is genuinely
 outside that universe. It makes no forecast or recommendation.
 
 Each company page also includes a controlled **Ask the evidence** experience. A
