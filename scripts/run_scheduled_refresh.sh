@@ -34,6 +34,22 @@ if [[ -s "$HEADLINE_INDEX" ]]; then
 fi
 PYTHONPATH=src "$PYTHON_BIN" scripts/build_company_pages.py "${build_args[@]}" || exit 1
 PYTHONPATH=src "$PYTHON_BIN" scripts/evaluate_filing_changes.py || status=$?
+
+# The three site-level pages. build_vercel_output.py bundles every *.html in
+# company_pages/, and these are the ones no other step writes -- so on a worker
+# that keeps its disk between runs they survive from whenever someone last ran
+# `make research-page` by hand, and the bundle silently carries them. On a clean
+# runner they are simply absent, which is how the first successful hosted deploy
+# published a site whose research page, overview and earnings calendar were all
+# 404 -- including the three header links on all 194 company pages, and the
+# README's own link to "the research page".
+#
+# Generated here so the chain produces the whole site rather than inheriting
+# part of it from a machine's filesystem.
+PYTHONPATH=src "$PYTHON_BIN" scripts/build_research_page.py || status=$?
+PYTHONPATH=src "$PYTHON_BIN" scripts/build_overview_page.py || status=$?
+PYTHONPATH=src "$PYTHON_BIN" scripts/build_earnings_calendar.py || status=$?
+
 PYTHONPATH=src "$PYTHON_BIN" scripts/build_vercel_output.py || status=$?
 
 if [[ "${VERCEL_DEPLOY_ENABLED:-0}" == "1" ]]; then
