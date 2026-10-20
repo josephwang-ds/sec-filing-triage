@@ -1,10 +1,10 @@
 name: Refresh
 
-# The scheduled refresh, moved off the Vultr worker that used to run it through
-# ops/systemd/company-lens-refresh.timer. That box is gone and the roughly
-# 336 MB accession/price cache under /opt/company-lens went with it, which is
-# what makes a hosted runner a reasonable target now: the worker's one real
-# advantage was holding that cache, and there is no longer a cache to hold.
+# The scheduled refresh, moved off the Vultr worker that used to run it from a
+# systemd timer. That box is gone and the roughly 336 MB accession/price cache
+# it held went with it, which is what makes a hosted runner a reasonable target
+# now: the worker's one real advantage was holding that cache, and there is no
+# longer a cache to hold. docs/DEPLOYMENT.md records what the old shape was.
 #
 # What this does is the same chain the systemd unit ran, in the same order:
 # refresh the mutable SEC submission heads, download only unseen accession

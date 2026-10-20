@@ -51,7 +51,7 @@ deterministic evidence packet
 ```
 
 In the planned deployment, the Vercel frontend never receives provider keys. Scheduled
-generation would run on the Vultr backend, validate output, write a cache keyed by
+generation would run in the refresh job, validate output, write a cache keyed by
 accession, prompt version, provider, model, and evidence hash, then rebuild the static
 snapshot. That deployment is not connected yet.
 
@@ -130,7 +130,7 @@ a failure in the benchmark; the deterministic product fallback does not mask it.
 The same command accepts `deepseek`, `qwen`, `anthropic`, or `gemini`. Outputs are
 separated by provider and model, so comparisons never overwrite one another.
 
-After a real provider passes that gate, a future scheduled Vultr refresh could generate
+After a real provider passes that gate, a future scheduled refresh could generate
 briefs only for newly changed accessions.
 
 ## Bounded retrieval and reader controls

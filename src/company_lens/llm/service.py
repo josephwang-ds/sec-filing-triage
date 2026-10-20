@@ -34,7 +34,7 @@ class GenerationResult:
 
 
 class JsonExplanationCache:
-    """A transparent disk cache suitable for a scheduled Vultr build job."""
+    """A transparent disk cache suitable for a scheduled build job."""
 
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)

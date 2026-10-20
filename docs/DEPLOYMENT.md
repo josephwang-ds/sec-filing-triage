@@ -1,159 +1,123 @@
 # Scheduled deployment
 
-The public HTML bundle is deployed at <https://lens.josephjwang.com>. Production
-deployments now run non-interactively from the Vultr worker with an explicitly
-project-scoped Vercel token.
+The public HTML bundle is deployed at <https://lens.josephjwang.com>. The refresh
+that keeps it current, and the production deploy at the end of it, run from
+GitHub Actions: `.github/workflows/refresh.yml` on weekdays after the US close,
+with `.github/workflows/freshness.yml` watching the published result.
 
-A low-cost Vultr worker is provisioned in Tokyo with Ubuntu 24.04, 1 vCPU, 1 GB RAM,
-25 GB SSD, and the image-provided 2.3 GiB swap. The code, core build artifacts, and
-roughly 336 MB accession/price caches are installed under `/opt/company-lens`. A live
-Finnhub AAPL smoke build produced two company headlines plus one market headline; a
-full 193-page build and production deploy also completed from the worker. SSH listens
-on port 443 as a fallback. The root-only server secret file and weekday systemd timer
-are installed and active.
+This replaced a systemd timer on a Vultr worker. What that arrangement was, and
+why its failure is the reason the second workflow exists, is at the end of this
+document.
 
-## Recommended shape
+## The shape
 
-The planned target uses a prepaid Vultr instance as the stateful refresh worker and
-Vercel as the public static frontend. No browser request would need to reach Vultr.
+A hosted runner holds no state between runs, so the cache is the part worth
+understanding. Everything else is the same chain the worker ran, in the same
+order, and `scripts/run_scheduled_refresh.sh` is still the single definition of
+that order -- the workflow sets the environment it expects and calls it, rather
+than restating the steps where the two can drift apart.
 
 ```text
-systemd timer on Vultr
-        │
-        ├── refresh mutable SEC submission heads
-        ├── download only unseen accession documents
-        ├── refresh configured SEC Company Facts fundamentals
-        ├── refresh daily market histories
-        ├── rebuild 193 static company pages
-        ├── package public HTML only (no snapshot JSON/cache)
-        └── Vercel CLI deploys prebuilt output → Vercel CDN/domain
+schedule on GitHub Actions
+        |
+        +-- restore data/cache and data/build/universe.csv from the run before
+        +-- cli doctor: fail in seconds on a rejected User-Agent
+        +-- refresh mutable SEC submission heads
+        +-- download only unseen accession documents
+        +-- refresh configured SEC Company Facts fundamentals
+        +-- refresh daily market histories
+        +-- rebuild 193 static company pages
+        +-- package public HTML only (no snapshot JSON/cache)
+        +-- Vercel CLI deploys prebuilt output -> Vercel CDN/domain
+        +-- save the cache, even if a step above failed
+        +-- commit data/last-refresh.json
 ```
 
-The full local page directory is about 97 MB because it includes 58 MB of JSON build
-artifacts. The Vercel bundle publishes only the 195 HTML files, currently about
-42.4 MB. The low-cost worker runs one task at a time and now has the roughly 336 MB
-accession and price caches needed for incremental refreshes. The first full page build
-took about five minutes, peaked near 560 MB resident memory, and briefly used about
-330 MB of swap. That is acceptable for an overnight bonus project; upgrade only if
-future runtimes become operationally inconvenient.
+The full local page directory is about 97 MB because it includes 58 MB of JSON
+build artifacts. The Vercel bundle publishes only the 195 HTML files, currently
+about 42.4 MB, which stays well under the 100 MB Hobby static CLI upload limit.
 
-## One-time Vultr setup
+The cache is what makes a nightly run cheap: `edgar.py` skips any accession
+document already on disk, so a warm cache turns a twelve-thousand-request crawl
+into a handful of requests for whatever was filed since the last run. It is
+restored by key prefix because a cache entry is immutable once written -- each
+run saves under a new key and the restore picks the most recent. It is saved
+even when the run failed, because a crawl that died at request 9,000 has 9,000
+documents on disk and discarding them buys nothing.
 
-The paths below match the checked-in service templates.
+A cache miss is survivable rather than fatal: no `universe.csv` rebuilds it, no
+`data/cache/edgar` crawls from scratch. That costs 30 to 60 minutes once instead
+of needing a human.
+
+## One-time setup
+
+Add these as repository secrets under **Settings -> Secrets and variables ->
+Actions**. `EDGAR_USER_AGENT` is not a key and needs no registration: the SEC
+fair-access policy asks clients to identify themselves, so the value is a real
+name and email in one string.
+
+```text
+EDGAR_USER_AGENT     required; "Your Name you@example.com"
+VERCEL_TOKEN         required to deploy; create it scoped to the one project
+VERCEL_ORG_ID        required to deploy; team or personal account id
+VERCEL_PROJECT_ID    required to deploy; prj_... of the project serving the domain
+FINNHUB_API_KEY      optional; without it the headline refresh is skipped
+```
+
+Then run the workflow once by hand from the Actions tab with `full_ingest`
+checked. There is nothing for an incremental refresh to be incremental against
+until the cache exists, and the scheduled runs keep it warm from there.
+
+Add a Finnhub key only if live headline context is wanted. The refresh queries
+the current local universe rather than a hard-coded three-ticker list. It
+requests company-news metadata once per ticker, waits between requests, adds a
+bounded global-market set, keeps at most five cached rows per ticker for
+fourteen days, and sends the API key in a request header. The public company
+page still shows at most three exact-ticker/global-market rows. Review the
+vendor terms for the final hosting context before enabling a public production
+refresh.
+
+## The Vercel frontend
+
+To check a bundle before letting the schedule publish one, build and deploy it
+from a local checkout:
 
 ```bash
-sudo useradd --system --create-home --shell /usr/sbin/nologin company-lens
-sudo mkdir -p /opt/company-lens
-sudo chown company-lens:company-lens /opt/company-lens
-sudo -u company-lens git clone YOUR_REPOSITORY_URL /opt/company-lens
-cd /opt/company-lens
-sudo -u company-lens python3.12 -m venv .venv
-sudo -u company-lens .venv/bin/pip install -e '.[dev]'
-sudo npm install --global vercel
-```
-
-Copy the existing local caches for the first deployment. This avoids replaying the
-entire SEC history on the server:
-
-```bash
-rsync -av data/build data/cache USER@SERVER:/tmp/company-lens-data/
-sudo rsync -av /tmp/company-lens-data/ /opt/company-lens/data/
-sudo chown -R company-lens:company-lens /opt/company-lens/data
-```
-
-Create the worker secret file. `EDGAR_USER_AGENT` must contain the real name and
-email that the SEC fair-access policy asks clients to send. Leave Vercel deployment
-disabled until the first manual preview succeeds:
-
-```bash
-sudo cp ops/company-lens.env.example /etc/company-lens.env
-sudo chmod 600 /etc/company-lens.env
-sudoedit /etc/company-lens.env
-```
-
-Add a Finnhub key only if live headline context is enabled:
-
-```dotenv
-FINNHUB_API_KEY="replace-with-finnhub-key"
-COMPANY_LENS_HEADLINE_INDEX="/opt/company-lens/data/build/headlines.json"
-COMPANY_LENS_FUNDAMENTALS_TICKERS="AAPL"
-```
-
-The scheduled worker queries the current local universe rather than a hard-coded
-three-ticker list. It requests company-news metadata once per ticker, waits between
-requests, adds a bounded global-market set, keeps at most five cached rows per ticker
-for fourteen days, and sends the API key in a request header. The public company page
-still shows at most three exact-ticker/global-market rows. Review the vendor terms for
-the final hosting context before enabling a public production refresh.
-
-## Create and test the Vercel frontend
-
-Build the public bundle on Vultr:
-
-```bash
-cd /opt/company-lens
-sudo -u company-lens env PYTHONPATH=src .venv/bin/python scripts/build_vercel_output.py
+make vercel-bundle
 du -sh data/build/vercel_frontend/.vercel/output/static
+vercel deploy --cwd data/build/vercel_frontend --prebuilt --archive=tgz
 ```
 
-Create a Vercel access token in the Vercel dashboard. For the first interactive
-setup, log in and link the generated bundle to a new or existing `company-lens`
-project:
+Open the preview URL and verify `index.html`, one normal ticker, one
+single-letter ticker, and the 404 page. `--prod` promotes it.
 
-```bash
-sudo -u company-lens vercel login
-sudo -u company-lens vercel link --cwd data/build/vercel_frontend
-sudo -u company-lens vercel deploy \
-  --cwd data/build/vercel_frontend --prebuilt --archive=tgz
-```
-
-Open the preview URL and verify `index.html`, one normal ticker, one single-letter
-ticker, and the 404 page. Then deploy production:
-
-```bash
-sudo -u company-lens vercel deploy \
-  --cwd data/build/vercel_frontend --prebuilt --archive=tgz --prod
-```
-
-In Vercel **Project → Settings → General**, note the Project ID; note the Team/User
-ID for the owning scope. Put those values and the token into `/etc/company-lens.env`:
-
-```dotenv
-VERCEL_DEPLOY_ENABLED="1"
-VERCEL_TOKEN="replace-with-server-token"
-VERCEL_ORG_ID="team_or_user_id"
-VERCEL_PROJECT_ID="prj_project_id"
-```
-
-The environment file is mode `600`; do not commit these values. The checked-in
-deploy script requires all three variables and uses a compressed prebuilt deployment.
-It lets the Vercel CLI read `VERCEL_TOKEN` from the environment instead of placing the
-credential in the process command line. The hardened service directs CLI home and
-cache writes into private paths under `/opt/company-lens/data` and disables telemetry.
-For non-interactive CLI runs, Vercel recommends `VERCEL_ORG_ID` and
-`VERCEL_PROJECT_ID` so project linking is not required.
-The service stores any Vercel CLI state under `/opt/company-lens/data/vercel-cli`,
-because the hardened systemd unit does not expose the worker user's home directory.
+The deploy the workflow performs is `scripts/deploy_vercel_frontend.sh`, which
+requires `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` and uses a
+compressed prebuilt deployment. It lets the Vercel CLI read the token from the
+environment instead of placing the credential in the process command line. The
+IDs are in **Project -> Settings -> General** and in the owning scope's settings;
+for non-interactive runs Vercel recommends supplying both so project linking is
+not required.
 
 `VERCEL_PROJECT_ID` must be the project that serves the public site. That is
 **`company-lens-josephjwang`**, carrying `https://lens.josephjwang.com` and
 `https://company-lens-josephjwang.vercel.app`. It is the only one; a second
 project, `company-lens-demo`, existed until 2026-08-27 and was retired precisely
-because two of them is an unstable arrangement — deploying to one leaves the
+because two of them is an unstable arrangement -- deploying to one leaves the
 other serving whatever it last received, and both report success while the two
 public URLs drift apart. A stale ID reintroduces that failure, which is why the
 ID is worth re-checking rather than copied forward.
 
-## Ask AI provider keys (Vercel, not Vultr)
+## Ask AI provider keys (Vercel, not the refresh job)
 
 Live Q&A is a Vercel serverless function. It discovers providers only from API keys
 present in that project's environment. An empty environment returns `models: []` and
 the company page labels Q&A as not configured; it does not treat that as a network
-failure.
+failure. These keys belong to the Vercel project and never reach the refresh job,
+so nothing here is a repository secret.
 
 Add these as sensitive Production variables on the linked Vercel project. Never put
-them in Git, generated HTML, `/etc/company-lens.env` command lines, or browser
-JavaScript:
+them in Git, in a runner environment, in generated HTML, or in browser JavaScript:
 
 ```dotenv
 OPENAI_API_KEY="replace-with-openai-key"
@@ -198,49 +162,38 @@ deployment; redeploy production after adding them.
 After deploy, `GET https://lens.josephjwang.com/api/ask` should list the configured
 OpenAI model. A bounded POST is a paid provider call and needs a separate check.
 
-Add the production domain under Vercel **Project → Domains**, then create the DNS
-record Vercel shows. TLS is issued and renewed by Vercel. Do not point the public
-domain at Vultr in this architecture.
+Add the production domain under Vercel **Project -> Domains**, then create the DNS
+record Vercel shows. TLS is issued and renewed by Vercel. Nothing in this
+architecture should point the public domain anywhere else.
 
-Install and enable the timer:
+## The schedule
 
-```bash
-sudo cp ops/systemd/company-lens-refresh.service /etc/systemd/system/
-sudo cp ops/systemd/company-lens-refresh.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now company-lens-refresh.timer
-sudo systemctl start company-lens-refresh.service
-```
+`refresh.yml` runs `35 23 * * 1-5`: weekdays at 23:35 UTC, after the US market
+close in both EDT and EST, which is 07:35 the next morning in China. The minute
+is deliberately not on the hour -- GitHub queues `schedule` events on a
+best-effort basis and the top of the hour is its worst load window, where runs
+are delayed and queued jobs can be dropped outright. A `concurrency` group gives
+what the worker's file lock gave: a manual run waits rather than racing the cache
+of a scheduled one.
 
-The enabled timer runs Monday through Friday at 23:30 UTC, with up to ten minutes of jitter.
-That is 07:30 China time the next morning and after the US market close in both EDT
-and EST. `Persistent=true` runs a missed job after a reboot. The refresh script also
-uses a file lock, so a manual run cannot overlap the scheduled run.
+`freshness.yml` runs `15 12 * * *` and does no work at all. It fetches one
+company page, reads the collection date the page already prints, and fails when
+it is more than six days old. Weekday refreshes put a healthy site at most three
+days behind over a weekend; six means something broke before the weekend.
 
-Inspect status and logs with:
+Each run commits `data/last-refresh.json`. That is the audit trail -- a run that
+does not happen otherwise leaves no trace in this repository -- and it is also a
+keepalive, because GitHub disables scheduled workflows in a public repository
+after 60 days with no repository activity, which is precisely how an unattended
+cron dies quietly.
 
-```bash
-systemctl list-timers company-lens-refresh.timer
-systemctl status company-lens-refresh.service
-journalctl -u company-lens-refresh.service -n 200 --no-pager
-```
-
-## Optional Vultr-only fallback
-
-If Vercel is unavailable, Nginx can serve the same site directly. Replace the
-example domain and enable the checked-in configuration:
+Inspect runs from the Actions tab, or:
 
 ```bash
-sudo apt-get install nginx
-sudo cp ops/nginx/company-lens.conf /etc/nginx/sites-available/company-lens
-sudo ln -s /etc/nginx/sites-available/company-lens /etc/nginx/sites-enabled/company-lens
-sudo nginx -t
-sudo systemctl reload nginx
+gh run list --workflow refresh.yml
+gh run view --log-failed
+gh secret list
 ```
-
-The generated HTML is self-contained, so Nginx does not need Python on web requests.
-The normal Vercel path publishes only 42.4 MB of HTML and therefore remains well under
-the current 100 MB Hobby static CLI upload limit.
 
 ## Failure behavior
 
@@ -250,6 +203,29 @@ the current 100 MB Hobby static CLI upload limit.
 - Vercel deployment runs only after the HTML build and public bundle both succeed.
 - Snapshot JSON, accession text, Parquet files, and SEC identity never enter the
   Vercel bundle.
-- A partial refresh exits non-zero after rebuilding, so systemd records a visible
-  failure while the last usable site remains online.
+- A partial refresh exits non-zero after rebuilding, so the run is recorded as a
+  visible failure while the last usable site remains online.
 - Each page separately displays the latest filing date and the last SEC check time.
+- The cache is saved on failure, so a partial crawl is not paid for twice.
+
+## What this replaced, and what it cost
+
+A Vultr worker in Tokyo -- Ubuntu 24.04, 1 vCPU, 1 GB RAM -- held the code and
+roughly 336 MB of accession and price caches under `/opt/company-lens` and ran
+the same chain from a systemd timer on weekdays at 23:30 UTC. It worked. A full
+193-page build took about five minutes there and peaked near 560 MB resident.
+
+It stopped, and the way it stopped is the argument for everything above. Every
+page on the live site served `collected 2026-08-27` for 53 days. The deploy
+credential's last activity was 2026-09-03 -- so for a week the build and deploy
+chain kept running, kept reporting success, and kept publishing a cache that had
+stopped advancing. Nothing anywhere went red. The site was wrong in the one way
+the project claims to be careful about: confidently, and with a timestamp on the
+page saying so to anyone who read it.
+
+Two things follow from that, and both are in the workflows rather than in this
+document: a run now leaves a committed trace whether or not anyone is watching,
+and something independent reads the published page and fails when it is stale.
+The systemd unit and the Nginx fallback that went with this shape were deleted
+once the box was gone; `git log` has them if the VPS arrangement is ever wanted
+back.
