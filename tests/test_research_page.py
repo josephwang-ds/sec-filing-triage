@@ -289,3 +289,122 @@ class TestTheWorkedCasesKeepTheMisses:
 
     def test_the_note_explains_what_the_precision_means(self, prose):
         assert "wrong more often than it is right" in prose
+
+
+class TestTheLiveSectionIsHonestAtEveryStage:
+    """The prospective log reaches the page the same way the evidence does.
+
+    Every other section on this page renders a finished result. This one has to
+    render an unfinished one for months -- no outcomes at all at first, then a
+    sample far too small to mean anything -- and still be legible. The tests
+    below are mostly about the states the section passes through, because a page
+    that only reads well once the numbers are flattering is the thing this
+    project argues against.
+    """
+
+    @staticmethod
+    def _written(tmp_path, *, outcomes, rank_from=1, count=6):
+        from filing_triage import prediction_log
+
+        records = []
+        for i in range(count):
+            record = {
+                "accession": f"0000320193-26-00001{i}",
+                "cik": 320193, "ticker": "AAPL", "issuer": "Apple Inc.",
+                "acceptance_time": "2026-10-16T20:05:00+00:00",
+                "entry_session": "2026-10-19",
+                "rank": rank_from + i,
+                "score": 0.9 - i / 10,
+            }
+            if outcomes:
+                record[prediction_log.OUTCOME_FIELD] = {
+                    "measured": True, "material": i == 0,
+                    "reaction": 2.4 if i == 0 else 0.4,
+                }
+            records.append(record)
+        payload = {
+            "schema_version": prediction_log.SCHEMA_VERSION,
+            "date": "2026-10-17",
+            "written_at": "2026-10-17T07:21:00+00:00",
+            "predicts_session": "2026-10-19",
+            "model": {"estimator": "random_forest"},
+            "predictions": records,
+        }
+        prediction_log.write_once(tmp_path / "2026-10-17.json", payload)
+        return tmp_path
+
+    def test_no_log_omits_the_section(self, tmp_path):
+        """Before the first refresh writes a file there is nothing to say, and a
+        section with nothing behind it is the one hand-written claim on a page
+        generated from evidence."""
+        from build_research_page import _live, _live_section
+
+        assert _live(None) == {"live": None}
+        assert _live(tmp_path) == {"live": None}
+        assert _live_section({"live": None}, {}) == ""
+
+    def test_a_log_with_no_outcomes_still_renders(self, tmp_path, evidence):
+        """The state the first weeks are in. Hiding it until it reads well is
+        how a live tally becomes a highlight reel."""
+        from build_research_page import _live, _live_section
+
+        data = _live(self._written(tmp_path, outcomes=False))
+        section = _live_section(data, evidence["metrics"])
+        assert "Not yet answerable" in section
+        assert "Nothing above is a result" in section
+
+    def test_a_scored_log_shows_the_rate_against_both_references(self, tmp_path,
+                                                                 evidence):
+        from build_research_page import _live, _live_section
+
+        m = evidence["metrics"]
+        section = _live_section(_live(self._written(tmp_path, outcomes=True)), m)
+        # One material filing in the top five of the one published session.
+        assert f"{1 / 5:.1%}" in section
+        assert f"{m['daily_precision_at_5']:.1%}" in section
+        assert f"{m['daily_random_precision_at_5']:.1%}" in section
+
+    def test_the_rate_is_quoted_with_an_interval_and_a_sample_size(self, tmp_path,
+                                                                   evidence):
+        """A hit rate over a handful of filings without its interval is the
+        error this project exists to point at, committed by this project."""
+        from build_research_page import _live, _live_section
+
+        from filing_triage.prediction_log import wilson_interval
+
+        section = _live_section(_live(self._written(tmp_path, outcomes=True)),
+                                evidence["metrics"])
+        low, high = wilson_interval(1, 5)
+        assert f"[{low:.1%}, {high:.1%}]" in section
+        assert "small and early" in section
+
+    def test_only_the_top_five_reach_the_tally(self, tmp_path, evidence):
+        """The published number is a top-five read, so a record ranked sixth is
+        in the log and out of the rate."""
+        from build_research_page import _live
+
+        deep = _live(self._written(tmp_path, outcomes=True, rank_from=6))
+        assert deep["live"]["tally"]["scored_at_k"] == 0
+        assert deep["live"]["days"][0]["records"] == 6
+
+    def test_a_pending_record_is_not_counted_as_a_miss(self, tmp_path):
+        """Counting an unresolved prediction as wrong understates the live
+        number, which is the same class of error as overstating it."""
+        from build_research_page import _live
+
+        tally = _live(self._written(tmp_path, outcomes=False))["live"]["tally"]
+        assert tally["pending_at_k"] == 5
+        assert tally["hit_rate"] is None
+
+    def test_it_says_which_sessions_the_log_can_cover(self, tmp_path, evidence):
+        """The limitation a reader cannot see from the hit rate: a weekly
+        Saturday refresh can only ever publish the following Monday's queue, so
+        the live sample is weekend filings and the backtest beside it is every
+        session of the week."""
+        from build_research_page import _live, _live_section
+
+        section = _live_section(_live(self._written(tmp_path, outcomes=True)),
+                                evidence["metrics"])
+        assert "not a random sample of sessions" in section
+        # 2026-10-19, the entry session every fixture record carries.
+        assert "every session in this log is a Monday" in section

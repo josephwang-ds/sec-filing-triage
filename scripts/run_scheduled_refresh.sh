@@ -35,6 +35,22 @@ fi
 PYTHONPATH=src "$PYTHON_BIN" scripts/build_company_pages.py "${build_args[@]}" || exit 1
 PYTHONPATH=src "$PYTHON_BIN" scripts/evaluate_filing_changes.py || status=$?
 
+# The prospective prediction log, before the pages that render it.
+#
+# Order matters in both directions here. Scoring runs first because it reads the
+# price panel the step above just refreshed, and because a prediction written
+# today has nothing to score -- the two scripts never touch the same file in one
+# run. Both run before build_research_page.py, which reads the log to render the
+# live-versus-backtest section, so a run publishes the tally it just extended
+# rather than last week's.
+#
+# Neither aborts the chain. The log is the one artefact here that is committed
+# rather than deployed, and a week where the ranker could not be fitted is a
+# gap in it -- which is recoverable, and much better than a deploy skipped
+# because of it. The failure shows up in the run log and in the log's own dates.
+PYTHONPATH=src "$PYTHON_BIN" scripts/score_predictions.py || status=$?
+PYTHONPATH=src "$PYTHON_BIN" scripts/write_predictions.py || status=$?
+
 # The three site-level pages. build_vercel_output.py bundles every *.html in
 # company_pages/, and these are the ones no other step writes -- so on a worker
 # that keeps its disk between runs they survive from whenever someone last ran

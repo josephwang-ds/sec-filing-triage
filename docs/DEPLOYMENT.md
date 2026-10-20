@@ -28,10 +28,13 @@ schedule on GitHub Actions
         +-- refresh configured SEC Company Facts fundamentals
         +-- refresh daily market histories
         +-- rebuild the static company pages, one per issuer
+        +-- score the prediction log: outcomes for any window that has closed
+        +-- write the prediction log: next session's ranking, before its prices
+        +-- rebuild the research, overview and earnings pages
         +-- package public HTML only (no snapshot JSON/cache)
         +-- Vercel CLI deploys prebuilt output -> Vercel CDN/domain
         +-- save the cache, even if a step above failed
-        +-- commit data/last-refresh.json
+        +-- commit data/last-refresh.json and this run's predictions/ file
 ```
 
 The local page directory is larger than what ships, because it includes the JSON
@@ -216,6 +219,18 @@ rather than fetching the same accessions twice and racing the same cache.
 Every run commits `data/last-refresh.json`, success or failure, with a link to
 its log. A run that does not happen leaves no trace in this repository, which is
 exactly why the previous arrangement could stop for 53 days unnoticed.
+
+The same commit carries that run's `predictions/` file, and for the prediction
+log this step is not bookkeeping -- it is the artefact. The log's whole claim is
+that a ranking existed publicly before the prices it is judged against did, and
+a commit pushed by Actions is what timestamps it; a run that ranked filings and
+could not push them has produced nothing. The two reasons this is slightly
+fiddly are both in `refresh.yml`: the receipt step resets `--hard` onto the
+remote tip to avoid a non-fast-forward, which is the one operation here that can
+destroy a tracked file a refresh wrote, so the log is copied aside and back
+across it; and `predictions/` is the only tracked output of a refresh, so it is
+named explicitly in the `git add` rather than relying on everything else being
+gitignored.
 
 `freshness.yml` runs weekly and does no work at all: it fetches one company
 page, reads the `data-freshness-date` the page already carries, and fails when

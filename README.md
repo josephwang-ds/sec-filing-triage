@@ -47,7 +47,7 @@ the public page rather than quietly not shipping.
 A point-in-time event dataset built from SEC timestamps; a reusable audit library
 that fails the build rather than logging a warning; a ranker; and a
 source-backed company page with a controlled AI question-answering box that
-refuses to answer beyond its evidence. 674 tests. No price predictions, no
+refuses to answer beyond its evidence. 720 tests. No price predictions, no
 trading strategy, no buy or sell recommendations anywhere — the model predicts
 *how big* a reaction will be, never which direction, because direction is a bet
 against desks with faster data and more capital.
@@ -521,7 +521,7 @@ embargo sweep, and writes a self-contained HTML report.
 
 ```bash
 make quick           # smaller, no leakage study, ~30s
-make test            # 674 tests (~12 min; the nested model selection dominates)
+make test            # 720 tests (~12 min; the nested model selection dominates)
 make audit           # the leakage checks as an exit code
 make llm-eval        # frozen English/Chinese grounded-output scorecard
 make llm-eval-openai-dry-run  # inspect 20-case paid benchmark scope; sends nothing
@@ -637,6 +637,53 @@ typed on purpose.
 
 ---
 
+## What a backtest still cannot say
+
+Every number above is retrospective, and the audit is what makes it honest. But
+an audit is a statement about how carefully the past was handled, and a reader is
+being asked to accept it. Nothing in the evidence package rules out the one
+mistake no guard can see: that the choices behind it were made by a person who
+already knew how the sample came out.
+
+So the scheduled refresh now publishes its ranking *before* the outcome exists.
+
+```
+predictions/2026-10-24.json    the filings ranked for the next session, committed
+                               before a single price in their reaction windows
+                               had printed
+```
+
+Each file holds the queue for the first session the price panel does not yet
+hold: the accession, the issuer, the SEC acceptance timestamp, the rank, the
+score, and the same input fingerprint the evidence package records. A separate
+command appends the realised reaction weeks later, measured by the same
+market-model event study at the same 2.0σ cutoff the backtest's labels use, so
+"material" means one thing in both places. The prediction half is written once
+and never rewritten; `tests/test_prediction_log.py` fails the build if it moves,
+and its docstring explains why the commit graph — not the digest committed beside
+the file — is the part of that check which carries the claim.
+
+The research page carries the tally as soon as the log has a file in it, beside
+the backtest's **19.8%** for a top-five read and random's **11.6%**, with the
+sample size and the interval in front of the number — and with the one
+limitation a reader cannot see from a hit rate: a weekly Saturday refresh can
+only publish the following Monday's queue, so the live sample is filings
+released around a weekend while the backtest averages over every session.
+
+It will be too small to mean anything for months. That is the correct state for
+it to be published in: a live number first shown once it reads well is a
+highlight reel, and this log is worth starting precisely because it compounds
+without anyone deciding when to start looking.
+
+```bash
+make predictions         # rank the next session's filings and publish them
+make score-predictions   # append outcomes once reaction windows close
+```
+
+[predictions/README.md](predictions/README.md) has the record format.
+
+---
+
 ## How it works
 
 **Label.** Market-model event study. Regress the issuer on the market over
@@ -679,6 +726,10 @@ and no second path.
 | [`/overview.html`](https://lens.josephjwang.com/overview.html) | the same result in plain words, for a reader with no finance or ML background |
 | [`/earnings.html`](https://lens.josephjwang.com/earnings.html) | expected reporting dates, inferred from each issuer's own cadence |
 
+The refresh commits two things as well as deploying: `data/last-refresh.json`, so
+a run that does not happen leaves a trace, and that run's `predictions/` file,
+which is what timestamps the ranking.
+
 ```bash
 gh workflow run refresh.yml   # refresh, rebuild, deploy
 ```
@@ -716,17 +767,21 @@ src/filing_triage/
   volatility.py    the 20-session forecast target, three baselines, pinball/coverage
   chronos_model.py Chronos-2, zero-shot and cached; measured against those baselines
   model.py         the ranker
+  prediction_log.py  the prospective log's format, digests and live tally
   evaluate.py      ranking metrics
   experiments.py   the leakage study, embargo sweep, reaction-capture profile
                    and hyperparameter sensitivity grid
   report.py        self-contained HTML
   synth.py         the offline corpus
-tests/             674 tests; test_guards, test_pipeline, test_uncertainty
-                   and test_ingest_integration are the ones that matter
+tests/             720 tests; test_guards, test_pipeline, test_uncertainty,
+                   test_prediction_log and test_ingest_integration are the
+                   ones that matter
+predictions/       one file per refresh: the ranking, committed before the
+                   outcomes existed; append-only, guarded by a test
 docs/              METHODOLOGY.md, LEAKAGE.md, COMPANY_LENS.md
 ```
 
-About 17,994 lines under `src/`, plus 9,343 of tests. It is meant to be read
+About 18,296 lines under `src/`, plus 10,281 of tests. It is meant to be read
 end to end, and a test asserts these figures have not drifted from the code.
 
 ---

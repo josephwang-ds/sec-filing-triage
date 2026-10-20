@@ -16,7 +16,7 @@ PYTHON ?= $(shell   test -x .venv/bin/python && echo .venv/bin/python ||   comma
 # the project.
 export PYTHONPATH := $(CURDIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
 
-.PHONY: help install lock install-locked demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-all vercel-bundle vercel-deploy run company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
+.PHONY: help install lock install-locked predictions score-predictions demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-all vercel-bundle vercel-deploy run company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
 
 help:
 	@echo "make install   install the package and dev dependencies"
@@ -33,6 +33,8 @@ help:
 	@echo "make refresh-fundamentals  refresh the AAPL annual Company Facts pilot"
 	@echo "make refresh-headlines  refresh bounded Finnhub headline metadata"
 	@echo "make refresh-all  locked SEC + market refresh and static page rebuild"
+	@echo "make predictions   rank the next session's filings and publish them"
+	@echo "make score-predictions  append outcomes once reaction windows close"
 	@echo "make vercel-bundle  package public HTML as Vercel prebuilt output"
 	@echo "make vercel-deploy  deploy the prebuilt frontend to Vercel production"
 	@echo "make run       run the pipeline over whatever make ingest produced"
@@ -216,6 +218,16 @@ research-page: check-python
 # carries it to the live site with everything else.
 earnings-calendar: check-python
 	PYTHONPATH=src $(PYTHON) scripts/build_earnings_calendar.py
+
+# The prospective log. Written before the outcomes exist and scored after, by
+# two commands rather than one, so that "the outcomes were appended by code that
+# could also have rewritten the prediction" is not something a reader has to
+# rule out by reading carefully. The scheduled refresh runs both in that order.
+predictions: check-python
+	PYTHONPATH=src $(PYTHON) scripts/write_predictions.py
+
+score-predictions: check-python
+	PYTHONPATH=src $(PYTHON) scripts/score_predictions.py
 
 vercel-bundle: check-python
 	PYTHONPATH=src $(PYTHON) scripts/build_vercel_output.py

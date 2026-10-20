@@ -10,6 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, which the default shallow checkout does not give.
+          # tests/test_prediction_log.py asks git what each published prediction
+          # said in the commit that introduced it, and that check is the one that
+          # does not rest on the author having left the file alone -- a digest
+          # committed beside the file it pins can be moved by the same commit.
+          # Without history the test skips and the weaker check carries the build.
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -32,6 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the prediction log's git check; see the job above
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

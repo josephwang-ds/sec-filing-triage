@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from html import escape
 from pathlib import Path
 
+from filing_triage import prediction_log
 from filing_triage.calibration import CALIBRATION_SHARE, RELIABILITY_BINS
 from filing_triage.model import CV_EMBARGO, N_SPLITS
 from filing_triage.self_relative import TARGET_QUANTILE
@@ -27,6 +28,11 @@ from filing_triage.uncertainty import N_BOOTSTRAP
 from filing_triage.volatility import HAR_LAGS, HORIZON, LOOKBACK, QUANTILES
 
 EMBARGO_DAYS = int(CV_EMBARGO.days)
+
+# The read depth every headline on this page is quoted at, and therefore the one
+# the live log has to be tallied at: comparing a live top-three against a
+# backtested top-five would be a comparison of two different products.
+TOP_K = 5
 
 # Plain-language names for what the model reads. Semantics, not measurements:
 # the importances beside them come from the evidence, these do not, because a
@@ -192,7 +198,7 @@ INSIDERS = ("insider_metrics.json", "insider_disclosure_ladder.csv",
             "insider_gap_profile.csv", "insider_reaction_by_kind.csv")
 
 
-def load(evidence: Path) -> dict:
+def load(evidence: Path, predictions: Path | None = None) -> dict:
     missing = [name for name in REQUIRED if not (evidence / name).exists()]
     if missing:
         raise SystemExit(
@@ -219,7 +225,40 @@ def load(evidence: Path) -> dict:
         **_self_relative(evidence, rows),
         **_volatility(evidence, rows),
         **_insiders(evidence, rows),
+        **_live(predictions),
     }
+
+
+def _live(predictions: Path | None) -> dict:
+    """The prospective prediction log, which is not part of the evidence package.
+
+    Deliberately not: everything in `evidence/real_run` is one frozen execution
+    of the backtest, re-exported as a set, and the live log is the opposite kind
+    of artefact -- it only ever grows, one file per refresh, and a date already
+    in it is never rewritten. Folding it into the package would make every
+    re-export appear to restate it.
+
+    Absent is a legitimate state and renders nothing, because the section has
+    nothing to say before the first refresh writes a file. An empty log is a
+    different matter and does render: a log with no outcomes yet is the honest
+    report for the first few weeks, and hiding it until the numbers are flattering
+    is the behaviour this page exists to argue against.
+    """
+    if predictions is None:
+        return {"live": None}
+    payloads = prediction_log.load(predictions)
+    if not payloads:
+        return {"live": None}
+    return {"live": {
+        "tally": prediction_log.top_k_outcomes(payloads, k=TOP_K),
+        "days": [{
+            "date": payload.get("date", "?"),
+            "records": len(payload.get("predictions", [])),
+            "sessions": sorted({r.get("entry_session")
+                                for r in payload.get("predictions", [])}),
+            "top": prediction_log.top_k_outcomes([payload], k=TOP_K),
+        } for payload in payloads],
+    }}
 
 
 def _insiders(evidence: Path, rows) -> dict:
@@ -846,6 +885,192 @@ make. Nothing here is a view on price.</p>""",
     return own_company + probability + reading + _transformer_section(block)
 
 
+def _live_days(days) -> str:
+    out = []
+    for day in days:
+        top = day["top"]
+        sessions = ", ".join(str(x) for x in day["sessions"] if x) or "&mdash;"
+        out.append(
+            f"<tr><td>{escape(str(day['date']))}</td>"
+            f"<td>{sessions}</td>"
+            f"<td class='n'>{day['records']}</td>"
+            f"<td class='n'>{top['published_at_k']}</td>"
+            f"<td class='n'>{top['scored_at_k']}</td>"
+            f"<td class='n'>{top['material_at_k']}</td>"
+            f"<td class='n'>{top['pending_at_k']}</td></tr>"
+        )
+    return "".join(out)
+
+
+def _live_population(tally) -> str:
+    """Which sessions the log can cover, which is not a free choice.
+
+    The refresh runs weekly, on a Saturday, and a filing is only publishable
+    while no price in its reaction window has printed. By the following Saturday
+    every session except the coming Monday has resolved, so the live log is
+    structurally a log of Monday queues -- filings accepted over a weekend. That
+    is a different population from the all-sessions average the backtest
+    reports, it is a property of the cadence rather than of the ranker, and it
+    is invisible in the hit rate. Stated here, read from the log's own entry
+    sessions rather than asserted, because the honest comparison needs it and
+    the fix is a second weekly run rather than a footnote.
+    """
+    weekdays = tally.get("weekdays") or []
+    if not weekdays:
+        return ""
+    if len(weekdays) == 1:
+        covers = (f"every session in this log is a {weekdays[0]}")
+        because = (" A weekly Saturday refresh can only publish the queue for "
+                   "the following Monday: by the next run, every other "
+                   "session's windows have closed and those filings are "
+                   "training data rather than predictions.")
+    else:
+        covers = ("the sessions in this log are "
+                  + ", ".join(weekdays[:-1]) + f" and {weekdays[-1]}")
+        because = ""
+    return (f"<div class='note'><strong>And it is not a random sample of "
+            f"sessions:</strong> {covers}.{because} So this tally is measured on "
+            f"filings released around a weekend, while the backtest beside it "
+            f"averages over every session of the week. A second refresh on a "
+            f"weekday would widen it; nothing about the ranker would change.</div>")
+
+
+def _live_section(data, m) -> str:
+    """The prospective log: the one claim the rest of this page cannot make.
+
+    Everything above is a backtest. A backtest can be audited -- that is the
+    whole page -- but an audit is still an argument about process, and a reader
+    is being asked to accept it. A ranking committed to a public repository
+    before the prices in its reaction window existed is not an argument. It
+    either held up or it did not, and no amount of care taken after the fact can
+    move it either way.
+
+    So this section is written to be legible while it is still worthless. The
+    first weeks have no outcomes at all and the first months have a sample far
+    too small to separate the model from a coin; publishing it anyway, with its
+    interval and its sample size in front of the number, is the only version of
+    this that does not become a highlight reel later.
+    """
+    block = data.get("live")
+    if not block:
+        return ""
+
+    tally = block["tally"]
+    backtest = m["daily_precision_at_5"]
+    floor = m["daily_random_precision_at_5"]
+    scored, material = tally["scored_at_k"], tally["material_at_k"]
+    low, high = tally["hit_rate_ci_low"], tally["hit_rate_ci_high"]
+    runs = tally["files"]
+    dates = tally["dates"]
+    span = ("no runs yet" if not dates else dates[0] if len(set(dates)) == 1
+            else f"{dates[0]} to {dates[-1]}")
+
+    if not scored:
+        answer = (
+            f"Not yet answerable, and that is the honest state of it. "
+            f"{tally['records']} filing(s) have been published across {runs} "
+            f"refresh run(s) ({span}), {tally['published_at_k']} of them inside a "
+            f"top-{TOP_K} read, and not one reaction window has closed yet. The "
+            f"only thing measured here so far is that the predictions were "
+            f"committed before their outcomes existed."
+        )
+        rate_row = ("<tr class='pick'><td>Live, published before the outcome "
+                    "existed</td><td class='n'>0</td><td class='n'>&mdash;</td>"
+                    "<td class='n'>&mdash;</td><td class='n'>&mdash;</td></tr>")
+        reading = (
+            "<div class='note'>Nothing above is a result. A reaction window "
+            "closes within days of the filing entering, so the rows below will "
+            "acquire their outcomes almost immediately; what takes months is "
+            "accumulating enough of them for the hit rate to mean anything. "
+            "Published in this state deliberately &mdash; a live tally first "
+            "shown once it reads well is a highlight reel.</div>"
+            + _live_population(tally))
+    else:
+        interval = f"[{_pct(low)}, {_pct(high)}]"
+        straddles = (low <= floor <= high) and (low <= backtest <= high)
+        verdict = (
+            "wide enough to contain both the backtest and a random queue, so it "
+            "distinguishes nothing yet"
+            if straddles else
+            "already narrower than the gap it is being read against, which is "
+            "worth saying out loud because it was not true last month")
+        answer = (
+            f"{_pct(tally['hit_rate'])} of the top {TOP_K} published before their "
+            f"reaction windows opened turned out material &mdash; {material} of "
+            f"{scored} filings, over {runs} refresh run(s). The audited backtest "
+            f"reads {_pct(backtest)} and a random queue {_pct(floor)}. The 95% "
+            f"interval on the live number is {interval}: {verdict}."
+        )
+        rate_row = (
+            f"<tr class='pick'><td>Live, published before the outcome existed</td>"
+            f"<td class='n'>{scored}</td><td class='n'>{material}</td>"
+            f"<td class='n'><strong>{_pct(tally['hit_rate'])}</strong></td>"
+            f"<td class='n'>{interval}</td></tr>")
+        reading = (
+            f"<div class='note'><strong>The sample is small and early, and the "
+            f"interval is the number to read.</strong> {scored} scored filings "
+            f"over {runs} run(s) is not an evaluation; it is the beginning of "
+            f"one. Worse, the filings are not independent draws &mdash; a "
+            f"morning's top {TOP_K} share one market, so the effective sample "
+            f"size is closer to the number of sessions than to the number of "
+            f"filings, and the Wilson interval above does not correct for that "
+            f"either. Read the point estimate as a tally, not as a measurement. "
+            f"The only thing that fixes it is more Saturdays.</div>"
+            f"{_live_population(tally)}")
+
+    evidence = f"""
+{_table(["Reading the top " + str(TOP_K) + " by", "Filings scored", "Material",
+         "Hit rate", "95% interval"],
+        rate_row
+        + f"<tr><td>Audited backtest, purged walk-forward</td>"
+          f"<td class='n'>{int(m['daily_sessions_at_5']):,} sessions</td>"
+          f"<td class='n'>&mdash;</td><td class='n'>{_pct(backtest)}</td>"
+          f"<td class='n'>&mdash;</td></tr>"
+        + f"<tr class='clean'><td>Random within the session</td>"
+          f"<td class='n'>&mdash;</td><td class='n'>&mdash;</td>"
+          f"<td class='n'>{_pct(floor)}</td><td class='n'>&mdash;</td></tr>")}
+{reading}
+{_table(["Published", "For session", "Filings ranked", f"In the top {TOP_K}",
+         "Scored", "Material", "Window still open"], _live_days(block["days"]))}
+"""
+
+    return _section(
+        "live",
+        "Does it hold up on filings whose outcomes did not exist yet?",
+        answer,
+        evidence,
+        _method(
+            technique=("Each scheduled refresh ranks the filings entering the "
+                       "first session its price panel does not hold &mdash; not "
+                       "one price in their reaction windows has printed &mdash; "
+                       "and commits the ranking to the public repository before "
+                       "any of them can."),
+            scored_by=("A separate run appends the realised reaction once the "
+                       "window closes, from the same market-model event study "
+                       "and the same threshold the backtest&rsquo;s labels use. "
+                       "It may add outcome fields and nothing else."),
+            pinned=("Every record&rsquo;s prediction half is digested the day it "
+                    "is written and checked against the commit that introduced "
+                    "it. An edited prediction fails the build."),
+            what_to_read=("The sample size and the interval, in that order. A "
+                          "live hit rate over a few dozen filings is compatible "
+                          "with almost any claim."),
+        ),
+        """<p>The backtest above is scored out of sample, purged and embargoed,
+and the leakage ladder prices what the ordinary shortcuts would have been worth.
+All of that is still a statement about how carefully the past was handled. This
+section is a different kind of claim: the ranking was published, by a scheduled
+job, before the prices it is judged against existed. There is no version of
+hindsight that reaches it, which is why it is worth starting a log that will be
+uninformative for months rather than waiting until it is not.</p>
+<p>It is also the section most likely to disagree with the one above it, and the
+disagreement would be informative rather than embarrassing. The backtest runs on
+a hand-picked universe of surviving large caps over four years; the live log runs
+on whatever this week brought. A live number that settles below the backtest is
+the most likely outcome and the most useful thing this log could tell anyone.</p>""",
+    )
+
+
 def _transformer_section(block) -> str:
     """The FinBERT ablation, or nothing when the corpus was never encoded."""
     metrics = block["metrics"]
@@ -1310,6 +1535,13 @@ def _methods_index(data) -> str:
          ("Each input shuffled on held-out folds; the drop in precision is its "
          "importance. Out of sample, so it cannot reward memorisation.")),
     ]
+    if data.get("live"):
+        rows += [
+            ("Prospective prediction log", "The live hit rate",
+             ("Rankings committed to a public repository before the prices in "
+             "their reaction windows existed, scored later by a separate run "
+             "that may only append outcomes.")),
+        ]
     if data.get("self_relative"):
         rows += [
             ("Issuer-relative target", "Is this filing unusual for this company",
@@ -1452,6 +1684,8 @@ resampled days, so their difference is measured within a day rather than between
 two separate estimates.</p>""",
     )
 
+    live = _live_section(data, m)
+
     capacity = _section(
         "capacity",
         "What if a reader has time for more, or fewer, than five?",
@@ -1578,6 +1812,7 @@ the longer argument. A full index of methods is at the end.</p>
 </header>
 {hindsight}
 {worth}
+{live}
 {capacity}
 {trading}
 {family}
@@ -1636,11 +1871,16 @@ Full report with charts, per-fold results and the leakage audit:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path, default=Path("evidence/real_run"))
+    # The prospective log, which only grows and is never re-exported, so it is
+    # read from the repository rather than from the evidence package.
+    parser.add_argument("--predictions", type=Path,
+                        default=prediction_log.DIRECTORY)
     parser.add_argument("--out", type=Path,
                         default=Path("data/build/company_pages/research.html"))
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(render(load(args.evidence)), encoding="utf-8")
+    args.out.write_text(render(load(args.evidence, args.predictions)),
+                        encoding="utf-8")
     print(f"research page -> {args.out}")
     return 0
 

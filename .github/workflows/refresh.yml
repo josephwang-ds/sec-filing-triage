@@ -186,14 +186,32 @@ jobs:
       # The audit trail the Vultr timer never had -- the reason nobody noticed it
       # had stopped on 2026-08-27 is that a run which does not happen leaves no
       # trace anywhere in this repository. This one records every run, including
-      # the failures, with a link to its log. [skip ci] because the test suite
-      # has nothing to say about a timestamp.
+      # the failures, with a link to its log.
+      #
+      # It also carries the prospective prediction log, and that is the part of
+      # this step that is load-bearing rather than merely tidy. The log's whole
+      # claim is that a ranking existed in a public repository before the prices
+      # it is judged against did, and the commit this step pushes is what
+      # timestamps it. A refresh that ranked filings and did not push them has
+      # produced nothing. [skip ci] because the test suite has nothing to say
+      # about a timestamp -- and the next ordinary push runs the immutability
+      # guard over everything this one added.
       - name: Record the refresh
         if: always()
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Hold the log aside across the reset below. It is the only tracked
+          # file a refresh writes, so it is the one thing `--hard` can destroy,
+          # and a scored outcome lost here would be re-derived next week from
+          # vendor prices that have been re-adjusted since -- which is precisely
+          # the drift the log exists to make impossible. Copied rather than
+          # stashed: a stash pop can conflict, and this step runs `if: always()`
+          # on runs that have already failed once.
+          mkdir -p "${{ runner.temp }}/log"
+          cp predictions/*.json "${{ runner.temp }}/log/" 2>/dev/null || true
 
           # Move onto the current remote tip before writing anything. A run
           # takes a while and anything landing on main meanwhile would make this
@@ -206,11 +224,18 @@ jobs:
           # That is how the first version of this fix stayed green while doing
           # nothing, which is the exact failure this file exists to prevent.
           #
-          # --hard is safe here: every artifact a refresh produces is under the
-          # gitignored data/build and data/cache, so there is no tracked change
-          # to lose, and the receipt is written after the reset.
+          # --hard discards nothing else: every other artifact a refresh produces
+          # is under the gitignored data/build and data/cache, and the receipt is
+          # written after the reset.
           git fetch origin main --depth=1
           git reset --hard FETCH_HEAD
+
+          # Back on top of the new tip. Only the log's own JSON moves: a
+          # prediction file someone else pushed meanwhile, or an edit to the
+          # directory's README, belongs to the tip and is left as the tip has it
+          # rather than being reverted to this run's hour-old checkout.
+          mkdir -p predictions
+          cp "${{ runner.temp }}/log/"*.json predictions/ 2>/dev/null || true
 
           mkdir -p data
           cat > data/last-refresh.json <<JSON
@@ -220,7 +245,7 @@ jobs:
             "run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           }
           JSON
-          git add data/last-refresh.json
+          git add data/last-refresh.json predictions
           git diff --staged --quiet && exit 0
           git commit -m "Refresh: ${{ job.status }} [skip ci]"
 
