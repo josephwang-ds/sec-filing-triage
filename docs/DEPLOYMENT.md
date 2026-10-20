@@ -27,16 +27,24 @@ schedule on GitHub Actions
         +-- download only unseen accession documents
         +-- refresh configured SEC Company Facts fundamentals
         +-- refresh daily market histories
-        +-- rebuild 193 static company pages
+        +-- rebuild the static company pages, one per issuer
         +-- package public HTML only (no snapshot JSON/cache)
         +-- Vercel CLI deploys prebuilt output -> Vercel CDN/domain
         +-- save the cache, even if a step above failed
         +-- commit data/last-refresh.json
 ```
 
-The full local page directory is about 97 MB because it includes 58 MB of JSON
-build artifacts. The Vercel bundle publishes only the 195 HTML files, currently
-about 42.4 MB, which stays well under the 100 MB Hobby static CLI upload limit.
+The local page directory is larger than what ships, because it includes the JSON
+build artifacts; the Vercel bundle publishes only the HTML and the one function.
+Measured on the 2026-10-20 run: 194 issuers in the rebuilt universe, 12,032
+filings crawled, and a bundle of 196 HTML files at 56.3 MB -- under the 100 MB
+Hobby static CLI upload limit, with less headroom than the 42.4 MB this document
+recorded before, which is worth watching as the universe grows.
+
+The issuer count moves because `universe.csv` is screened live rather than
+pinned. It is not the 193 companies the README and the research page quote --
+those come from the frozen evidence package, which does not change when the site
+refreshes.
 
 The cache is what makes a nightly run cheap: `edgar.py` skips any accession
 document already on disk, so a warm cache turns a twelve-thousand-request crawl
