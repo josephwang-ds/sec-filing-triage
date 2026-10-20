@@ -14,14 +14,32 @@ name: Refresh
 # this workflow sets the environment it expects and calls it, rather than
 # restating the steps and letting the two drift.
 
-# On demand only. A weekday cron was the original shape, copied from the systemd
-# timer it replaced, and it is the wrong shape for this: the site is a portfolio
-# piece that wants to be current when someone is about to look at it, not a
-# service with readers at 07:35 every morning. Crawling 12,000 filings nightly
-# to publish a page nobody opened that day is rude to the SEC and buys nothing.
+# Weekly, plus on demand. A nightly cron was the first shape, inherited from the
+# systemd timer this replaced, and it was too much: crawling 12,000 filings to
+# publish a page nobody opened that day is rude to the SEC and buys nothing.
+# On demand alone was too little, for a reason that has nothing to do with
+# freshness -- GitHub disables scheduled workflows in a public repository after
+# 60 days without repository activity, so a repository whose only schedule was
+# the watchdog had the watchdog depending on someone happening to commit. A
+# weekly run commits its receipt, which keeps both workflows alive.
+#
+# Saturday 07:20 UTC: after Friday's close with hours to spare, so the run sees
+# the whole trading week and Friday's settled prices; before the Monday 12:15
+# UTC watchdog, so what it checks is at most two days old. Not on the hour,
+# because the top of the hour is GitHub's worst window for `schedule` -- runs
+# are delayed there and queued jobs can be dropped.
+#
+# One interaction worth knowing: an Actions cache is evicted after 7 days
+# without access, and a weekly cadence sits exactly on that boundary. A late
+# run can tip past it, and then the restore misses and this crawls from scratch
+# -- 45 minutes instead of a few. That is handled rather than prevented: the run
+# detects the miss and ingests. If the full crawls become frequent, a second
+# weekday run would keep the cache warm.
 #
 # Run it from the Actions tab, or:  gh workflow run refresh.yml
 on:
+  schedule:
+    - cron: "20 7 * * 6"
   workflow_dispatch:
     inputs:
       full_ingest:
@@ -186,4 +204,22 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/last-refresh.json
           git diff --staged --quiet || git commit -m "Refresh: ${{ job.status }} [skip ci]"
-          git push
+
+          # Rebase before pushing. The checkout is from whenever the run
+          # started, and a run takes the better part of an hour, so anything
+          # landing on main meanwhile makes this push a non-fast-forward. That
+          # is what happened on the run that first published the full site: the
+          # refresh and the deploy both succeeded, the receipt said success, and
+          # the run was still marked failed -- because the step whose whole job
+          # is to make outcomes visible could not push its own record.
+          #
+          # And a receipt that cannot land is not worth failing a good run over,
+          # so this warns instead. The warning is on the run summary; the
+          # refresh's own result is the conclusion.
+          git fetch origin main
+          git rebase origin/main || {
+            git rebase --abort || true
+            echo "::warning::could not rebase the refresh receipt onto main; not pushed"
+            exit 0
+          }
+          git push || echo "::warning::could not push the refresh receipt"

@@ -177,18 +177,29 @@ architecture should point the public domain anywhere else.
 
 ## Running it
 
-`refresh.yml` has no schedule. It runs when you run it, from the Actions tab or:
+`refresh.yml` runs weekly, on Saturday at 07:20 UTC, and whenever you run it:
 
 ```bash
 gh workflow run refresh.yml
 ```
 
-A weekday cron was the first shape, inherited from the systemd timer it
-replaced, and it was the wrong one. This site is a portfolio piece: it wants to
-be current when someone is about to look at it, not at 07:35 every morning.
-Crawling 12,000 filings nightly to publish a page nobody opened is rude to the
-SEC and buys nothing. `full_ingest` forces a crawl from scratch; leave it off
-and a warm cache makes the run incremental.
+Saturday morning UTC is after Friday's close with hours to spare, so a run sees
+the whole trading week and Friday's settled prices, and it lands before the
+Monday watchdog, so what the watchdog checks is at most two days old. The minute
+is off the hour because that is GitHub's worst window for `schedule`.
+
+A nightly cron was the first shape, inherited from the systemd timer this
+replaced, and it was too much: crawling 12,000 filings to publish a page nobody
+opened that day is rude to the SEC and buys nothing. On demand alone was too
+little, and not for a reason about freshness -- see the 60-day note below.
+`full_ingest` forces a crawl from scratch; leave it off and a warm cache makes
+the run incremental.
+
+One interaction to know about: an Actions cache is evicted after 7 days without
+access, and a weekly cadence sits exactly on that boundary, so a late run can
+miss and crawl from scratch -- 45 minutes rather than a few. The run detects the
+miss and ingests rather than failing. If that becomes frequent, a second weekday
+run would keep the cache warm.
 
 A `concurrency` group gives what the worker's file lock gave: a second run waits
 rather than fetching the same accessions twice and racing the same cache.
@@ -203,10 +214,17 @@ the newest is more than 30 days old. On demand means stale by choice, so this is
 not asking "is it current" but "has it rotted past the point a reader following
 the README link would notice".
 
-One limitation worth knowing: GitHub disables scheduled workflows in a public
-repository after 60 days with no repository activity. The refresh no longer
-commits on a schedule, so the watchdog's own survival now depends on this
-repository seeing commits.
+GitHub disables scheduled workflows in a public repository after 60 days with no
+repository activity, which is the real argument for the refresh having a
+schedule at all: its receipt commit is what resets that clock, for itself and
+for the watchdog. With the refresh on demand only, both schedules depended on
+someone happening to commit -- which, in a finished portfolio project, is
+exactly the assumption that does not hold.
+
+The receipt is pushed after a rebase onto main, because a run takes the better
+part of an hour and anything landing meanwhile makes the push a
+non-fast-forward. A receipt that still cannot land warns rather than failing the
+run: the refresh's own result is the conclusion, not the bookkeeping.
 
 ```bash
 gh run list --workflow refresh.yml
