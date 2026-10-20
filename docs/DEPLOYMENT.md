@@ -21,6 +21,7 @@ than restating the steps where the two can drift apart.
 schedule on GitHub Actions
         |
         +-- restore data/cache and data/build/universe.csv from the run before
+        +-- rebuild universe.csv if the cache did not carry one
         +-- cli doctor: fail in seconds on a rejected User-Agent
         +-- refresh mutable SEC submission heads
         +-- download only unseen accession documents

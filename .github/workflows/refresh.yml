@@ -104,18 +104,21 @@ jobs:
           # ever breaks `deploy --prebuilt`; nothing else depends on the version.
           npm install --global vercel
 
-          # Everything a real pull needs, checked in seconds. A rejected
-          # User-Agent discovered at minute fifty of a crawl wastes an hour and
-          # the SEC's patience; this is the same check `make doctor` runs.
-          PYTHONPATH=src python -m filing_triage.cli doctor
-
           # Self-healing on a cache miss: without the universe the refresh
-          # scripts have no issuer list to refresh.
+          # scripts have no issuer list to refresh. This comes before `doctor`
+          # because doctor checks that the universe file exists -- putting the
+          # check first made a cold start fail on the one condition the very
+          # next line repairs.
           if [ ! -f data/build/universe.csv ]; then
             echo "::notice::no universe.csv in the cache; rebuilding it"
             mkdir -p data/build
             PYTHONPATH=src python scripts/build_demo_universe.py --out data/build/universe.csv
           fi
+
+          # Everything a real pull needs, checked in seconds. A rejected
+          # User-Agent discovered at minute fifty of a crawl wastes an hour and
+          # the SEC's patience; this is the same check `make doctor` runs.
+          PYTHONPATH=src python -m filing_triage.cli doctor
 
           # A cache miss leaves nothing for an incremental refresh to be
           # incremental against, so the crawl has to happen whether or not it
