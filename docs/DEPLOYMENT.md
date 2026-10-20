@@ -129,8 +129,8 @@ Add these as sensitive Production variables on the linked Vercel project. Never 
 them in Git, in a runner environment, in generated HTML, or in browser JavaScript:
 
 ```dotenv
-OPENAI_API_KEY="replace-with-openai-key"
-COMPANY_LENS_OPENAI_MODEL="replace-with-a-currently-valid-openai-model"
+DEEPSEEK_API_KEY="replace-with-deepseek-key"
+DASHSCOPE_API_KEY="replace-with-qwen-key"
 COMPANY_LENS_ASK_ORIGIN="https://lens.josephjwang.com"
 COMPANY_LENS_ASK_DAILY_BUDGET="300"
 COMPANY_LENS_ASK_KV_REST_URL="replace-with-a-redis-rest-endpoint"
@@ -164,12 +164,21 @@ minute at the counter store must not become an unmetered spend window.
 `GET /api/ask` reports `daily_budget` and `shared_counters`, so the deployed
 configuration can be checked without a paid call.
 
-Use an explicit `COMPANY_LENS_OPENAI_MODEL`. Do not rely on the function's default
-model name. Environment-variable changes do not repair an already-running
-deployment; redeploy production after adding them.
+`index.js` also knows how to reach OpenAI, Anthropic and Gemini, and exposes
+none of them, because the keys are not in this project's environment. That is
+the deliberate configuration, not an omission: the endpoint is unauthenticated,
+and the cheapest adequate providers are the ones worth leaving reachable behind
+a public demo. Adding a key is all it takes to put a provider back.
 
-After deploy, `GET https://lens.josephjwang.com/api/ask` should list the configured
-OpenAI model. A bounded POST is a paid provider call and needs a separate check.
+Set an explicit model env var per provider rather than relying on the function's
+defaults -- a default model name goes stale and a stale one fails at request
+time. Environment-variable changes do not repair an already-running deployment;
+redeploy production after any change here, which `gh workflow run refresh.yml`
+does at the end of a refresh.
+
+After deploy, `GET https://lens.josephjwang.com/api/ask` lists exactly the
+providers whose keys are present. A bounded POST is a paid provider call and
+needs a separate check.
 
 Add the production domain under Vercel **Project -> Domains**, then create the DNS
 record Vercel shows. TLS is issued and renewed by Vercel. Nothing in this
