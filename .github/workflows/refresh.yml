@@ -68,14 +68,24 @@ jobs:
       - name: Restore the SEC and price cache
         uses: actions/cache/restore@v4
         with:
-          # universe.csv is in here because it lives under the gitignored
-          # data/build/ and every refresh script reads it. Cached rather than
-          # rebuilt each run so the page set stays stable: it is scraped from a
-          # live listing, and a universe that quietly changes membership
-          # overnight changes which 193 companies the site is about.
+          # Two kinds of thing, both under the gitignored data/build/.
+          #
+          # universe.csv is cached rather than rebuilt each run so the page set
+          # stays stable: it is scraped from a live listing, and a universe that
+          # quietly changes membership overnight changes which companies the
+          # site is about.
+          #
+          # The panels -- events.parquet, prices.parquet, membership.csv -- are
+          # what `cli ingest` merges the crawl into, and every refresh script
+          # downstream reads them rather than the raw cache. Leaving them out
+          # cost a run: the scheduled job restored a warm data/cache, found no
+          # panels, and died on `missing local event panel`. The generated HTML
+          # beside them is not cached, because it is rebuilt every run by design.
           path: |
             data/cache
-            data/build/universe.csv
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
           key: company-lens-cache-${{ github.run_id }}
           restore-keys: |
             company-lens-cache-
@@ -121,11 +131,19 @@ jobs:
           PYTHONPATH=src python -m filing_triage.cli doctor
 
           # A cache miss leaves nothing for an incremental refresh to be
-          # incremental against, so the crawl has to happen whether or not it
-          # was asked for. edgar.py skips documents already on disk, so this is
-          # a no-op against a warm cache and ~30-60 minutes against a cold one.
-          if [ "${{ inputs.full_ingest }}" = "true" ] || [ ! -d data/cache/edgar ]; then
-            echo "::notice::crawling from scratch"
+          # incremental against, so the ingest has to happen whether or not it
+          # was asked for. edgar.py skips documents already on disk, so against
+          # a warm cache this re-merges the panels in minutes; against a cold
+          # one it is the full ~45-minute crawl.
+          #
+          # Missing panels count as a miss even when data/cache is warm. That is
+          # the state the first scheduled run found itself in, and it failed
+          # rather than repairing itself.
+          if [ "${{ inputs.full_ingest }}" = "true" ] \
+            || [ ! -d data/cache/edgar ] \
+            || [ ! -f data/build/events.parquet ] \
+            || [ ! -f data/build/prices.parquet ]; then
+            echo "::notice::ingesting (cold cache, missing panels, or asked for)"
             PYTHONPATH=src python -m filing_triage.cli ingest
           fi
 
@@ -141,7 +159,9 @@ jobs:
         with:
           path: |
             data/cache
-            data/build/universe.csv
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
           key: company-lens-cache-${{ github.run_id }}
 
       # Two jobs in one commit. It is the audit trail the Vultr timer never had
