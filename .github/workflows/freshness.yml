@@ -28,11 +28,18 @@ jobs:
           MAX_AGE_DAYS: "6"
         run: |
           set -euo pipefail
+          # Every company page tags its freshness markers with
+          # data-freshness-date: one for the issuer's own latest filing, one for
+          # the day the SEC was last checked. The second is always the later of
+          # the two, so the maximum is the page's own answer to "when was this
+          # refreshed". Read from the attribute rather than the visible label,
+          # which is translated and has already been reworded once.
           collected="$(curl -sS -L --max-time 30 "$PAGE" \
-            | grep -oE 'collected [0-9]{4}-[0-9]{2}-[0-9]{2}' \
-            | head -1 | cut -d' ' -f2)"
+            | grep -oE 'data-freshness-date="[0-9]{4}-[0-9]{2}-[0-9]{2}"' \
+            | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+            | sort | tail -1)"
           if [ -z "$collected" ]; then
-            echo "::error::no collection date found on $PAGE -- the page shape changed, or the site is down"
+            echo "::error::no freshness date found on $PAGE -- the page shape changed, or the site is down"
             exit 1
           fi
           age=$(( ( $(date -u +%s) - $(date -u -d "$collected" +%s) ) / 86400 ))
