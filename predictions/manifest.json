@@ -1,0 +1,10 @@
+{
+  "files": {
+    "2026-10-20.json": {
+      "records": 3,
+      "sha256": "f64336aef9ecb672a09141df1da1ce99a3cdc2db516c730fdfdbc78c17ff132b",
+      "written_at": "2026-10-20T08:18:46.358136+00:00"
+    }
+  },
+  "schema_version": "1"
+}

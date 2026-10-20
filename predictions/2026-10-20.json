@@ -1,0 +1,107 @@
+{
+  "schema_version": "1",
+  "date": "2026-10-20",
+  "written_at": "2026-10-20T08:18:46.358136+00:00",
+  "predicts_session": "2026-10-20",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12019,
+    "last_session_in_panel": "2026-10-19",
+    "inputs": {
+      "events": {
+        "rows": 12032,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "280cd9d9aa6db13236d9bf0ac205359ec72a07fb6c3e3ab7aab57e3e86750116"
+      },
+      "prices": {
+        "rows": 2006904,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "838d475f868de93c7a296c04a16ae3df4378574be5190118429a2eb18768e65d",
+        "first_session": "1962-01-02",
+        "last_session": "2026-10-19"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.15",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.0.6",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.0",
+        "yfinance": "1.7.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0000066740-26-000303",
+      "cik": 66740,
+      "ticker": "MMM",
+      "issuer": "3M CO",
+      "acceptance_time": "2026-10-19T20:55:19-04:00",
+      "entry_session": "2026-10-20",
+      "rank": 1,
+      "score": 0.219503
+    },
+    {
+      "accession": "0001091667-26-000060",
+      "cik": 1091667,
+      "ticker": "CHTR",
+      "issuer": "CHARTER COMMUNICATIONS, INC. /MO/",
+      "acceptance_time": "2026-10-19T20:07:05-04:00",
+      "entry_session": "2026-10-20",
+      "rank": 2,
+      "score": 0.13759
+    },
+    {
+      "accession": "0001628280-26-066291",
+      "cik": 1613103,
+      "ticker": "MDT",
+      "issuer": "Medtronic plc",
+      "acceptance_time": "2026-10-19T20:23:27-04:00",
+      "entry_session": "2026-10-20",
+      "rank": 3,
+      "score": 0.1251
+    }
+  ]
+}
