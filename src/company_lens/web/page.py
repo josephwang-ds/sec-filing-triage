@@ -1486,6 +1486,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
             },
             "zh": {
                 "nav.earnings": "预计财报",
+                "nav.what": "项目介绍",
                 "nav.research": "审计方法",
                 "nav.find": "查找公司",
                 "nav.overview": "概览",
