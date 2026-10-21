@@ -44,7 +44,8 @@ def render(table: pd.DataFrame, as_of: pd.Timestamp, horizon: int) -> str:
                   f" &ndash; {(when + pd.Timedelta(days=3)):%b %-d}")
         rows.append(
             f"<tr class='{level}'>"
-            f"<td class='ticker'>{html.escape(row['ticker'])}</td>"
+            f"<td class='ticker'><a href='{html.escape(row['ticker'].lower())}.html'>"
+            f"{html.escape(row['ticker'])}</a></td>"
             f"<td class='window'>{window}</td>"
             f"<td class='num'>{int(row['days_until'])}</td>"
             f"<td class='date'>{row['last_report']:%Y-%m-%d}</td>"
@@ -58,12 +59,12 @@ def render(table: pd.DataFrame, as_of: pd.Timestamp, horizon: int) -> str:
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Expected earnings</title>
+<title>Reporting calendar · Company Lens</title>
 <style>
-:root{{--paper:#fcfcfb;--panel:#fff;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;
---rule:#e6e5e1;--accent:#2a78d6;--warn:#c8392f;--ok:#2f7a55;--amber:#a8781f}}
-@media(prefers-color-scheme:dark){{:root{{--paper:#1a1a19;--panel:#222221;--ink:#f7f7f4;
---ink2:#c3c2b7;--rule:#33322f;--accent:#5b9ceb;--warn:#e88079;--ok:#6bbd92;--amber:#d6a94a}}}}
+:root{{--paper:#f5f4ec;--panel:#fff;--ink:#183c35;--ink2:#526558;--muted:#657567;
+--rule:#d8ddd3;--accent:#426b50;--warn:#c8392f;--ok:#2f7a55;--amber:#a8781f}}
+@media(prefers-color-scheme:dark){{:root{{--paper:#101e19;--panel:#172c23;--ink:#f7f7f4;
+--ink2:#c3c2b7;--rule:#33322f;--accent:#b4cd8c;--warn:#e88079;--ok:#6bbd92;--amber:#d6a94a}}}}
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--paper);color:var(--ink);
 font:400 15px/1.6 -apple-system,"Segoe UI",sans-serif}}
@@ -91,7 +92,33 @@ td.empty{{color:var(--muted);text-align:center;padding:32px}}
 footer{{margin-top:32px;padding-top:16px;border-top:1px solid var(--rule);
 color:var(--muted);font-size:12px}}
 @media(max-width:560px){{td.date,th.date{{display:none}}}}
+.lens-nav{{display:flex;
+flex-wrap:wrap;
+gap:12px 22px;
+align-items:center;
+padding:0 0 22px;
+margin-bottom:32px;
+border-bottom:1px solid var(--line,var(--rule,#d8ddd3))}}
+.lens-nav a{{color:inherit;
+text-decoration:none;
+font-size:12px;
+font-weight:700}}
+.lens-nav a:first-child{{margin-right:auto}}
+.lens-nav a:hover{{text-decoration:underline}}
+.lens-nav a:focus-visible{{outline:2px solid currentColor;
+outline-offset:4px}}td.ticker a{{color:var(--accent);
+text-decoration:none}}
+.table-scroll{{overflow-x:auto}}h1{{font:500 clamp(30px,5vw,48px)/1.1 Georgia,serif}}
+.wrap{{max-width:1040px}}
+.banner{{border-radius:8px}}
 </style></head><body><div class="wrap">
+<nav class="lens-nav" aria-label="Site navigation">
+<a href="index.html">Company Lens</a>
+<a href="overview.html">Overview</a>
+<a href="research.html">Research</a>
+<a href="earnings.html">Reporting calendar</a>
+<a href="https://www.josephjwang.com/">Joseph Wang ↗</a>
+</nav>
 <h1>Expected earnings</h1>
 <p class="sub">{len(upcoming)} of {len(table)} issuers · next {horizon} days ·
 as of {as_of:%Y-%m-%d}</p>
@@ -107,10 +134,10 @@ universe: median miss {ACCURACY['median_error_days']} day,
 {ACCURACY['within_7_days']:.0%} within a week. The window shown is ±3 days.</span>
 </div>
 
-<table><thead><tr>
+<div class="table-scroll"><table><thead><tr>
 <th>Issuer</th><th>Expected window</th><th>Days</th>
 <th class="date">Last report</th><th>Confidence</th>
-</tr></thead><tbody>{body}</tbody></table>
+</tr></thead><tbody>{body}</tbody></table></div>
 
 <footer>Generated {datetime.now(UTC):%Y-%m-%d %H:%M} UTC from Item 2.02 filings in
 the local EDGAR build. Green: annual anchor with eight or more prior reports.

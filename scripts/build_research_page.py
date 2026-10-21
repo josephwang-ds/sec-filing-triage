@@ -7,7 +7,7 @@ that numbers drift when nothing is watching. If the evidence is re-exported, thi
 page changes with it or fails loudly because a file it needs is missing.
 
 The visual language is the Company Lens site's own -- warm paper, Georgia
-headlines, the same blue -- because this is a section of that site rather than a
+headlines, forest-green accents -- because this is a section of that site rather than a
 research paper bolted onto it.
 """
 
@@ -1359,8 +1359,8 @@ regression.</p>"""
 # --------------------------------------------------------------------------- #
 
 STYLE = """
-:root{--ink:#102537;--muted:#667681;--blue:#2864dc;--paper:#f3f2ed;
---panel:#fff;--line:#d7dcdd;--alarm:#b03a2e;--soft:#eef3fb}
+:root{--ink:#183c35;--muted:#657567;--blue:#426b50;--paper:#f5f4ec;
+--panel:#fff;--line:#d8ddd3;--alarm:#b03a2e;--soft:#eef3fb}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);
 font:400 16px/1.65 Inter,-apple-system,"Segoe UI",sans-serif}
@@ -1453,8 +1453,8 @@ a{color:var(--blue)}
 .back{display:inline-block;margin-bottom:26px;font-size:13px;text-decoration:none}
 @media(max-width:860px){.sec-body{grid-template-columns:1fr;gap:18px}
 .method{position:static;order:-1}.brief li{grid-template-columns:1fr;gap:4px}}
-@media(prefers-color-scheme:dark){:root{--paper:#12171a;--panel:#1b2226;
---ink:#e9eef0;--muted:#95a3ab;--line:#2b353a;--blue:#6ba2f5;--alarm:#e08376;
+@media(prefers-color-scheme:dark){:root{--paper:#101e19;--panel:#172c23;
+--ink:#e9eef0;--muted:#95a3ab;--line:#2b353a;--blue:#b4cd8c;--alarm:#e08376;
 --soft:#1e2833}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 """
@@ -1788,8 +1788,29 @@ and a sentiment model old enough to avoid that was tried and measured.
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>How the ranking was audited &middot; Company Lens</title>
-<style>{STYLE}</style></head><body><div class="wrap">
+<style>{STYLE}.lens-nav{{display:flex;
+flex-wrap:wrap;
+gap:12px 22px;
+align-items:center;
+padding:0 0 22px;
+margin-bottom:32px;
+border-bottom:1px solid var(--line,var(--rule,#d8ddd3))}}
+.lens-nav a{{color:inherit;
+text-decoration:none;
+font-size:12px;
+font-weight:700}}
+.lens-nav a:first-child{{margin-right:auto}}
+.lens-nav a:hover{{text-decoration:underline}}
+.lens-nav a:focus-visible{{outline:2px solid currentColor;
+outline-offset:4px}}</style></head><body><div class="wrap">
 
+<nav class="lens-nav" aria-label="Site navigation">
+<a href="index.html">Company Lens</a>
+<a href="overview.html">Overview</a>
+<a href="research.html">Research</a>
+<a href="earnings.html">Reporting calendar</a>
+<a href="https://www.josephjwang.com/">Joseph Wang ↗</a>
+</nav>
 <header>
 <a class="back" href="index.html">&larr; Company Lens</a>
 <p class="eyebrow">How the ranking was audited</p>
