@@ -10,9 +10,16 @@ name: Freshness
 # and compares one date, which is what a hosted runner is actually good at, and
 # it stays useful whether the refresh runs here, on a VPS, or by hand.
 
-# Weekly, now that the refresh is on demand. A daily check against a six-day
-# limit made sense against a weekday cron; against a site refreshed when its
-# author decides to, it would just send mail about a staleness that was chosen.
+# Weekly, one day after the weekly refresh. A daily check against a six-day limit
+# made sense when the refresh ran every weekday; against a weekly one it would
+# mostly report a staleness that is simply the schedule.
+#
+# The limit stays generous on purpose. GitHub delays `schedule` events and drops
+# queued ones -- this repository has already seen a cron fire 2h27m late -- so a
+# limit tight enough to notice one missed Saturday would mostly report on the
+# scheduler rather than on the site. Thirty days means four consecutive weekly
+# runs vanished, which is rot rather than lateness, and is still well short of
+# the 53 days the previous arrangement managed before anyone noticed.
 on:
   schedule:
     - cron: "15 12 * * 1"
