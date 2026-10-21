@@ -108,6 +108,9 @@ class TestTheBoundariesSurviveTheSimplification:
         the other."""
         assert "if you somehow knew in advance" in prose
         assert "cannot find what is not there" in prose
+        assert "average share of selected filings" in prose
+        assert "not the chance of finding at least one material filing" in prose
+        assert "of the time, the top five contained" not in prose
 
     def test_the_failures_are_reported_not_only_the_successes(self, prose):
         assert "did not work" in prose
