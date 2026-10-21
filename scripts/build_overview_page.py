@@ -166,7 +166,7 @@ person can check for themselves.</p>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>What this project is &middot; Company Lens</title>
 <style>
-:root{{--ink:#14202b;--muted:#5f6f7a;--blue:#2258c9;--paper:#f5f4ef;--panel:#fff;
+:root{{--ink:#183c35;--muted:#657567;--blue:#426b50;--paper:#f5f4ec;--panel:#fff;
 --line:#dde1e2;--warm:#f0ece2;--alarm:#a8382c}}
 *{{box-sizing:border-box}}
 body{{margin:0;background:var(--paper);color:var(--ink);
@@ -184,7 +184,7 @@ h3{{margin:0 0 6px;font:500 19px/1.3 Georgia,serif}}
 p{{max-width:36em}}
 section{{padding:60px 0;border-top:1px solid var(--line)}}
 .band{{background:var(--panel)}}
-.dark{{background:#14202b;color:#eef2f4;border-top:0}}
+.dark{{background:#183c35;color:#f5f4ec;border-top:0}}
 .dark h2{{color:#fff}}
 .dark p{{color:#c2ceD5}}
 .dark strong{{color:#fff}}
@@ -197,10 +197,10 @@ gap:1px;background:var(--line);border:1px solid var(--line);margin:34px 0 0}}
 line-height:1.5}}
 .swing{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
 gap:20px;margin:34px 0 0;max-width:520px}}
-.swing div{{padding:20px;background:#1d2b38;border-radius:4px}}
+.swing div{{padding:20px;background:#234a40;border-radius:4px}}
 .swing b{{display:block;font:500 40px/1 Georgia,serif}}
 .swing .bad b{{color:#e8897c}}
-.swing .good b{{color:#7fb3ff}}
+.swing .good b{{color:#c6df9d}}
 .swing small{{display:block;margin-top:6px;font-size:12.5px;color:#a8b8c4}}
 .swing .arrow{{color:#7d8f9c;font-size:24px}}
 .findings{{list-style:none;margin:34px 0 0;padding:0}}
@@ -214,14 +214,36 @@ border-left:3px solid var(--blue);font-size:16px}}
 border-radius:4px;text-decoration:none;font-weight:650;font-size:15px}}
 .cta a.primary{{background:var(--blue);border-color:var(--blue);color:#fff}}
 footer{{padding:40px 0 70px;color:var(--muted);font-size:13.5px}}
-@media(prefers-color-scheme:dark){{:root{{--paper:#11171b;--panel:#1a2126;
---ink:#e9eef0;--muted:#93a1a9;--line:#2a343a;--blue:#6ea4f7;--warm:#1f2a30;
+@media(prefers-color-scheme:dark){{:root{{--paper:#101e19;--panel:#172c23;
+--ink:#e9eef0;--muted:#93a1a9;--line:#2a343a;--blue:#b4cd8c;--warm:#1f2a30;
 --alarm:#e0857a}}}}
 @media(max-width:560px){{.swing{{grid-template-columns:1fr;gap:12px}}
 .swing .arrow{{transform:rotate(90deg)}}}}
+.lens-nav{{display:flex;
+flex-wrap:wrap;
+gap:12px 22px;
+align-items:center;
+padding:0 0 22px;
+margin-bottom:32px;
+border-bottom:1px solid var(--line,var(--rule,#d8ddd3))}}
+.lens-nav a{{color:inherit;
+text-decoration:none;
+font-size:12px;
+font-weight:700}}
+.lens-nav a:first-child{{margin-right:auto}}
+.lens-nav a:hover{{text-decoration:underline}}
+.lens-nav a:focus-visible{{outline:2px solid currentColor;
+outline-offset:4px}}
 </style></head><body>
 
 <header><div class="wrap">
+<nav class="lens-nav" aria-label="Site navigation">
+<a href="index.html">Company Lens</a>
+<a href="overview.html">Overview</a>
+<a href="research.html">Research</a>
+<a href="earnings.html">Reporting calendar</a>
+<a href="https://www.josephjwang.com/">Joseph Wang ↗</a>
+</nav>
 <a class="back" href="index.html">&larr; Company Lens</a>
 <h1>A system that reads the day&rsquo;s filings &mdash; and a measurement of how
 easy it is to fool yourself building one</h1>
@@ -235,14 +257,16 @@ analyst has time to read about five before the opening bell.</p>
 <p>It ranks the morning&rsquo;s filings so the five someone reads are the five
 worth reading. On {filings:,} real filings from {issuers or 193} companies:</p>
 <div class="numbers">
-<div><b>{_pct(m['daily_precision_at_5'])}</b><span>of the time, the top five
-contained something that moved the stock</span></div>
-<div><b>{_pct(m['daily_random_precision_at_5'])}</b><span>if you read five at
-random</span><small>the honest comparison</small></div>
+<div><b>{_pct(m['daily_precision_at_5'])}</b><span>of the top five filings were material,
+on an average eligible trading day</span></div>
+<div><b>{_pct(m['daily_random_precision_at_5'])}</b><span>of five randomly selected filings
+were material, on an average eligible trading day</span><small>the honest comparison</small></div>
 <div><b>{_pct(m['daily_oracle_precision_at_5'])}</b><span>if you somehow knew in
 advance</span><small>most days do not contain five important filings</small></div>
 </div>
-<p style="margin-top:26px">So it captures about
+<p style="margin-top:26px">This is the average share of selected filings, not the chance of
+finding at least
+one material filing. So it captures about
 <strong>{_pct(m['daily_span_captured_at_5'])} of everything there is to
 capture</strong>. That ceiling is the honest way to read the first number: a
 system cannot find what is not there.</p>
