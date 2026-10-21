@@ -1,0 +1,147 @@
+{
+  "schema_version": "1",
+  "date": "2026-10-21",
+  "written_at": "2026-10-21T14:17:06.487825+00:00",
+  "predicts_session": "2026-10-22",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12032,
+    "last_session_in_panel": "2026-10-21",
+    "inputs": {
+      "events": {
+        "rows": 12058,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "66f0d86750a69829c73b119f86cc3d165ccf8b2c14f6d03a4f3943a7e596de0e"
+      },
+      "prices": {
+        "rows": 2007294,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "fc11acbde5b8e0d1f31255dbf076b2bbd6d1227505f48c8259ff2e75249558be",
+        "first_session": "1962-01-02",
+        "last_session": "2026-10-21"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.15",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.0.6",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.0",
+        "yfinance": "1.7.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0001104659-26-117587",
+      "cik": 1800,
+      "ticker": "ABT",
+      "issuer": "ABBOTT LABORATORIES",
+      "acceptance_time": "2026-10-21T13:19:51-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 1,
+      "score": 0.173996
+    },
+    {
+      "accession": "0000097745-26-000173",
+      "cik": 97745,
+      "ticker": "TMO",
+      "issuer": "THERMO FISHER SCIENTIFIC INC.",
+      "acceptance_time": "2026-10-21T10:03:16-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 2,
+      "score": 0.151327
+    },
+    {
+      "accession": "0001156039-26-000068",
+      "cik": 1156039,
+      "ticker": "ELV",
+      "issuer": "Elevance Health, Inc.",
+      "acceptance_time": "2026-10-21T10:01:36-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 3,
+      "score": 0.138062
+    },
+    {
+      "accession": "0001628280-26-066601",
+      "cik": 1800,
+      "ticker": "ABT",
+      "issuer": "ABBOTT LABORATORIES",
+      "acceptance_time": "2026-10-21T11:36:13-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 4,
+      "score": 0.124526
+    },
+    {
+      "accession": "0001628280-26-066596",
+      "cik": 1413329,
+      "ticker": "PM",
+      "issuer": "Philip Morris International Inc.",
+      "acceptance_time": "2026-10-21T11:04:41-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 5,
+      "score": 0.121167
+    },
+    {
+      "accession": "0000732717-26-000370",
+      "cik": 732717,
+      "ticker": "T",
+      "issuer": "AT&T INC.",
+      "acceptance_time": "2026-10-21T10:32:08-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 6,
+      "score": 0.112693
+    },
+    {
+      "accession": "0000753308-26-000077",
+      "cik": 753308,
+      "ticker": "NEE",
+      "issuer": "NEXTERA ENERGY INC",
+      "acceptance_time": "2026-10-21T11:40:10-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 7,
+      "score": 0.095901
+    }
+  ]
+}
