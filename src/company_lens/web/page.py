@@ -207,7 +207,7 @@ def _document(snapshot: CompanySnapshot) -> str:
     # Stated in the footer rather than as a banner over the page. It is true and
     # it belongs on the page; it is not the first thing a reader needs.
     universe = snapshot.provenance.get("universe") or {}
-    universe_note = ("<span>Universe: a convenience sample of current large caps, "
+    universe_note = ("<span data-i18n=\"footer.universe\">Universe: a convenience sample of current large caps, "
                      "not a point-in-time index</span>"
                      if universe.get("survivorship_controlled") is False else "")
 
@@ -346,8 +346,8 @@ def _document(snapshot: CompanySnapshot) -> str:
 
     <footer><div><strong>Company Lens</strong><span data-i18n="footer.tagline">Understand the evidence before forming a view.</span>
     <a href="index.html#method" data-i18n="footer.how">How to read this lens</a></div>
-<div class="footer-meta">{universe_note}<span>Snapshot v{html.escape(snapshot.schema_version)}</span>
-<span>Market through {html.escape(snapshot.as_of)}</span><span>SEC + adjusted daily prices</span></div></footer>
+<div class="footer-meta">{universe_note}<span><span data-i18n="footer.snapshot">Snapshot</span> v{html.escape(snapshot.schema_version)}</span>
+<span><span data-i18n="footer.market">Market through</span> {html.escape(snapshot.as_of)}</span><span data-i18n="footer.sources">SEC + adjusted daily prices</span></div></footer>
 
 <script type="application/json" id="period-data">{payload}</script>
 <script>{_script(default_period, snapshot.ticker, snapshot.benchmark)}</script>
@@ -377,6 +377,33 @@ def _nav_links(snapshot: CompanySnapshot) -> str:
         f'<a href="{href}"><span>{i:02d}</span>'
         f'<b data-i18n="{key}">{label}</b></a>'
         for i, (href, key, label) in enumerate(entries, start=1))
+
+
+def _localized_reason(reason: str) -> str:
+    """Translate generated model explanations without changing their evidence."""
+    exact = {
+        "evidence or freshness checks did not pass": "证据或时效性检查未通过",
+        "too few earlier filings from this issuer to say what is normal": "该公司的历史披露不足，尚无法判断常态",
+        "elevated model probability without a confirming signal": "模型概率偏高，但缺少可核验的佐证信号",
+        "consistent with this issuer's usual disclosures": "与该公司以往的常规披露一致",
+        "the most unusual language in this issuer's filing history": "措辞异常度为该公司披露历史最高",
+        "the heaviest pre-filing volume in its own history": "披露前成交量为该公司历史最高",
+        "the longest filing this issuer has made": "文件长度为该公司披露历史最高",
+    }
+    translated = exact.get(reason)
+    if translated is None:
+        patterns = (
+            (r"more unusual language than ([0-9]+%) of this issuer's earlier filings", "措辞比该公司此前 {} 的披露更异常"),
+            (r"pre-filing volume above ([0-9]+%) of its own history", "披露前成交量高于该公司历史中 {} 的观测"),
+            (r"longer than ([0-9]+%) of its own filings", "文件长度超过该公司此前 {} 的披露"),
+        )
+        for pattern, template in patterns:
+            match = re.fullmatch(pattern, reason)
+            if match:
+                translated = template.format(match.group(1))
+                break
+    return (f'<span data-i18n-en="{html.escape(reason)}" '
+            f'data-i18n-zh="{html.escape(translated or reason)}">{html.escape(reason)}</span>')
 
 
 def _disclosure_signal(snapshot: CompanySnapshot) -> str:
@@ -422,7 +449,7 @@ def _disclosure_signal(snapshot: CompanySnapshot) -> str:
             f'</div>'
         )
 
-    reasons = "".join(f"<li>{html.escape(str(reason))}</li>"
+    reasons = "".join(f"<li>{_localized_reason(str(reason))}</li>"
                       for reason in signal.get("reasons", []))
     points = json.dumps(signal.get("points", []))
     model = signal.get("model", {})
@@ -450,7 +477,7 @@ def _disclosure_signal(snapshot: CompanySnapshot) -> str:
       </div>
       <figure class="signal-chart">
         <svg viewBox="0 0 320 210" role="img"
-             aria-label="Each earlier filing from this issuer, plotted by how unusual its language was against how large its reaction turned out to be.">
+             data-aria-zh="该公司历次披露的措辞异常度与实际市场反应幅度对比" aria-label="Each earlier filing from this issuer, plotted by how unusual its language was against how large its reaction turned out to be.">
           <g id="signal-plot"></g>
         </svg>
         <figcaption>
@@ -459,7 +486,8 @@ def _disclosure_signal(snapshot: CompanySnapshot) -> str:
         </figcaption>
       </figure>
     </div>
-    <p class="signal-footer">{footer}</p>
+    <p class="signal-footer" data-i18n-en="{footer}"
+    data-i18n-zh="{html.escape(str(model.get('estimator', 'model')))} · 校准方法 {html.escape(str(model.get('calibration', 'n/a')))} · 评估截至 {html.escape(str(model.get('evaluated_through', 'n/a')))}">{footer}</p>
     <script type="application/json" id="signal-points">{points}</script>
     </section>"""
 
@@ -506,16 +534,22 @@ def _volatility_forecast(snapshot: CompanySnapshot) -> str:
     forecaster = names.get(str(forecast.get("forecaster", "")),
                            str(forecast.get("forecaster", "")))
 
+    forecaster_zh = {"har": "历史波动率回归", "climatology": "该公司自身历史",
+                     "random_walk": "沿用当前波动率", "chronos": "Chronos-2"}.get(
+                         str(forecast.get("forecaster", "")), forecaster)
+    footnote_zh = (f"样本外有 {float(coverage):.0%} 的结果落在 80% 区间内"
+                   if coverage is not None else "")
+
     return f"""<section class="vol-section" id="volatility">
     <div class="section-heading"><div>
-    <p class="eyebrow" data-i18n="vol.eyebrow">THE NEXT {int(forecast.get('horizon_sessions', 20))} SESSIONS</p>
+    <p class="eyebrow" data-i18n="vol.eyebrow" data-i18n-count="{int(forecast.get('horizon_sessions', 20))}">THE NEXT {int(forecast.get('horizon_sessions', 20))} SESSIONS</p>
     <h2 data-i18n="vol.title">How wide a range to expect</h2></div>
     <span class="signal-badge {tone}" data-i18n="vol.state.{state.replace(' ', '_')}">{html.escape(label)}</span></div>
     <p class="section-intro" data-i18n="vol.intro">How much this stock is expected to
     move over the next month, as a range rather than a number. It says nothing about
     which way &mdash; a wide range is as consistent with good news as with bad.</p>
     <div class="vol-bar" role="img"
-         aria-label="Expected annualised volatility between {low:.0%} and {high:.0%}, most likely {median:.0%}, against this issuer's usual {usual:.0%}.">
+         data-aria-zh="预期年化波动率区间为 {low:.0%} 至 {high:.0%}，最可能为 {median:.0%}，该公司常态为 {usual:.0%}。" aria-label="Expected annualised volatility between {low:.0%} and {high:.0%}, most likely {median:.0%}, against this issuer's usual {usual:.0%}.">
       <div class="vol-track">
         <div class="vol-band" style="left:{at(low):.1f}%;width:{at(high) - at(low):.1f}%"></div>
         <div class="vol-median" style="left:{at(median):.1f}%"></div>
@@ -528,7 +562,8 @@ def _volatility_forecast(snapshot: CompanySnapshot) -> str:
       <div><b>{low:.0%}&ndash;{high:.0%}</b><span data-i18n="vol.band">80% of the time, in this range</span></div>
       <div><b>{usual:.0%}</b><span data-i18n="vol.usual">this issuer&rsquo;s usual level</span></div>
     </div>
-    <p class="signal-footer">{html.escape(forecaster)} &middot;
+    <p class="signal-footer" data-i18n-en="{html.escape(forecaster)} · as of {html.escape(str(forecast.get('as_of', '')))} · {html.escape(footnote)}"
+    data-i18n-zh="{html.escape(forecaster_zh)} · 截至 {html.escape(str(forecast.get('as_of', '')))} · {html.escape(footnote_zh)}">{html.escape(forecaster)} &middot;
     as of {html.escape(str(forecast.get('as_of', '')))} &middot; {footnote}</p>
     </section>"""
 
@@ -677,15 +712,15 @@ def _profile_meta(profile: dict[str, Any]) -> str:
     if source_url and source_label:
         source = (
             f'<a href="{html.escape(str(source_url))}" target="_blank" rel="noreferrer">'
-            f'{html.escape(str(source_label))} ↗</a>'
+            f'<span data-i18n-en="{html.escape(str(source_label))} ↗" data-i18n-zh="SEC EDGAR 公司记录 ↗">{html.escape(str(source_label))} ↗</span></a>'
         )
     cik = profile.get("cik")
     cik_label = f"CIK {html.escape(str(cik))}" if cik else "CIK unavailable"
     return (
         '<div class="profile-meta">'
         f"<span>{cik_label}</span>{source}"
-        f"<span>Prices {price_start}—{price_end}</span>"
-        f"<span>{filing_count} recent filings in snapshot</span>"
+        f'<span><span data-i18n="profile.prices">Prices</span> {price_start}—{price_end}</span>'
+        f'<span data-i18n="profile.filings" data-i18n-count="{filing_count}">{filing_count} recent filings in snapshot</span>'
         "</div>"
     )
 
@@ -705,17 +740,17 @@ def _brief(snapshot: CompanySnapshot) -> str:
             else "公司更新"
         )
         filing_title_attrs = (
-            f' data-i18n="filing.item_title" data-i18n-en="{html.escape(filing_title)}" '
+            f' data-i18n="item.{html.escape(latest.items[0]["code"]) if latest.items else "unknown"}" data-i18n-en="{html.escape(filing_title)}" '
             f'data-i18n-zh="{html.escape(str(filing_title_zh))}"'
         )
         filing_meta = (
             f'<span>{html.escape(latest.form)}</span>'
-            f'<span>{html.escape(_pretty_date(latest.accepted_at))}</span>'
+            f'<span data-local-date="{html.escape(latest.accepted_at)}">{html.escape(_pretty_date(latest.accepted_at))}</span>'
         )
         if latest.reaction:
             filing_meta += (
                 f'<span>{_signed_percent(latest.reaction.benchmark_adjusted_move)} '
-                f'vs {html.escape(snapshot.benchmark)}</span>'
+                f'<span data-i18n="reaction.versus">vs</span> {html.escape(snapshot.benchmark)}</span>'
             )
         source_link = (
             f'<a href="{html.escape(latest.source_url)}" target="_blank" '
@@ -783,7 +818,7 @@ def _filing_card(filing: FilingBrief, index: int, benchmark: str) -> str:
     reaction = (
         '<span data-i18n="filing.reaction_not_measurable">Reaction not yet measurable</span>'
         if filing.reaction is None
-        else f"{_signed_percent(filing.reaction.benchmark_adjusted_move)} vs {benchmark}"
+        else f'{_signed_percent(filing.reaction.benchmark_adjusted_move)} <span data-i18n="reaction.versus">vs</span> {html.escape(benchmark)}'
     )
     entities = "".join(_entity_chip(entity) for entity in filing.entities)
     if not entities:
@@ -825,15 +860,15 @@ def _filing_card(filing: FilingBrief, index: int, benchmark: str) -> str:
       <header class="filing-lead-header"><span class="filing-form">{html.escape(filing.form)}</span>
       <div><p class="eyebrow" data-i18n="filing.latest">Latest disclosure</p>
       <h3>{localized_title}</h3>
-      <small><span data-i18n="filing.accepted">Accepted</span> {accepted}</small></div>
+      <small><span data-i18n="filing.accepted">Accepted</span> <span data-local-date="{html.escape(filing.accepted_at)}">{accepted}</span></small></div>
       <a href="{html.escape(filing.source_url)}" target="_blank" rel="noreferrer"
       data-i18n="filing.open_sec">Open SEC filing ↗</a></header>
       <div class="filing-body">{body}</div></article>"""
     return f"""<details class="filing-card">
       <summary><div><span class="filing-form">{html.escape(filing.form)}</span>
       <strong>{localized_title}</strong>
-      <small><span data-i18n="filing.accepted">Accepted</span> {accepted}</small></div>
-      <div class="filing-summary-meta"><span>{html.escape(reaction)}</span>
+      <small><span data-i18n="filing.accepted">Accepted</span> <span data-local-date="{html.escape(filing.accepted_at)}">{accepted}</span></small></div>
+      <div class="filing-summary-meta"><span>{reaction}</span>
       <span data-i18n="filing.view_evidence">View evidence</span><i>⌄</i></div></summary>
       <div class="filing-body">{body}</div>
       </details>"""
@@ -919,13 +954,13 @@ def _reaction_block(filing: FilingBrief, benchmark: str) -> str:
     session = datetime.fromisoformat(reaction.session).strftime("%b %d, %Y")
     return f"""<section class="reaction-panel" aria-label="Observed filing market reaction">
     <div class="reaction-heading"><div><span data-i18n="reaction.title">What happened next</span>
-    <strong>{html.escape(session)} · first eligible session</strong></div>
+    <strong><span data-local-date="{html.escape(reaction.session)}">{html.escape(session)}</span> · <span data-i18n="reaction.first_session">first eligible session</span></strong></div>
     <small data-i18n="reaction.observed">Observed, not attributed</small></div>
     <div class="reaction-grid">
     <div><span data-i18n="reaction.company_move">Company move</span><strong>{html.escape(asset_move)}</strong>
     <small data-i18n="reaction.open_close">open to close</small></div>
     <div><span data-i18n="reaction.after_benchmark">After subtracting {html.escape(benchmark)}</span><strong>{html.escape(relative_move)}</strong>
-    <small>{html.escape(asset_move)} less {html.escape(benchmark_move)}</small></div>
+    <small>{html.escape(asset_move)} <span data-i18n="reaction.less">less</span> {html.escape(benchmark_move)}</small></div>
     <div><span data-i18n="reaction.compared">Compared with past filings</span><strong>{history_value}</strong>
     <small>{history_note}</small></div></div>
     <p data-i18n="reaction.boundary">This is the first session whose opening followed SEC acceptance. It shows what
@@ -962,7 +997,7 @@ def _comparison_block(filing: FilingBrief) -> str:
         )
     return f"""<section class="comparison-panel" aria-label="Prior comparable filing changes">
     <div class="comparison-heading"><div><span data-i18n="comparison.title">What changed vs the last similar filing</span>
-    <strong>{html.escape(_pretty_date(comparison.prior_accepted_at))}</strong></div>
+    <strong data-local-date="{html.escape(comparison.prior_accepted_at)}">{html.escape(_pretty_date(comparison.prior_accepted_at))}</strong></div>
     <a href="{html.escape(comparison.prior_source_url)}" target="_blank" rel="noreferrer">
     <span data-i18n="comparison.prior">Prior filing ↗</span></a></div><div class="change-counts">{count_chips}</div>
     <div class="change-list">{changes}</div></section>"""
@@ -1096,6 +1131,18 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
     translations = json.dumps(
         {
             "en": {
+                "profile.prices": "Prices",
+                "profile.filings": "{count} recent filings in snapshot",
+
+                "reaction.first_session": "first eligible session",
+                "reaction.less": "less",
+                "reaction.versus": "vs",
+                "footer.universe": "Universe: a convenience sample of current large caps, not a point-in-time index",
+                "footer.snapshot": "Snapshot",
+                "footer.market": "Market through",
+                "footer.sources": "SEC + adjusted daily prices",
+                "ask.original_language": "Answer text stays in its original language. Ask again to generate an answer in the selected language.",
+
                 "nav.earnings": "Expected earnings",
                 "nav.what": "What this is",
                 "nav.research": "How this is audited",
@@ -1248,7 +1295,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "signal.state.withheld": "Withheld",
                 "nav.signal": "This filing",
                 "nav.volatility": "Expected range",
-                "vol.eyebrow": "THE NEXT 20 SESSIONS",
+                "vol.eyebrow": "THE NEXT {count} SESSIONS",
                 "vol.title": "How wide a range to expect",
                 "vol.intro": ("How much this stock is expected to move over the next "
                     "month, as a range rather than a number. It says nothing about "
@@ -1485,6 +1532,18 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.limitations": "What this answer cannot establish",
             },
             "zh": {
+                "profile.prices": "行情区间",
+                "profile.filings": "快照包含 {count} 份近期披露",
+
+                "reaction.first_session": "首个符合条件的交易日",
+                "reaction.less": "减去",
+                "reaction.versus": "相对",
+                "footer.universe": "公司范围：当前大型公司的便利样本，并非历史时点的指数成分",
+                "footer.snapshot": "快照版本",
+                "footer.market": "行情截至",
+                "footer.sources": "SEC 披露 + 复权日线行情",
+                "ask.original_language": "回答正文保留生成时的语言。如需中文回答，请选择中文后重新提问。",
+
                 "nav.earnings": "预计财报",
                 "nav.what": "项目介绍",
                 "nav.research": "审计方法",
@@ -1617,7 +1676,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "signal.state.withheld": "已扣留",
                 "nav.signal": "本次披露",
                 "nav.volatility": "预计区间",
-                "vol.eyebrow": "未来 20 个交易日",
+                "vol.eyebrow": "未来 {count} 个交易日",
                 "vol.title": "预计波动区间有多宽",
                 "vol.intro": ("未来一个月这只股票预计会有多大幅度的波动，给出的是一个区间"
                     "而不是一个数字。它不说明方向——区间宽既可能是好消息，也可能是坏消息。"),
@@ -1831,10 +1890,10 @@ function storedLanguage() {{
 function applyLanguage(language, persist=true) {{
   uiLanguage = language === 'zh' ? 'zh' : 'en';
   document.documentElement.lang = uiLanguage === 'zh' ? 'zh-CN' : 'en';
-  document.querySelectorAll('[data-i18n]').forEach(element => {{
+  document.querySelectorAll('[data-i18n], [data-i18n-en]').forEach(element => {{
     if (element.dataset.i18nEn || element.dataset.i18nZh) {{
       element.textContent = uiLanguage === 'zh'
-        ? (element.dataset.i18nZh || element.dataset.i18nEn || element.textContent)
+        ? (translations.zh[element.dataset.i18n] || element.dataset.i18nZh || element.dataset.i18nEn || element.textContent)
         : (element.dataset.i18nEn || element.textContent);
       return;
     }}
@@ -1874,6 +1933,7 @@ function applyLanguage(language, persist=true) {{
   );
   refreshAskStatus();
   refreshAskAnswerMeta();
+  refreshLocalizedDetails();
   if (askModel.options.length && (askModel.dataset.state === 'unavailable' || askModel.dataset.state === 'not_configured')) {{
     askModel.options[0].textContent = tr(
       askModel.dataset.state === 'not_configured' ? 'ask.not_configured' : 'ask.models_unavailable',
@@ -1905,7 +1965,10 @@ function setPeriod(label) {{
   document.getElementById('relative-copy').textContent = tr('performance.relative', {{
     value: pct(p.relative_total_return), benchmark,
   }});
-  document.getElementById('brief-period-label').textContent = label;
+  document.getElementById('brief-period-label').textContent = uiLanguage === 'zh' ? label.replace('Y', ' 年') : label;
+  document.querySelectorAll('.period-button').forEach(button => {{
+    button.textContent = uiLanguage === 'zh' ? button.dataset.period.replace('Y', ' 年') : button.dataset.period;
+  }});
   document.getElementById('total-return').textContent = pct(p.asset.total_return);
   document.getElementById('cagr').textContent = pct(p.asset.cagr);
   document.getElementById('max-drawdown').textContent = plainPct(p.asset.max_drawdown);
@@ -2242,6 +2305,7 @@ function renderAskAnswer(payload) {{
   const heading = document.createElement('div');
   heading.className = 'ask-answer-heading';
   const label = document.createElement('span');
+  label.dataset.i18n = 'ask.validated_answer';
   label.textContent = tr('ask.validated_answer');
   const model = document.createElement('small');
   model.className = 'ask-answer-meta';
@@ -2260,10 +2324,16 @@ function renderAskAnswer(payload) {{
   const details = document.createElement('details');
   details.className = 'ask-limitations';
   const summary = document.createElement('summary');
+  summary.dataset.i18n = 'ask.limitations';
   summary.textContent = tr('ask.limitations');
   details.append(summary);
   payload.boundaries.forEach(claim => details.append(renderAskClaim(claim)));
   askResult.append(details);
+  const languageNote = document.createElement('p');
+  languageNote.className = 'ask-scope-note';
+  languageNote.dataset.i18n = 'ask.original_language';
+  languageNote.textContent = tr('ask.original_language');
+  askResult.append(languageNote);
 }}
 
 function formatAskTime(iso) {{
@@ -2304,7 +2374,8 @@ function renderAskClaim(claim) {{
     claim.citations.forEach(citation => {{
       const link = document.createElement('a');
       link.href = safeAskHref(citation.url);
-      link.textContent = citation.label;
+      link.dataset.citationLabel = citation.label;
+      link.textContent = localizedCitationLabel(citation.label);
       if (link.href.startsWith('http')) {{
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -2314,6 +2385,80 @@ function renderAskClaim(claim) {{
     article.append(links);
   }}
   return article;
+}}
+
+
+function localizedCitationLabel(label) {{
+  if (uiLanguage !== 'zh') return label;
+  const labels = {{
+    'Latest SEC filing': '最新 SEC 披露',
+    'SEC source passage': 'SEC 原文段落',
+    'Filing wording comparison': '披露措辞对比',
+    'SEC company record': 'SEC 公司记录',
+    'Asset Open To Close': '公司开盘至收盘收益',
+    'Benchmark Open To Close': '基准开盘至收盘收益',
+    'Benchmark Adjusted Move': '扣除基准后的变动',
+    'Prior Sample Size': '历史样本数',
+    'Historical Magnitude Percentile': '历史反应幅度分位',
+    'Asset Total Return': '公司累计回报', 'Asset Annualized Return': '公司年化回报',
+    'Asset Max Drawdown': '公司最大回撤', 'Benchmark Total Return': '基准累计回报',
+    'Total Return': '累计回报', 'Cagr': '年化复合增长率',
+    'Annualized Volatility': '年化波动率', 'Max Drawdown': '最大回撤',
+    'Current Drawdown': '当前回撤', 'Worst Day': '最差单日收益',
+    'Beta': '贝塔系数', 'Correlation': '相关系数',
+    'Ending Value': '期末价值', 'Relative Total Return': '相对累计回报',
+    'Observations': '观测数', 'Recovery Sessions': '恢复所需交易日',
+    'Max Drawdown Date': '最大回撤日期',
+  }};
+  const metrics = {{
+    'Revenue': '营业收入', 'Gross profit': '毛利润', 'Operating income': '营业利润',
+    'Net income': '净利润', 'Operating cash flow': '经营现金流',
+    'Capital expenditures': '资本支出', 'Diluted shares': '稀释股本',
+    'Total assets': '总资产', "Stockholders' equity": '股东权益',
+    'Share-based compensation': '股份薪酬', 'Share repurchases': '股份回购',
+    'Dividends paid': '已付股息', 'Free cash flow': '自由现金流',
+    'Gross margin': '毛利率', 'Operating margin': '营业利润率',
+    'Free cash flow per share': '每股自由现金流',
+  }};
+  const match = label.match(/^(SEC source for )?(.+?)( FY[0-9]{{4}})?$/);
+  if (match && metrics[match[2]]) {{
+    return `${{metrics[match[2]]}}${{match[3] || ''}}${{match[1] ? ' · SEC 来源' : ''}}`;
+  }}
+  return labels[label] || label;
+}}
+
+function refreshLocalizedDetails() {{
+  document.querySelectorAll('[data-citation-label]').forEach(element => {{
+    element.textContent = localizedCitationLabel(element.dataset.citationLabel);
+  }});
+  document.querySelectorAll('[data-local-date]').forEach(element => {{
+    if (!element.dataset.dateEn) element.dataset.dateEn = element.textContent;
+    // Use the filed calendar date, without shifting it into the browser timezone.
+    const date = element.dataset.localDate.slice(0, 10);
+    element.textContent = uiLanguage === 'zh' && /^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$/.test(date)
+      ? `${{Number(date.slice(0,4))}}年${{Number(date.slice(5,7))}}月${{Number(date.slice(8,10))}}日${{element.dataset.dateEn.includes(' · ') ? ' · ' + element.dataset.dateEn.split(' · ').slice(1).join(' · ') : ''}}`
+      : element.dataset.dateEn;
+  }});
+  document.querySelectorAll('.item-chip[title]').forEach(element => {{
+    const label = element.querySelector('[data-i18n]');
+    if (label) element.title = label.textContent;
+  }});
+  const ariaLabels = {{
+    'Company navigation': '公司导航', 'Page storyline': '页面章节',
+    'On this page': '本页目录', 'Historical period': '历史期间',
+    'Growth of ten thousand dollars compared with benchmark': '一万美元投资价值与基准的对比',
+    'Guided research questions': '研究问题引导',
+    'Recent filing timeline': '近期披露时间线',
+    'Observed filing market reaction': '披露后的历史市场反应',
+    'Prior comparable filing changes': '与此前同类披露的变化',
+  }};
+  document.querySelectorAll('[aria-label]').forEach(element => {{
+    const original = element.dataset.ariaEn || element.getAttribute('aria-label');
+    const chinese = element.dataset.ariaZh || ariaLabels[original];
+    if (!chinese) return;
+    element.dataset.ariaEn = original;
+    element.setAttribute('aria-label', uiLanguage === 'zh' ? chinese : original);
+  }});
 }}
 
 function safeAskHref(value) {{
@@ -2680,3 +2825,4 @@ h1,h2{letter-spacing:-.035em}h1 em{color:#6b8051}
 
 
 """
+

@@ -180,14 +180,14 @@ def test_company_page_is_self_contained_and_source_linked(tmp_path) -> None:
     assert 'aria-current="page"' in page
     assert "A source-backed test company profile." in page
     assert "CIK 0000000123" in page
-    assert "Prices 2024-01-02—2024-12-31" in page
+    assert "2024-01-02—2024-12-31" in page
     assert "Find a company" in page
     assert '<span class="current-symbol" aria-current="page">ABC</span>' in page
     assert 'id="correlation"' in page
     assert 'id="worst-day"' in page
     assert "Prior comparison unavailable" in page
     assert "What happened next" in page
-    assert "+2.4% vs SPY" in page
+    assert '+2.4% <span data-i18n="reaction.versus">vs</span> SPY' in page
     assert "More extreme than 80%" in page
     assert "of 10 earlier measurable filings" in page
     assert "does not claim the filing caused the move" in page
@@ -541,3 +541,39 @@ def test_static_404_preserves_supported_scope(tmp_path) -> None:
     assert "193-company universe" in page
     assert "AAPL, MSFT, NVDA" in page
     assert 'href="index.html"' in page
+
+
+def test_localized_dynamic_details_preserve_evidence(tmp_path) -> None:
+    from lxml import html as html_parser
+
+    page = render_company_page(_snapshot(), tmp_path / 'abc.html').read_text()
+    doc = html_parser.fromstring(page)
+    # These were English-only nodes even after the rest of the page switched.
+    assert doc.xpath('//*[@data-i18n="profile.filings"]/@data-i18n-count') == ['1']
+    assert doc.xpath('//*[@data-i18n="reaction.first_session"]')
+    assert doc.xpath('//*[@data-i18n="reaction.less"]')
+    assert doc.xpath('//*[@data-i18n="footer.market"]')
+    assert doc.xpath('//*[@data-local-date="2024-12-20T17:00:00-05:00"]')
+    assert 'Revenue was' in doc.xpath('//blockquote')[0].text_content()
+    assert '经营业绩(财报)' in page
+    assert 'SEC 原文段落' in page
+
+
+def test_signal_reasons_translate_numbers_without_altering_original() -> None:
+    from lxml import html as html_parser
+
+    from company_lens.web.page import _localized_reason
+
+    examples = {
+        "consistent with this issuer's usual disclosures": "与该公司以往的常规披露一致",
+        "more unusual language than 95% of this issuer's earlier filings": (
+            "措辞比该公司此前 95% 的披露更异常"
+        ),
+        "pre-filing volume above 90% of its own history": "披露前成交量高于该公司历史中 90% 的观测",
+        "the longest filing this issuer has made": "文件长度为该公司披露历史最高",
+    }
+    for english, chinese in examples.items():
+        span = html_parser.fromstring(_localized_reason(english))
+        assert span.get('data-i18n-en') == english
+        assert span.get('data-i18n-zh') == chinese
+        assert span.text == english
