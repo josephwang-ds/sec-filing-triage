@@ -1,0 +1,177 @@
+{
+  "schema_version": "1",
+  "date": "2026-10-22",
+  "written_at": "2026-10-22T06:24:30.550197+00:00",
+  "predicts_session": "2026-10-22",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12032,
+    "last_session_in_panel": "2026-10-21",
+    "inputs": {
+      "events": {
+        "rows": 12068,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "5c406338db5301a2ac09ba82795df99e22d70a2c1428e9ddd1dbdb470dc4ade9"
+      },
+      "prices": {
+        "rows": 2007294,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "9ecbf61b4389eb9a3c2ad19c5365e72c797b4450ec3f47856a40cc3258600df7",
+        "first_session": "1962-01-02",
+        "last_session": "2026-10-21"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.15",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.0.6",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.0",
+        "yfinance": "1.7.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0000707549-26-000052",
+      "cik": 707549,
+      "ticker": "LRCX",
+      "issuer": "LAM RESEARCH CORP",
+      "acceptance_time": "2026-10-22T00:13:03-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 1,
+      "score": 0.542126
+    },
+    {
+      "accession": "0000097476-26-000165",
+      "cik": 97476,
+      "ticker": "TXN",
+      "issuer": "TEXAS INSTRUMENTS INC",
+      "acceptance_time": "2026-10-22T00:04:14-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 2,
+      "score": 0.531887
+    },
+    {
+      "accession": "0001628280-26-066700",
+      "cik": 1326801,
+      "ticker": "META",
+      "issuer": "Meta Platforms, Inc.",
+      "acceptance_time": "2026-10-22T00:03:35-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 3,
+      "score": 0.431343
+    },
+    {
+      "accession": "0000051143-26-000093",
+      "cik": 51143,
+      "ticker": "IBM",
+      "issuer": "INTERNATIONAL BUSINESS MACHINES CORP",
+      "acceptance_time": "2026-10-22T00:19:17-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 4,
+      "score": 0.416875
+    },
+    {
+      "accession": "0000277948-26-000039",
+      "cik": 277948,
+      "ticker": "CSX",
+      "issuer": "CSX CORP",
+      "acceptance_time": "2026-10-22T00:01:14-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 5,
+      "score": 0.40407
+    },
+    {
+      "accession": "0000092380-26-000104",
+      "cik": 92380,
+      "ticker": "LUV",
+      "issuer": "SOUTHWEST AIRLINES CO",
+      "acceptance_time": "2026-10-22T00:16:24-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 6,
+      "score": 0.361216
+    },
+    {
+      "accession": "0001051470-26-000085",
+      "cik": 1051470,
+      "ticker": "CCI",
+      "issuer": "CROWN CASTLE INC.",
+      "acceptance_time": "2026-10-22T00:17:48-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 7,
+      "score": 0.346935
+    },
+    {
+      "accession": "0001628280-26-066738",
+      "cik": 1318605,
+      "ticker": "TSLA",
+      "issuer": "Tesla, Inc.",
+      "acceptance_time": "2026-10-22T00:41:42-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 8,
+      "score": 0.328626
+    },
+    {
+      "accession": "0001104659-26-117587",
+      "cik": 1800,
+      "ticker": "ABT",
+      "issuer": "ABBOTT LABORATORIES",
+      "acceptance_time": "2026-10-21T13:19:51-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 9,
+      "score": 0.189864
+    },
+    {
+      "accession": "0000097745-26-000173",
+      "cik": 97745,
+      "ticker": "TMO",
+      "issuer": "THERMO FISHER SCIENTIFIC INC.",
+      "acceptance_time": "2026-10-21T10:03:16-04:00",
+      "entry_session": "2026-10-22",
+      "rank": 10,
+      "score": 0.133013
+    }
+  ]
+}
