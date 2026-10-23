@@ -7,6 +7,13 @@ const crypto = require("node:crypto");
 const EVIDENCE = JSON.parse(
   fs.readFileSync(path.join(__dirname, "evidence.json"), "utf8"),
 );
+const EVENT_EVIDENCE = readOptionalJson("event_evidence.json") || { companies: {} };
+
+function readOptionalJson(name) {
+  const file = path.join(__dirname, name);
+  if (!fs.existsSync(file)) return null;
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
 const MAX_QUESTION_LENGTH = 280;
 const MAX_OUTPUT_TOKENS = 1_200;
 const WINDOW_MS = 60 * 60 * 1000;
@@ -128,7 +135,7 @@ const UNSUPPORTED_ANSWER = [
 ];
 const NUMBER_LITERAL = /(?<![A-Za-z0-9_.])[+-]?\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:%|[KMBT])?/g;
 
-module.exports = async function handler(request, response) {
+async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("Content-Type", "application/json; charset=utf-8");
   response.setHeader("X-Content-Type-Options", "nosniff");
@@ -178,6 +185,17 @@ module.exports = async function handler(request, response) {
   const depth = input.depth === "professional" ? "professional" : "beginner";
   const company = EVIDENCE.companies[ticker];
   const provider = PROVIDERS[providerName];
+
+  if (clientSuppliedEvidence(input) || Object.prototype.hasOwnProperty.call(input, "event_version")) {
+    return answerFromEventVersion(response, {
+      depth,
+      input,
+      language,
+      providerName,
+      question,
+      ticker,
+    });
+  }
 
   if (!company || !/^[A-Z.]{1,6}$/.test(ticker)) {
     return send(response, 404, { error: "ticker_not_available" });
@@ -622,3 +640,155 @@ function send(response, status, payload) {
   response.statusCode = status;
   response.end(JSON.stringify(payload));
 }
+
+function clientSuppliedEvidence(input) {
+  return [
+    "allowed_citations",
+    "allowed_number_literals",
+    "citations",
+    "evidence",
+    "events",
+    "source_url",
+  ].some((key) => Object.prototype.hasOwnProperty.call(input || {}, key));
+}
+
+async function readPublishedEvidence(ticker, version) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN || "";
+  if (!token) return { configured: false };
+  const headers = { authorization: "Bearer " + token, "x-api-version": "12" };
+  try {
+    const listed = await fetch(
+      "https://vercel.com/api/blob?prefix=" + encodeURIComponent((String(process.env.EVENTS_BLOB_PREFIX || "lens-events").replace(/^\/+|\/+$/g, "") || "lens-events") + "/commit.json") + "&limit=5",
+      { headers },
+    );
+    if (!listed.ok) return { configured: true, error: true };
+    const payload = await listed.json();
+    const commitPath = (String(process.env.EVENTS_BLOB_PREFIX || "lens-events").replace(/^\/+|\/+$/g, "") || "lens-events") + "/commit.json";
+    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === commitPath);
+    if (!match || !match.url) return { configured: true, missing: true };
+    const commitResponse = await fetch(match.url, { headers });
+    if (!commitResponse.ok) return { configured: true, error: true };
+    const commit = await commitResponse.json();
+    const entry = commit && commit.tickers && commit.tickers[ticker];
+    const versions = (entry && entry.versions) || {};
+    const authorized = versions[version];
+    if (!authorized || !authorized.evidence_url) return { configured: true, missing: true };
+    const body = await fetch(authorized.evidence_url, { headers });
+    if (body.status === 404) return { configured: true, missing: true };
+    if (!body.ok) return { configured: true, error: true };
+    const record = await body.json();
+    if (!record || !record.evidence || record.evidence.event_version !== version) {
+      return { configured: true, missing: true };
+    }
+    return { configured: true, record };
+  } catch (error) {
+    return { configured: true, error: true };
+  }
+}
+
+async function resolveEventPacket(input) {
+  if (clientSuppliedEvidence(input)) {
+    return {
+      payload: {
+        error: "client_evidence_rejected",
+        message: "The server loads event evidence by ticker and version. Client-supplied evidence is ignored.",
+      },
+      status: 400,
+    };
+  }
+  const ticker = String((input && input.ticker) || "").trim().toUpperCase();
+  const version = String(input && input.event_version != null ? input.event_version : "").trim();
+  const published = await readPublishedEvidence(ticker, version);
+  if (published.configured && published.error) {
+    return {
+      payload: {
+        error: "event_version_unavailable",
+        message: "This event version could not be read. Refresh the page and ask again. A different version was not substituted.",
+      },
+      status: 409,
+    };
+  }
+  let record = published.configured ? published.record : null;
+  if (!published.configured) {
+    const versions = EVENT_EVIDENCE.companies && EVENT_EVIDENCE.companies[ticker]
+      && EVENT_EVIDENCE.companies[ticker].versions;
+    record = versions && versions[version];
+  }
+  if (!record || record.evidence.event_version !== version) {
+    return {
+      payload: {
+        error: "event_version_unavailable",
+        message: "This event version is no longer available. Refresh the page and ask again. A different version was not substituted.",
+      },
+      status: 409,
+    };
+  }
+  if (input.event_id) {
+    const id = String(input.event_id);
+    const known = (record.evidence.events || []).some((event) => event.event_id === id);
+    if (!known) {
+      return { payload: { error: "event_not_in_version" }, status: 422 };
+    }
+  }
+  return { record, status: 200 };
+}
+
+async function answerFromEventVersion(response, args) {
+  const resolved = await resolveEventPacket(args.input);
+  if (!resolved.record) return send(response, resolved.status, resolved.payload);
+  const provider = PROVIDERS[args.providerName];
+  if (!provider || !process.env[provider.key]) {
+    return send(response, 400, { error: "model_not_available" });
+  }
+  if (args.question.length < 4 || args.question.length > MAX_QUESTION_LENGTH) {
+    return send(response, 422, {
+      error: "question_length",
+      message: `Use between 4 and ${MAX_QUESTION_LENGTH} characters.`,
+    });
+  }
+  if (UNSUPPORTED_QUESTION.some((pattern) => pattern.test(args.question))) {
+    return send(response, 422, {
+      error: "question_scope",
+      message: "Ask about the supplied company evidence, not what to buy or a price forecast.",
+    });
+  }
+  const record = resolved.record;
+  const packet = {
+    allowed_citations: record.allowed_citations,
+    allowed_number_literals: record.allowed_number_literals,
+    evidence: { ...record.evidence, user_question: args.question },
+    task: {
+      event_version: record.evidence.event_version,
+      language: args.language,
+      reader_depth: args.depth,
+      ticker: args.ticker,
+      user_question: args.question,
+    },
+  };
+  const started = Date.now();
+  try {
+    let result = await callProvider(args.providerName, process.env[provider.modelEnv] || provider.model, packet);
+    let errors = validateOutput(result.output, record);
+    if (errors.length) {
+      return send(response, 502, {
+        error: "grounding_validation_failed",
+        message: "The model answer was withheld because it did not pass evidence validation.",
+      });
+    }
+    const answer = presentAnswer(result.output, record, {
+      event_version: record.evidence.event_version,
+      provider: args.providerName,
+      ticker: args.ticker,
+      latency_ms: Date.now() - started,
+    });
+    return send(response, 200, answer);
+  } catch (error) {
+    return send(response, 502, {
+      error: "provider_failed",
+      message: "The selected model is temporarily unavailable. Try another model.",
+    });
+  }
+}
+
+handler.resolveEventPacket = resolveEventPacket;
+module.exports = handler;

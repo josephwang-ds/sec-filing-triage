@@ -17,6 +17,7 @@ from company_lens.web.ask import (
 )
 
 DEFAULT_ASK_FUNCTION = Path("ops/vercel/ask/index.js")
+DEFAULT_EVENTS_FUNCTION = Path("ops/vercel/events/index.js")
 
 # What the pages are generated *from*. If any of this is newer than the newest
 # generated page, the pages predate the code that renders them.
@@ -71,6 +72,7 @@ def build_vercel_output(
     static.mkdir(parents=True)
     for path in html_files:
         shutil.copy2(path, static / path.name)
+    _build_events_function(source, temporary)
     _build_ask_function(source, temporary, ask_function_source)
     config = {
         "version": 3,
@@ -117,6 +119,16 @@ def _build_ask_function(
     function = output / "functions" / "api" / "ask.func"
     function.mkdir(parents=True)
     shutil.copy2(function_source, function / "index.js")
+    evidence_path = source / "event_evidence.json"
+    event_evidence = (
+        json.loads(evidence_path.read_text(encoding="utf-8"))
+        if evidence_path.is_file()
+        else {"companies": {}, "schema_version": "company-lens.event-evidence.v1"}
+    )
+    (function / "event_evidence.json").write_text(
+        json.dumps(event_evidence, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
     (function / "evidence.json").write_text(
         json.dumps(
             {
@@ -138,6 +150,39 @@ def _build_ask_function(
                 "maxDuration": 45,
                 "memory": 512,
                 "launcherType": "Nodejs",
+                "shouldAddHelpers": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _build_events_function(source: Path, output: Path) -> None:
+    """Public event read API. It does not fetch providers or deploy the site."""
+    source_file = DEFAULT_EVENTS_FUNCTION
+    if not source_file.is_file():
+        raise ValueError(f"Company Lens events function is missing: {source_file}")
+    function = output / "functions" / "api" / "events.func"
+    function.mkdir(parents=True)
+    shutil.copy2(source_file, function / "index.js")
+    public_path = source / "events_public.json"
+    public = (
+        json.loads(public_path.read_text(encoding="utf-8"))
+        if public_path.is_file()
+        else {"companies": {}, "health": None, "schema_version": "company-lens.events-public.v1"}
+    )
+    (function / "public.json").write_text(
+        json.dumps(public, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    (function / ".vc-config.json").write_text(
+        json.dumps(
+            {
+                "runtime": "nodejs22.x",
+                "handler": "index.js",
+                "launcherType": "Nodejs",
+                "maxDuration": 15,
+                "memory": 512,
                 "shouldAddHelpers": True,
             }
         ),
