@@ -100,16 +100,15 @@ class TestThePageCarriesTheFindings:
 
 
 class TestTheIndexLinksToIt:
-    def test_the_entry_points_exist_in_the_renderer(self):
-        """A page nobody can reach is not published. The index carries both
-        links, in both languages."""
+    def test_the_entry_points_exist_in_the_renderer(self, tmp_path):
+        """Research remains reachable; the retired estimated calendar does not."""
+        from company_lens.web import render_index
+
+        page = render_index(tmp_path / "index.html").read_text()
+        assert 'href="research.html"' in page
+        assert 'href="earnings.html"' not in page
         source = (ROOT / "src" / "company_lens" / "web" / "page.py").read_text()
-        assert 'href="research.html"' in source
-        assert 'href="earnings.html"' in source
-        for key in ("method.research", "method.earnings"):
-            assert source.count(f"'{key}'") >= 2, (
-                f"{key} needs an English and a Chinese string"
-            )
+        assert source.count("'method.research'") >= 2
 
 
 @pytest.fixture(scope="module")

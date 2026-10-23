@@ -9,7 +9,10 @@ def test_scheduled_refresh_updates_fundamentals_before_building_pages() -> None:
     fundamentals = script.index("scripts/refresh_fundamentals.py")
     page_build = script.index("scripts/build_company_pages.py")
     assert fundamentals < page_build
-    assert "COMPANY_LENS_FUNDAMENTALS_TICKERS:-AAPL" in script
+    assert "scripts/refresh_fundamentals.py --all" in script
+    assert "COMPANY_LENS_FUNDAMENTALS_TICKERS:-AAPL" not in script
+    workflow = Path(".github/workflows/refresh.yml").read_text(encoding="utf-8")
+    assert "COMPANY_LENS_FUNDAMENTALS_TICKERS: AAPL" not in workflow
 
 
 def test_scheduled_refresh_generates_every_page_it_publishes() -> None:
