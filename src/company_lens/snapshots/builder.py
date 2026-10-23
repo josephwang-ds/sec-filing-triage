@@ -28,6 +28,10 @@ from company_lens.universe import (
 from filing_triage.ingest.prices import load_prices
 
 DEFAULT_PERIODS = (1, 3, 5, 10)
+COMPARISON_BENCHMARKS = ("QQQ",)
+# A period is "partial" when matched history starts this much after the
+# requested boundary (IPO, benchmark inception or a short cache).
+PARTIAL_COVERAGE_DAYS = 7
 
 
 def build_snapshot(
@@ -35,6 +39,7 @@ def build_snapshot(
     *,
     data_dir: str | Path = "data/build",
     benchmark: str = "SPY",
+    comparison_benchmarks: tuple[str, ...] = COMPARISON_BENCHMARKS,
     years: int = 5,
     initial_investment: float = 10_000.0,
     headline_index: str | Path | None = None,
@@ -44,6 +49,7 @@ def build_snapshot(
         [ticker],
         data_dir=data_dir,
         benchmark=benchmark,
+        comparison_benchmarks=comparison_benchmarks,
         years=years,
         initial_investment=initial_investment,
         headline_index=headline_index,
@@ -55,6 +61,7 @@ def build_snapshots(
     *,
     data_dir: str | Path = "data/build",
     benchmark: str = "SPY",
+    comparison_benchmarks: tuple[str, ...] = COMPARISON_BENCHMARKS,
     years: int = 5,
     initial_investment: float = 10_000.0,
     headline_index: str | Path | None = None,
@@ -75,6 +82,11 @@ def build_snapshots(
     price_tickers = prices["ticker"].astype(str).str.upper()
     event_tickers = events["ticker"].astype(str).str.upper()
     benchmark_rows = prices[price_tickers == benchmark.upper()]
+    comparison_rows = {
+        symbol: prices[price_tickers == symbol]
+        for symbol in dict.fromkeys(item.upper() for item in comparison_benchmarks)
+        if symbol != benchmark.upper()
+    }
     price_groups = _group_frames(
         prices[price_tickers != benchmark.upper()],
         prices.loc[price_tickers != benchmark.upper(), "ticker"].astype(str).str.upper(),
@@ -87,6 +99,7 @@ def build_snapshots(
             pd.concat([price_groups.get(company.ticker, pd.DataFrame()), benchmark_rows]),
             event_groups.get(company.ticker, events.iloc[0:0]),
             benchmark=benchmark,
+            comparison_rows=comparison_rows,
             years=years,
             initial_investment=initial_investment,
             headline_documents=headline_documents,
@@ -107,6 +120,7 @@ def _assemble_snapshot(
     events: pd.DataFrame,
     *,
     benchmark: str,
+    comparison_rows: dict[str, pd.DataFrame] | None = None,
     years: int,
     initial_investment: float,
     headline_documents: list[ImportedDocument] | None,
@@ -119,15 +133,9 @@ def _assemble_snapshot(
         option_metrics, option_growth = historical_picture(
             prices, ticker, benchmark, option_years, initial_investment
         )
-        chart_growth = _downsample_growth(option_growth)
-        period_options[f"{option_years}Y"] = {
-            "period": {
-                "start": chart_growth[0]["date"],
-                "end": chart_growth[-1]["date"],
-            },
-            "performance": option_metrics,
-            "growth": chart_growth,
-        }
+        period_options[f"{option_years}Y"] = _period_view(
+            option_metrics, option_growth, option_years
+        )
 
     selected = period_options[f"{years}Y"]
     metrics = selected["performance"]
@@ -136,6 +144,12 @@ def _assemble_snapshot(
     filings = build_filing_briefs(events, ticker, reactions=reactions)
     filing_timeline = build_filing_timeline(events, ticker, reactions=reactions)
     market_rows = prices[prices["ticker"].str.upper() == ticker]
+    benchmark_comparisons = {
+        symbol: _benchmark_comparison(
+            market_rows, rows, ticker, symbol, requested_periods, initial_investment
+        )
+        for symbol, rows in (comparison_rows or {}).items()
+    }
     company_name, cik = company.official_name, company.cik
     first_market = market_rows.sort_values("date").iloc[0]
     last_market = market_rows.sort_values("date").iloc[-1]
@@ -199,7 +213,78 @@ def _assemble_snapshot(
         fundamentals=fundamentals,
         disclosure_signal=_disclosure_signal(root, ticker),
         volatility_forecast=_volatility_forecast(root, ticker),
+        benchmark_comparisons=benchmark_comparisons,
     )
+
+
+def _period_view(metrics: dict, growth: list[dict], years: int) -> dict:
+    """One period's chart and metrics, with the matched overlap disclosed."""
+    chart_growth = _downsample_growth(growth)
+    start, end = growth[0]["date"], growth[-1]["date"]
+    requested_start = (pd.Timestamp(end) - pd.DateOffset(years=years)).date().isoformat()
+    shortfall = (pd.Timestamp(start) - pd.Timestamp(requested_start)).days
+    return {
+        "period": {"start": chart_growth[0]["date"], "end": chart_growth[-1]["date"]},
+        "performance": metrics,
+        "growth": chart_growth,
+        "coverage": {
+            "status": "partial" if shortfall > PARTIAL_COVERAGE_DAYS else "full",
+            "requested_start": requested_start,
+            "start": start,
+            "end": end,
+            "observations": metrics["observations"],
+        },
+    }
+
+
+def _benchmark_comparison(
+    company_rows: pd.DataFrame,
+    benchmark_rows: pd.DataFrame,
+    ticker: str,
+    symbol: str,
+    periods: tuple[int, ...],
+    initial_investment: float,
+) -> dict:
+    """Company/benchmark history on exactly matched dates, or why it is unavailable.
+
+    A benchmark whose cache ends before the company's prices is withheld rather
+    than charted over a shorter window under the same period label.
+    """
+    if benchmark_rows.empty:
+        return {"symbol": symbol, "status": "unavailable", "reason": "missing_prices",
+                "periods": {}}
+    company_end = pd.Timestamp(company_rows["date"].max()).date().isoformat()
+    benchmark_end = pd.Timestamp(benchmark_rows["date"].max()).date().isoformat()
+    if benchmark_end < company_end:
+        return {"symbol": symbol, "status": "unavailable", "reason": "stale_prices",
+                "price_end": benchmark_end, "company_end": company_end, "periods": {}}
+    pair = pd.concat([company_rows, benchmark_rows])
+    views: dict[str, dict] = {}
+    for option_years in periods:
+        label = f"{option_years}Y"
+        try:
+            metrics, growth = historical_picture(
+                pair, ticker, symbol, option_years, initial_investment
+            )
+            # Sample volatility/covariance need at least two returns. A two-row
+            # cache produces NaN, which would break JSON.parse for the whole page.
+            if metrics["observations"] < 3:
+                raise ValueError("not enough returns for comparison risk metrics")
+            # Withhold a corrupt optional comparison without breaking the fixed
+            # benchmark, chart, language controls or question initialization.
+            json.dumps({"performance": metrics, "growth": growth}, allow_nan=False)
+        except ValueError:
+            views[label] = {"status": "unavailable", "reason": "insufficient_overlap"}
+            continue
+        views[label] = {"status": "available", **_period_view(metrics, growth, option_years)}
+    available = any(view["status"] == "available" for view in views.values())
+    return {
+        "symbol": symbol,
+        "status": "available" if available else "unavailable",
+        "reason": None if available else "insufficient_overlap",
+        "price_end": benchmark_end,
+        "periods": views,
+    }
 
 
 def _disclosure_signal(data_dir: Path, ticker: str) -> dict | None:

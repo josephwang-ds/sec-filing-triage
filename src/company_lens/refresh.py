@@ -20,6 +20,9 @@ from company_lens.universe import SupportedCompany, supported_companies
 from filing_triage.ingest.edgar import EdgarClient, parse_submissions
 from filing_triage.ingest.prices import fetch_daily
 
+# SPY is the default benchmark; QQQ feeds the optional history comparison.
+REFERENCE_SYMBOLS = ("SPY", "QQQ")
+
 
 @dataclass(frozen=True)
 class FilingRefreshResult:
@@ -164,9 +167,9 @@ def refresh_market_data(
         missing = sorted(requested - known)
         if missing:
             raise ValueError(f"unknown local ticker(s): {', '.join(missing)}")
-        symbols = sorted(requested | {"SPY"})
+        symbols = sorted(requested | set(REFERENCE_SYMBOLS))
     else:
-        symbols = sorted({company.ticker for company in companies} | {"SPY"})
+        symbols = sorted({company.ticker for company in companies} | set(REFERENCE_SYMBOLS))
 
     updated: dict[str, pd.DataFrame] = {}
     failures: list[str] = []

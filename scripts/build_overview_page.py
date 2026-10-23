@@ -317,7 +317,7 @@ and reported in the same place as the successes.</p>
 <div class="cta">
 <a class="primary" href="index.html">Open the live site</a>
 <a href="research.html">The audited findings, in full detail</a>
-<a href="https://github.com/josephwang-ds/ai-quant-signal-platform">Source code</a>
+<a href="https://github.com/josephwang-ds/sec-filing-triage">Source code</a>
 </div>
 </div></section>
 

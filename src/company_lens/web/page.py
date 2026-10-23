@@ -179,6 +179,10 @@ def _document(snapshot: CompanySnapshot) -> str:
         f'<button class="period-button" data-period="{label}" type="button">{label}</button>'
         for label in snapshot.period_options
     )
+    benchmark_buttons = _benchmark_buttons(snapshot)
+    comparisons = json.dumps(snapshot.benchmark_comparisons, ensure_ascii=False).replace(
+        "</", "<\\/"
+    )
     brief = _brief(snapshot)
     intro_key = "brief.intro"
     intro = ("Start with the latest disclosure, then the historical picture. "
@@ -278,19 +282,25 @@ def _document(snapshot: CompanySnapshot) -> str:
         <div class="brief-grid">{brief}</div>
       </section>
 
-  <section class="performance-section" id="performance" aria-labelledby="performance-title">
+  <section class="performance-section" id="performance" aria-labelledby="performance-title"
+  data-benchmark-scope="history">
     <div class="section-heading performance-heading">
       <div><p class="eyebrow" data-i18n="performance.eyebrow">HISTORICAL INVESTMENT PICTURE</p>
       <h2 id="performance-title" data-i18n="performance.title">What happened to $10,000?</h2></div>
+      <div class="history-controls">
+      {benchmark_buttons}
       <div class="period-control" aria-label="Historical period">{period_buttons}</div>
+      </div>
     </div>
     <p class="section-intro" data-i18n="performance.intro">Adjusted buy-and-hold history versus {html.escape(snapshot.benchmark)}
     over the exact same dates. Historical context, not expected return.</p>
+    <p class="section-intro" id="benchmark-definition">{html.escape(_benchmark_definition(snapshot.benchmark))}</p>
+    <p class="benchmark-note" id="benchmark-note" aria-live="polite"></p>
     <div class="performance-layout">
       <div class="chart-panel">
         <div class="chart-legend">
           <span><i class="line asset"></i>{html.escape(snapshot.ticker)}</span>
-          <span><i class="line benchmark"></i>{html.escape(snapshot.benchmark)}</span>
+          <span><i class="line benchmark"></i><span id="legend-benchmark">{html.escape(snapshot.benchmark)}</span></span>
           <span id="chart-range"></span>
         </div>
         <svg id="growth-chart" viewBox="0 0 920 360" role="img"
@@ -350,6 +360,7 @@ def _document(snapshot: CompanySnapshot) -> str:
 <span><span data-i18n="footer.market">Market through</span> {html.escape(snapshot.as_of)}</span><span data-i18n="footer.sources">SEC + adjusted daily prices</span></div></footer>
 
 <script type="application/json" id="period-data">{payload}</script>
+<script type="application/json" id="benchmark-data">{comparisons}</script>
 <script>{_script(default_period, snapshot.ticker, snapshot.benchmark)}</script>
 </body></html>"""
 
@@ -571,13 +582,15 @@ def _volatility_forecast(snapshot: CompanySnapshot) -> str:
 def _ask_section() -> str:
     return """<section class="ask-section" id="ask"
     aria-labelledby="ask-title">
-    <div class="section-heading"><div><p class="eyebrow" data-i18n="ask.eyebrow">CONTROLLED LLM Q&amp;A</p>
-    <h2 id="ask-title" data-i18n="ask.title">Ask the evidence</h2></div>
-    <span class="ask-validation" data-i18n="ask.validated">Every answer is validated</span></div>
+    <div class="section-heading"><div><p class="eyebrow" data-i18n="ask.eyebrow">QUESTIONS ABOUT THIS COMPANY</p>
+    <h2 id="ask-title" data-i18n="ask.title">Ask about this company</h2></div>
+    <span class="ask-validation" data-i18n="ask.validated">Citations and answer format checked</span></div>
     <p class="section-intro" data-i18n="ask.intro">Start with a guided research task, review the drafted
     question, then choose whether to send it. The model can use only this page's frozen evidence.</p>
     <div class="ask-layout">
       <form class="ask-form" id="ask-form">
+        <details class="ask-advanced">
+        <summary data-i18n="ask.advanced">Model, language &amp; sources</summary>
         <div class="ask-controls">
           <label><span data-i18n="ask.model">Model</span><select id="ask-model" name="provider" disabled>
           <option data-i18n="ask.loading_models">Loading live models…</option></select></label>
@@ -588,6 +601,7 @@ def _ask_section() -> str:
           <option data-i18n="ask.loading_scopes">Loading scopes…</option></select></label>
         </div>
         <p class="ask-scope-note" id="ask-scope-note" data-i18n="ask.scope_note_core">SEC filings and long-term fundamentals only.</p>
+        </details>
         <div class="ask-step-heading"><span>1</span><div>
         <strong data-i18n="ask.choose_task">Choose what to investigate</strong>
         <small data-i18n="ask.choose_task_copy">Selecting a tab drafts a bounded question. Nothing is sent automatically.</small>
@@ -599,6 +613,10 @@ def _ask_section() -> str:
           data-i18n="ask.task_history">History vs benchmark</button>
           <button type="button" role="tab" data-ask-task="risk"
           data-i18n="ask.task_risk">Risk experienced</button>
+        </div>
+        <details class="ask-more-tasks">
+        <summary data-i18n="ask.more_tasks">More research questions</summary>
+        <div class="ask-task-tabs" role="tablist" aria-label="More research questions">
           <button type="button" role="tab" data-ask-task="limits"
           data-i18n="ask.task_limits">Evidence limits</button>
           <button type="button" role="tab" data-ask-task="quality"
@@ -612,6 +630,7 @@ def _ask_section() -> str:
           <button type="button" role="tab" data-ask-task="missing"
           data-i18n="ask.task_missing">Missing evidence</button>
         </div>
+        </details>
         <div class="ask-task-preview" id="ask-task-preview">
           <span data-i18n="ask.guided_prompt">GUIDED PROMPT</span>
           <strong id="ask-task-title"></strong>
@@ -626,7 +645,7 @@ def _ask_section() -> str:
         placeholder="What does the latest 8-K tell me?"
         data-i18n-placeholder="ask.placeholder" required></textarea></label>
         <div class="ask-submit-row"><button id="ask-submit" type="submit" disabled
-        data-i18n="ask.submit">3 · Ask selected model</button>
+        data-i18n="ask.submit">Get a cited answer</button>
         <button id="ask-stop" type="button" hidden data-i18n="ask.stop">Stop</button>
         <button id="ask-retry" type="button" hidden data-i18n="ask.retry">Retry model check</button>
         <span id="ask-status" aria-live="polite"
@@ -637,7 +656,7 @@ def _ask_section() -> str:
         <div class="ask-scope-groups">
           <section class="ask-scope-group in-scope"><strong data-i18n="ask.in_scope">In scope</strong>
           <ul><li data-i18n="ask.in_scope_1">What the latest 8-K says, with cited passages</li>
-          <li data-i18n="ask.in_scope_2">Historical return and risk versus the benchmark</li>
+          <li data-i18n="ask.in_scope_2">Historical return and risk versus the snapshot's fixed benchmark</li>
           <li data-i18n="ask.in_scope_3">Observed filing reaction and prior wording changes</li>
           <li data-i18n="ask.in_scope_4">Which evidence is present or missing</li></ul></section>
           <section class="ask-scope-group out-scope"><strong data-i18n="ask.out_scope">Always withheld</strong>
@@ -1104,6 +1123,41 @@ def _metric(label: str, element_id: str, definition: str, translation_key: str) 
     )
 
 
+BENCHMARK_DEFINITIONS = {
+    "SPY": "SPY tracks the S&P 500: use it to compare this stock with large US companies "
+    "over the same period.",
+    "QQQ": "QQQ tracks the Nasdaq-100: the 100 largest non-financial companies listed on "
+    "Nasdaq. It leans toward technology but is not a pure technology index.",
+}
+
+
+def _benchmark_definition(symbol: str) -> str:
+    return BENCHMARK_DEFINITIONS.get(symbol, f"{symbol} is the comparison benchmark.")
+
+
+def _benchmark_buttons(snapshot: CompanySnapshot) -> str:
+    """One benchmark at a time; a pair without usable matched history is disabled."""
+    if not snapshot.benchmark_comparisons:
+        return ""
+    default = html.escape(snapshot.benchmark)
+    buttons = [(
+        f'<button class="benchmark-button active" data-benchmark="{default}" '
+        f'type="button" aria-pressed="true">{default}</button>'
+    )]
+    for symbol, comparison in snapshot.benchmark_comparisons.items():
+        disabled = comparison.get("status") != "available"
+        reason = comparison.get("reason") or ""
+        buttons.append(
+            f'<button class="benchmark-button" data-benchmark="{html.escape(symbol)}" '
+            f'data-unavailable-reason="{html.escape(reason)}" type="button" '
+            f'aria-pressed="false"{" disabled" if disabled else ""}>{html.escape(symbol)}</button>'
+        )
+    return (
+        '<div class="benchmark-control" role="group" aria-label="Comparison benchmark">'
+        f'{"".join(buttons)}</div>'
+    )
+
+
 def _default_period(snapshot: CompanySnapshot) -> str:
     years = round((datetime.fromisoformat(snapshot.period["end"]) -
                    datetime.fromisoformat(snapshot.period["start"])).days / 365.25)
@@ -1308,14 +1362,16 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "vol.state.slightly_elevated": "Slightly elevated",
                 "vol.state.elevated": "Elevated",
                 "vol.state.unusually_calm": "Unusually calm",
-                "ask.eyebrow": "CONTROLLED LLM Q&A",
-                "ask.title": "Ask the evidence",
-                "ask.validated": "Every answer is validated",
+                "ask.eyebrow": "QUESTIONS ABOUT THIS COMPANY",
+                "ask.title": "Ask about this company",
+                "ask.validated": "Citations and answer format checked",
                 "ask.intro": (
                     "Start with a guided research task, review the drafted question, then "
                     "choose whether to send it. The model can use only this page's frozen "
                     "evidence."
                 ),
+                "ask.advanced": "Model, language & sources",
+                "ask.more_tasks": "More research questions",
                 "ask.model": "Model",
                 "ask.evidence_scope": "Evidence scope",
                 "ask.loading_scopes": "Loading scopes…",
@@ -1378,13 +1434,16 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                     "What evidence is included and excluded, and what conclusions "
                     "cannot be supported?"
                 ),
-                "ask.submit": "3 · Ask selected model",
+                "ask.submit": "Get a cited answer",
                 "ask.retry": "Retry model check",
                 "ask.checking_models": "Checking available models…",
                 "ask.scope_title": "WHAT THIS DEMO CAN ANSWER",
                 "ask.in_scope": "In scope",
                 "ask.in_scope_1": "What the latest 8-K says, with cited passages",
-                "ask.in_scope_2": "Historical return and risk versus the benchmark",
+                "ask.in_scope_2": (
+                    "Historical return and risk versus {benchmark}, this snapshot's fixed "
+                    "benchmark, even when History shows another comparison"
+                ),
                 "ask.in_scope_3": "Observed filing reaction and prior wording changes",
                 "ask.in_scope_4": "Which evidence is present or missing",
                 "ask.out_scope": "Always withheld",
@@ -1500,6 +1559,36 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "footer.how": "How to read this lens",
                 "performance.relative": "{value} vs {benchmark} over this period",
                 "performance.benchmark_ending": "{benchmark} ending value",
+                "benchmark.definition.SPY": (
+                    "SPY tracks the S&P 500: use it to compare this stock with large US "
+                    "companies over the same period."
+                ),
+                "benchmark.definition.QQQ": (
+                    "QQQ tracks the Nasdaq-100: the 100 largest non-financial companies "
+                    "listed on Nasdaq. It leans toward technology but is not a pure "
+                    "technology index."
+                ),
+                "benchmark.matched": (
+                    "Matched trading dates {start} — {end}, {sessions} sessions."
+                ),
+                "benchmark.partial": (
+                    "Shorter than {period}: shared history starts {start}, not "
+                    "{requested}. Earlier dates are not filled."
+                ),
+                "benchmark.fixed_elsewhere": (
+                    "Only this section uses {selected}. The one-minute brief, filing "
+                    "reactions and AI answers stay on {benchmark}."
+                ),
+                "benchmark.unavailable.missing_prices": (
+                    "{selected} prices are not in this snapshot, so the comparison is off."
+                ),
+                "benchmark.unavailable.stale_prices": (
+                    "{selected} prices end before this company's prices, so the "
+                    "comparison is off until market data is refreshed."
+                ),
+                "benchmark.unavailable.insufficient_overlap": (
+                    "Not enough shared trading dates with {selected} for this period."
+                ),
                 "performance.not_available": "Not available",
                 "performance.not_recovered": "not recovered within the selected period",
                 "performance.recovered": "recovered after {sessions} trading sessions",
@@ -1526,7 +1615,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                     "but no answer will be shown."
                 ),
                 "ask.stopped_status": "Stopped before an answer returned.",
-                "ask.validated_answer": "VALIDATED ANSWER",
+                "ask.validated_answer": "CITATION & FORMAT CHECK PASSED",
                 "ask.answered_at": "answered {time}",
                 "ask.evidence_through": "evidence through {date}",
                 "ask.limitations": "What this answer cannot establish",
@@ -1687,13 +1776,15 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "vol.state.slightly_elevated": "略高于常态",
                 "vol.state.elevated": "明显高于常态",
                 "vol.state.unusually_calm": "异常平静",
-                "ask.eyebrow": "受控的 LLM 问答",
-                "ask.title": "向证据提问",
-                "ask.validated": "每个答案都经过校验",
+                "ask.eyebrow": "关于这家公司的问题",
+                "ask.title": "你想了解这家公司的什么？",
+                "ask.validated": "检查引用与回答格式",
                 "ask.intro": (
                     "先选择一个引导式研究任务，检查自动生成的问题，再决定是否发送。"
                     "模型只能使用本页冻结的证据。"
                 ),
+                "ask.advanced": "模型、回答语言与资料范围",
+                "ask.more_tasks": "更多研究问题",
                 "ask.model": "模型",
                 "ask.evidence_scope": "证据范围",
                 "ask.loading_scopes": "正在载入范围…",
@@ -1736,13 +1827,13 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.task_limits_question": (
                     "目前包含和排除了哪些证据？哪些结论无法得到支持？"
                 ),
-                "ask.submit": "3 · 询问所选模型",
+                "ask.submit": "获取带来源的回答",
                 "ask.retry": "重新检查模型",
                 "ask.checking_models": "正在检查可用模型…",
                 "ask.scope_title": "这个演示可以回答什么",
                 "ask.in_scope": "可以回答",
                 "ask.in_scope_1": "最新 8-K 说了什么，并提供引用段落",
-                "ask.in_scope_2": "相对基准的历史回报和风险",
+                "ask.in_scope_2": "相对 {benchmark}（本快照固定基准）的历史回报和风险；历史区切换到其他基准时也不变",
                 "ask.in_scope_3": "披露后的观测反应和历史措辞变化",
                 "ask.in_scope_4": "当前有哪些证据、缺少哪些证据",
                 "ask.out_scope": "始终拦截",
@@ -1829,6 +1920,25 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "footer.how": "如何阅读 Company Lens",
                 "performance.relative": "本期相对 {benchmark}：{value}",
                 "performance.benchmark_ending": "{benchmark} 期末价值",
+                "benchmark.definition.SPY": (
+                    "SPY 跟踪标普 500，用来比较这只股票与美国大型公司整体在同一时期的表现。"
+                ),
+                "benchmark.definition.QQQ": (
+                    "QQQ 跟踪纳斯达克 100 指数，即在纳斯达克上市的 100 家最大非金融公司。"
+                    "它偏重科技，但不是纯科技指数。"
+                ),
+                "benchmark.matched": "匹配交易日 {start} — {end}，共 {sessions} 个交易日。",
+                "benchmark.partial": (
+                    "不足 {period}：共同历史从 {start} 开始，而非 {requested}；不会补齐更早的日期。"
+                ),
+                "benchmark.fixed_elsewhere": (
+                    "只有本区使用 {selected}。一分钟摘要、披露反应和 AI 回答仍以 {benchmark} 为基准。"
+                ),
+                "benchmark.unavailable.missing_prices": "本快照没有 {selected} 价格，因此无法比较。",
+                "benchmark.unavailable.stale_prices": (
+                    "{selected} 价格早于本公司价格截止，需刷新行情后才能比较。"
+                ),
+                "benchmark.unavailable.insufficient_overlap": "该期间与 {selected} 的共同交易日不足。",
                 "performance.not_available": "暂无数据",
                 "performance.not_recovered": "在所选期间内尚未收复",
                 "performance.recovered": "在 {sessions} 个交易日后收复",
@@ -1850,7 +1960,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.stop": "停止",
                 "ask.stopped": "已停止等待。该请求可能仍在服务端完成，但不会展示任何答案。",
                 "ask.stopped_status": "已在返回答案前停止。",
-                "ask.validated_answer": "已验证答案",
+                "ask.validated_answer": "引用与格式检查通过",
                 "ask.answered_at": "{time} 生成",
                 "ask.evidence_through": "证据截至 {date}",
                 "ask.limitations": "这个答案无法证明什么",
@@ -1862,6 +1972,10 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
 const periods = JSON.parse(document.getElementById('period-data').textContent);
 const ticker = {json.dumps(ticker)};
 const benchmark = {json.dumps(benchmark)};
+// The history section may compare against another benchmark; everything else
+// (brief, filing reactions, AI request) stays on `benchmark`.
+const comparisons = JSON.parse(document.getElementById('benchmark-data').textContent);
+let historyBenchmark = benchmark;
 const translations = {translations};
 const svg = document.getElementById('growth-chart');
 const assetPath = document.getElementById('asset-path');
@@ -1899,7 +2013,7 @@ function applyLanguage(language, persist=true) {{
     }}
     const values = {{
       ticker,
-      benchmark,
+      benchmark: scopedBenchmark(element),
       count: element.dataset.i18nCount || '',
       suffix: element.dataset.i18nSuffix || '',
       pct: element.dataset.i18nPct || '',
@@ -1910,7 +2024,7 @@ function applyLanguage(language, persist=true) {{
     element.placeholder = tr(element.dataset.i18nPlaceholder, {{ticker, benchmark}});
   }});
   document.querySelectorAll('[data-i18n-title]').forEach(element => {{
-    element.title = tr(element.dataset.i18nTitle, {{ticker, benchmark}});
+    element.title = tr(element.dataset.i18nTitle, {{ticker, benchmark: scopedBenchmark(element)}});
   }});
   document.querySelectorAll('[data-freshness-key]').forEach(element => {{
     const date = element.dataset.freshnessDate;
@@ -1928,9 +2042,6 @@ function applyLanguage(language, persist=true) {{
   toggle.setAttribute('aria-label', uiLanguage === 'zh' ? 'Switch to English' : '切换为中文');
   toggle.setAttribute('aria-pressed', String(uiLanguage === 'zh'));
   document.getElementById('ask-language').value = uiLanguage === 'zh' ? 'Chinese' : 'English';
-  document.getElementById('benchmark-ending-label').textContent = tr(
-    'performance.benchmark_ending', {{benchmark}},
-  );
   refreshAskStatus();
   refreshAskAnswerMeta();
   refreshLocalizedDetails();
@@ -1951,27 +2062,98 @@ const pct = value => new Intl.NumberFormat('en-US', {{style:'percent',maximumFra
 const plainPct = value => new Intl.NumberFormat('en-US', {{style:'percent',maximumFractionDigits:1}}).format(value);
 const decimal = value => value == null ? tr('performance.not_available') : value.toFixed(2);
 
+function scopedBenchmark(element) {{
+  return element.closest('[data-benchmark-scope="history"]') ? historyBenchmark : benchmark;
+}}
+
+function periodLabel(label) {{
+  return uiLanguage === 'zh' ? label.replace('Y', ' 年') : label;
+}}
+
+function historyView(symbol, label) {{
+  if (symbol === benchmark) return periods[label];
+  const view = comparisons[symbol] && comparisons[symbol].periods[label];
+  return view && view.status === 'available' ? view : null;
+}}
+
+function setBenchmark(symbol) {{
+  const comparison = comparisons[symbol];
+  if (symbol !== benchmark && (!comparison || comparison.status !== 'available')) return;
+  historyBenchmark = symbol;
+  const label = historyView(symbol, currentPeriod)
+    ? currentPeriod
+    : Object.keys(periods).find(candidate => historyView(symbol, candidate));
+  setPeriod(label);
+}}
+
 function setPeriod(label) {{
+  if (!historyView(historyBenchmark, label)) return;
   currentPeriod = label;
-  const view = periods[label];
+  const brief = periods[label].performance;
+  document.getElementById('brief-period-label').textContent = periodLabel(label);
+  document.getElementById('total-return').textContent = pct(brief.asset.total_return);
+  document.getElementById('max-drawdown').textContent = plainPct(brief.asset.max_drawdown);
+  renderHistory(label);
+}}
+
+function renderHistory(label) {{
+  const selected = historyBenchmark;
+  const view = historyView(selected, label);
   const p = view.performance;
   document.querySelectorAll('.period-button').forEach(button => {{
-    const active = button.dataset.period === label;
+    const period = button.dataset.period;
+    const active = period === label;
+    const usable = Boolean(historyView(selected, period));
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
+    button.disabled = !usable;
+    button.title = usable ? '' : tr('benchmark.unavailable.insufficient_overlap', {{selected}});
+    button.textContent = periodLabel(period);
   }});
+  document.querySelectorAll('.benchmark-button').forEach(button => {{
+    const symbol = button.dataset.benchmark;
+    const active = symbol === selected;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    const reason = button.dataset.unavailableReason;
+    button.title = button.disabled && reason
+      ? tr(`benchmark.unavailable.${{reason}}`, {{selected: symbol}})
+      : '';
+  }});
+  document.querySelectorAll('#performance [data-i18n]').forEach(element => {{
+    element.textContent = tr(element.dataset.i18n, {{ticker, benchmark: selected}});
+  }});
+  document.querySelectorAll('#performance [data-i18n-title]').forEach(element => {{
+    element.title = tr(element.dataset.i18nTitle, {{ticker, benchmark: selected}});
+  }});
+  document.getElementById('legend-benchmark').textContent = selected;
+  const definition = document.getElementById('benchmark-definition');
+  if (translations.en[`benchmark.definition.${{selected}}`]) {{
+    definition.textContent = tr(`benchmark.definition.${{selected}}`);
+  }}
+  const notes = [tr('benchmark.matched', {{
+    start: view.coverage ? view.coverage.start : view.period.start,
+    end: view.coverage ? view.coverage.end : view.period.end,
+    sessions: p.observations,
+  }})];
+  if (view.coverage && view.coverage.status === 'partial') {{
+    notes.push(tr('benchmark.partial', {{
+      period: periodLabel(label), start: view.coverage.start, requested: view.coverage.requested_start,
+    }}));
+  }}
+  if (selected !== benchmark) notes.push(tr('benchmark.fixed_elsewhere', {{selected, benchmark}}));
+  const unavailable = Array.from(document.querySelectorAll('.benchmark-button:disabled'))
+    .map(button => tr(`benchmark.unavailable.${{button.dataset.unavailableReason}}`, {{selected: button.dataset.benchmark}}));
+  document.getElementById('benchmark-note').textContent = [...notes, ...unavailable].join(' ');
+  document.getElementById('benchmark-ending-label').textContent = tr(
+    'performance.benchmark_ending', {{benchmark: selected}},
+  );
   document.getElementById('ending-value').textContent = money(p.ending_value);
   document.getElementById('benchmark-ending').textContent = money(p.initial_investment * (1 + p.benchmark.total_return));
   document.getElementById('relative-copy').textContent = tr('performance.relative', {{
-    value: pct(p.relative_total_return), benchmark,
+    value: pct(p.relative_total_return), benchmark: selected,
   }});
-  document.getElementById('brief-period-label').textContent = uiLanguage === 'zh' ? label.replace('Y', ' 年') : label;
-  document.querySelectorAll('.period-button').forEach(button => {{
-    button.textContent = uiLanguage === 'zh' ? button.dataset.period.replace('Y', ' 年') : button.dataset.period;
-  }});
-  document.getElementById('total-return').textContent = pct(p.asset.total_return);
   document.getElementById('cagr').textContent = pct(p.asset.cagr);
-  document.getElementById('max-drawdown').textContent = plainPct(p.asset.max_drawdown);
   document.getElementById('volatility').textContent = plainPct(p.asset.annualized_volatility);
   document.getElementById('beta').textContent = decimal(p.beta);
   document.getElementById('correlation').textContent = decimal(p.correlation);
@@ -1988,7 +2170,7 @@ function setPeriod(label) {{
   riskCopy.textContent = tr('performance.risk_copy', {{
     asset: plainPct(p.asset.max_drawdown),
     benchmark_drawdown: plainPct(p.benchmark.max_drawdown),
-    benchmark,
+    benchmark: selected,
     date: p.asset.max_drawdown_date,
     recovery,
   }});
@@ -2026,11 +2208,12 @@ svg.addEventListener('pointermove', event => {{
   hoverLine.setAttribute('x1',xx); hoverLine.setAttribute('x2',xx); hoverLine.style.opacity=1;
   assetPoint.setAttribute('cx',xx); assetPoint.setAttribute('cy',chartScale.y(row.asset_value)); assetPoint.style.opacity=1;
   benchmarkPoint.setAttribute('cx',xx); benchmarkPoint.setAttribute('cy',chartScale.y(row.benchmark_value)); benchmarkPoint.style.opacity=1;
-  tooltip.innerHTML=`<b>${{row.date}}</b><span>${{ticker}} ${{money(row.asset_value)}}</span><span>${{benchmark}} ${{money(row.benchmark_value)}}</span>`;
+  tooltip.innerHTML=`<b>${{row.date}}</b><span>${{ticker}} ${{money(row.asset_value)}}</span><span>${{historyBenchmark}} ${{money(row.benchmark_value)}}</span>`;
   tooltip.style.left=`${{Math.min(Math.max(event.clientX-rect.left,90),rect.width-90)}}px`; tooltip.classList.add('visible');
 }});
 svg.addEventListener('pointerleave', hideTooltip);
 document.querySelectorAll('.period-button').forEach(button => button.addEventListener('click',()=>setPeriod(button.dataset.period)));
+document.querySelectorAll('.benchmark-button').forEach(button => button.addEventListener('click',()=>setBenchmark(button.dataset.benchmark)));
 setPeriod({json.dumps(default_period)});
 
 const askForm = document.getElementById('ask-form');
@@ -2122,11 +2305,11 @@ function refreshAskTask(forceQuestion=false) {{
   lastGuidedQuestion = nextQuestion;
 }}
 
-function selectAskTask(task) {{
+function selectAskTask(task, focusQuestion=true) {{
   if (!askTaskDefinitions[task]) return;
   activeAskTask = task;
   refreshAskTask(true);
-  askQuestion.focus();
+  if (focusQuestion) askQuestion.focus();
 }}
 
 function setAskStatus(message, state='') {{
@@ -2245,8 +2428,11 @@ askTaskTabs.forEach((tab, index) => {{
     event.preventDefault();
     const direction = event.key === 'ArrowRight' ? 1 : -1;
     const nextIndex = (index + direction + askTaskTabs.length) % askTaskTabs.length;
-    askTaskTabs[nextIndex].focus();
-    selectAskTask(askTaskTabs[nextIndex].dataset.askTask);
+    const next = askTaskTabs[nextIndex];
+    const fold = next.closest('details');
+    if (fold && !fold.open) fold.open = true;
+    next.focus();
+    selectAskTask(next.dataset.askTask, false);
   }});
 }});
 
@@ -2597,13 +2783,13 @@ const indexTranslations = {
     'method.expand': 'Under the hood',
     'method.intro': 'Every page follows one order: historical picture, latest SEC disclosure, then company-specific context. Broad market headlines and implementation details stay off the company page so they cannot be mistaken for company evidence.',
     'method.history': 'History',
-    'method.history_copy': 'Price and risk versus SPY',
+    'method.history_copy': 'Return and risk against the S&P 500 ETF (SPY)',
     'method.disclosure': 'Disclosure',
     'method.disclosure_copy': 'What the latest 8-K actually says',
     'method.boundary': 'Boundary',
     'method.boundary_copy': 'Citations, limitations, no forecast',
-    'method.research': 'How the ranking was audited',
-    'method.research_copy': 'The leakage ladder, the intervals, and what the label cannot claim',
+    'method.research': 'Behind the filing research',
+    'method.research_copy': 'Evaluation methods, uncertainty, and limitations',
     'method.earnings': 'Expected reporting dates',
     'method.earnings_copy': "Estimated reporting windows, inferred from each issuer’s filing history",
     'method.tech': 'Under the hood: point-in-time SEC ingestion, return and risk calculations, deterministic NLP change filtering, and an optional source-bounded LLM explanation layer.',
@@ -2640,13 +2826,13 @@ const indexTranslations = {
     'method.expand': '技术细节',
     'method.intro': '每个公司页按同一顺序呈现：长期历史表现、最新 SEC 披露、公司相关信息。宽泛市场新闻和实现细节不会混入公司证据。',
     'method.history': '历史表现',
-    'method.history_copy': '价格与风险对比 SPY',
+    'method.history_copy': '与标普 500 ETF（SPY）比较收益和风险',
     'method.disclosure': '公司披露',
     'method.disclosure_copy': '最新 8-K 实际说了什么',
     'method.boundary': '证据边界',
     'method.boundary_copy': '引用、局限与不预测原则',
-    'method.research': '排序是怎么审计的',
-    'method.research_copy': '泄漏阶梯、误差区间，以及这个标签不能声称什么',
+    'method.research': '公告研究的方法与局限',
+    'method.research_copy': '展开查看评估方法、不确定性和研究边界',
     'method.earnings': '预计财报日期',
     'method.earnings_copy': '根据历史申报节奏估计的时间窗口，并非公司公告日期',
     'method.tech': '技术基础：时点正确的 SEC 数据摄取、回报与风险计算、确定性 NLP 变化过滤，以及可选的来源受限 LLM 解释层。',
@@ -2765,7 +2951,7 @@ applyIndexLanguage(savedIndexLanguage === 'zh' ? 'zh' : 'en', false);
 def _css() -> str:
     return """
 :root{--paper:#f5f4ec;--panel:#fff;--ink:#183c35;--muted:#657567;--line:#d8ddd3;--blue:#426b50;--blue-soft:#e9efdf;--green:#14765d;--green-soft:#eaf6f0;--amber:#a96418;--amber-soft:#fff5e8;--navy:#183c35;--shadow:0 18px 50px rgba(24,42,53,.08)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.55}.topbar{height:70px;padding:0 max(28px,calc((100vw - 1240px)/2));display:flex;align-items:center;border-bottom:1px solid var(--line);background:rgba(245,244,236,.94);position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:10px;color:var(--navy);font-weight:760;text-decoration:none;letter-spacing:-.02em}.brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--navy);color:white;font-size:11px;letter-spacing:.04em}.topbar nav{display:flex;align-items:center;margin-left:55px;gap:8px}.company-search-link{padding:7px 10px;border-radius:8px;color:var(--muted);font-size:12px;font-weight:700;text-decoration:none}.company-search-link:hover{background:var(--panel);color:var(--ink)}.current-symbol{padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.06em}.site-link{padding:7px 9px;border-radius:7px;color:var(--muted);font-size:11px;font-weight:750;text-decoration:none;white-space:nowrap}.site-link:hover{background:var(--panel);color:var(--blue)}.trust-label{margin-left:auto;color:var(--green);font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.08em}.language-toggle{margin-left:14px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:750 11px/1.2 "Avenir Next","Segoe UI",sans-serif;cursor:pointer}.language-toggle:hover{border-color:#aebbc0;color:var(--blue)}.language-toggle:focus-visible{outline:3px solid rgba(66,107,80,.18);outline-offset:2px}main{max-width:1240px;margin:auto;padding:30px 28px 90px}.company-hero{display:flex;justify-content:space-between;align-items:end;padding:65px 0 48px}.eyebrow{margin:0 0 10px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.13em}.company-title{display:flex;align-items:center;gap:16px}.company-title h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,5vw,68px);font-weight:500;line-height:1.05;letter-spacing:-.045em}.company-title>span{padding:7px 10px;background:var(--navy);border-radius:8px;color:#fff;font-size:13px;font-weight:800;letter-spacing:.06em}.hero-copy{max-width:650px;margin:17px 0 0;color:var(--muted);font-size:18px}.market-observation{min-width:220px;padding-left:25px;border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-end}.market-observation span,.ending-card>span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}.market-observation strong{font-family:Georgia,serif;font-size:38px;font-weight:500}.market-observation small{color:var(--muted)}section{margin-bottom:28px;padding:38px;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 1px 0 rgba(255,255,255,.6)}.section-heading{display:flex;align-items:start;justify-content:space-between;gap:24px}.section-heading h2,.trust-section h2{margin:0;font-family:Georgia,serif;font-size:34px;font-weight:500;letter-spacing:-.025em}.mode-badge,.freshness{padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.brief-section{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:var(--shadow)}.brief-section .eyebrow{color:#78a7ff}.brief-section .mode-badge{border-color:#476656;color:#aebfca}.brief-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:28px;background:#476656;border:1px solid #476656;border-radius:14px;overflow:hidden}.brief-card{min-height:190px;padding:25px;background:#122d41}.brief-card>span{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.brief-card.observed>span{color:#80aaff}.brief-card.calculated>span{color:#5fd0aa}.brief-card.interpreted>span{color:#e9b66d}.brief-card p{font-family:Georgia,serif;font-size:20px;line-height:1.45}.claim-links{display:flex;gap:8px}.claim-links a{font-size:11px;color:#daefc6;text-decoration:none;border-bottom:1px solid #6e8290}.authority-row{display:flex;gap:25px;margin-top:22px;color:#aebfca;font-size:11px}.authority-row span{display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%}.dot.observed{background:#80aaff}.dot.calculated{background:#5fd0aa}.dot.interpreted{background:#e9b66d}.performance-section{padding-bottom:30px}.performance-heading{align-items:center}.period-control{display:flex;padding:4px;background:var(--paper);border-radius:10px}.period-button{border:0;background:transparent;padding:7px 13px;border-radius:7px;color:var(--muted);font-weight:750;cursor:pointer}.period-button:hover{color:var(--ink)}.period-button.active{background:var(--panel);color:var(--blue);box-shadow:0 2px 8px rgba(20,40,55,.08)}.section-intro{max-width:730px;margin:10px 0 28px;color:var(--muted)}.performance-layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:18px}.chart-panel{position:relative;border:1px solid var(--line);border-radius:14px;padding:18px;background:#fbfcfc}.chart-legend{height:25px;display:flex;align-items:center;gap:18px;color:var(--muted);font-size:11px}.chart-legend span:last-child{margin-left:auto}.line{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}.line.asset{background:var(--blue)}.line.benchmark{background:#8a969e}#growth-chart{display:block;width:100%;overflow:visible}#growth-chart path{fill:none;stroke-linecap:round;stroke-linejoin:round}#asset-path{stroke:var(--blue);stroke-width:3}#benchmark-path{stroke:#99a4ab;stroke-width:2}#chart-grid line{stroke:#e6eaeb;stroke-width:1}#chart-labels text{font-size:10px;fill:#7c888f}#hover-line{stroke:#91a0a8;stroke-dasharray:3 3;opacity:0;pointer-events:none}#asset-point{fill:var(--blue);stroke:white;stroke-width:2;opacity:0}#benchmark-point{fill:#89969e;stroke:white;stroke-width:2;opacity:0}.chart-hit{fill:transparent;cursor:crosshair}.chart-tooltip{position:absolute;top:72px;transform:translateX(-50%);display:none;min-width:155px;padding:10px 12px;background:var(--navy);color:#fff;border-radius:9px;box-shadow:var(--shadow);pointer-events:none;font-size:11px}.chart-tooltip.visible{display:flex;flex-direction:column}.chart-tooltip b{margin-bottom:4px}.ending-card{padding:24px;background:var(--blue-soft);border-radius:14px;display:flex;flex-direction:column}.ending-card>strong{margin:8px 0 2px;font-family:Georgia,serif;font-size:34px;font-weight:500;color:#173f91}.ending-card>small{color:#4d6d9f}.mini-comparison{margin-top:auto;padding-top:18px;border-top:1px solid #cfdbf3;display:flex;flex-direction:column;color:#4d6d9f;font-size:11px}.mini-comparison b{font-size:17px;color:#173f91}.metric-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:18px}.metric-card{padding:16px;border:1px solid var(--line);border-radius:12px}.metric-card>span{display:flex;justify-content:space-between;min-height:36px;color:var(--muted);font-size:11px;font-weight:700}.metric-card i{display:grid;place-items:center;width:17px;height:17px;border:1px solid var(--line);border-radius:50%;font-style:normal}.metric-card strong{display:block;font-family:Georgia,serif;font-size:25px;font-weight:500}.metric-card small{display:none}.risk-note{display:flex;gap:20px;margin-top:18px;padding:15px 18px;border-left:3px solid var(--amber);background:var(--amber-soft);color:#664b2e;font-size:13px}.risk-note strong{min-width:130px}.filing-list{display:flex;flex-direction:column;gap:10px}.filing-card{border:1px solid var(--line);border-radius:14px;overflow:hidden}.filing-card summary{list-style:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}.filing-card summary::-webkit-details-marker{display:none}.filing-card summary>div:first-child{display:grid;grid-template-columns:auto 1fr;gap:2px 11px;align-items:center}.filing-card summary strong{font-size:15px}.filing-card summary small{grid-column:2;color:var(--muted)}.filing-form{grid-row:1/3;padding:7px 9px;background:var(--green-soft);color:var(--green);border-radius:8px;font-weight:800}.filing-summary-meta{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:12px}.filing-summary-meta i{font-size:18px;transition:transform .2s}.filing-card[open] .filing-summary-meta i{transform:rotate(180deg)}.filing-body{padding:0 20px 22px;border-top:1px solid var(--line);background:#fbfcfc}.filing-items{display:flex;flex-wrap:wrap;gap:7px;padding:16px 0}.item-chip,.number-chip{padding:5px 8px;border-radius:7px;background:var(--paper);color:var(--muted);font-size:11px;text-decoration:none}.number-chip{background:var(--blue-soft);color:#2855a7;font-weight:750}.filing-columns{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:30px}.filing-columns h3{margin:16px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em}.number-list{display:flex;flex-wrap:wrap;gap:6px}.passages{display:flex;flex-direction:column;gap:8px}blockquote{margin:0;padding:14px 16px;border-left:2px solid #9db8ed;background:#fff}blockquote p{margin:0 0 7px;font-family:Georgia,serif;font-size:15px}blockquote a,.filing-columns aside a{color:var(--blue);font-size:10px;text-decoration:none}.filing-columns aside{padding:16px;border-radius:10px;background:var(--paper);display:flex;flex-direction:column;align-items:start;gap:8px;font-size:11px;color:var(--muted)}.filing-columns aside>span{text-transform:uppercase;letter-spacing:.08em}.filing-columns aside code{word-break:break-all;color:var(--ink)}.missing,.empty{color:var(--muted);font-size:12px;font-style:italic}.trust-section{background:#e9ece9}.trust-section>.eyebrow{color:var(--green)}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:28px}.trust-grid article{padding:20px;background:rgba(255,255,255,.6);border-radius:12px}.trust-grid article>span{font-family:Georgia,serif;color:var(--green);font-size:24px}.trust-grid h3{margin:8px 0 4px}.trust-grid p{margin:0;color:var(--muted);font-size:13px}footer{max-width:1240px;margin:auto;padding:28px;display:flex;justify-content:space-between;border-top:1px solid var(--line);color:var(--muted);font-size:12px}footer>div:first-child{display:flex;flex-direction:column}.footer-meta{display:flex;gap:20px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.55}.topbar{height:70px;padding:0 max(28px,calc((100vw - 1240px)/2));display:flex;align-items:center;border-bottom:1px solid var(--line);background:rgba(245,244,236,.94);position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:10px;color:var(--navy);font-weight:760;text-decoration:none;letter-spacing:-.02em}.brand-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--navy);color:white;font-size:11px;letter-spacing:.04em}.topbar nav{display:flex;align-items:center;margin-left:55px;gap:8px}.company-search-link{padding:7px 10px;border-radius:8px;color:var(--muted);font-size:12px;font-weight:700;text-decoration:none}.company-search-link:hover{background:var(--panel);color:var(--ink)}.current-symbol{padding:5px 8px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.06em}.site-link{padding:7px 9px;border-radius:7px;color:var(--muted);font-size:11px;font-weight:750;text-decoration:none;white-space:nowrap}.site-link:hover{background:var(--panel);color:var(--blue)}.trust-label{margin-left:auto;color:var(--green);font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.08em}.language-toggle{margin-left:14px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);font:750 11px/1.2 "Avenir Next","Segoe UI",sans-serif;cursor:pointer}.language-toggle:hover{border-color:#aebbc0;color:var(--blue)}.language-toggle:focus-visible{outline:3px solid rgba(66,107,80,.18);outline-offset:2px}main{max-width:1240px;margin:auto;padding:30px 28px 90px}.company-hero{display:flex;justify-content:space-between;align-items:end;padding:65px 0 48px}.eyebrow{margin:0 0 10px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:.13em}.company-title{display:flex;align-items:center;gap:16px}.company-title h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,5vw,68px);font-weight:500;line-height:1.05;letter-spacing:-.045em}.company-title>span{padding:7px 10px;background:var(--navy);border-radius:8px;color:#fff;font-size:13px;font-weight:800;letter-spacing:.06em}.hero-copy{max-width:650px;margin:17px 0 0;color:var(--muted);font-size:18px}.market-observation{min-width:220px;padding-left:25px;border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:flex-end}.market-observation span,.ending-card>span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}.market-observation strong{font-family:Georgia,serif;font-size:38px;font-weight:500}.market-observation small{color:var(--muted)}section{margin-bottom:28px;padding:38px;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 1px 0 rgba(255,255,255,.6)}.section-heading{display:flex;align-items:start;justify-content:space-between;gap:24px}.section-heading h2,.trust-section h2{margin:0;font-family:Georgia,serif;font-size:34px;font-weight:500;letter-spacing:-.025em}.mode-badge,.freshness{padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.brief-section{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:var(--shadow)}.brief-section .eyebrow{color:#78a7ff}.brief-section .mode-badge{border-color:#476656;color:#aebfca}.brief-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:28px;background:#476656;border:1px solid #476656;border-radius:14px;overflow:hidden}.brief-card{min-height:190px;padding:25px;background:#122d41}.brief-card>span{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.brief-card.observed>span{color:#80aaff}.brief-card.calculated>span{color:#5fd0aa}.brief-card.interpreted>span{color:#e9b66d}.brief-card p{font-family:Georgia,serif;font-size:20px;line-height:1.45}.claim-links{display:flex;gap:8px}.claim-links a{font-size:11px;color:#daefc6;text-decoration:none;border-bottom:1px solid #6e8290}.authority-row{display:flex;gap:25px;margin-top:22px;color:#aebfca;font-size:11px}.authority-row span{display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%}.dot.observed{background:#80aaff}.dot.calculated{background:#5fd0aa}.dot.interpreted{background:#e9b66d}.performance-section{padding-bottom:30px}.performance-heading{align-items:center}.period-control{display:flex;padding:4px;background:var(--paper);border-radius:10px}.period-button{border:0;background:transparent;padding:7px 13px;border-radius:7px;color:var(--muted);font-weight:750;cursor:pointer}.period-button:hover{color:var(--ink)}.period-button.active{background:var(--panel);color:var(--blue);box-shadow:0 2px 8px rgba(20,40,55,.08)}.history-controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.benchmark-control{display:flex;padding:4px;background:var(--paper);border-radius:10px}.benchmark-button{border:0;background:transparent;padding:7px 13px;border-radius:7px;color:var(--muted);font-weight:750;cursor:pointer}.benchmark-button:hover{color:var(--ink)}.benchmark-button.active{background:var(--panel);color:var(--blue);box-shadow:0 2px 8px rgba(20,40,55,.08)}.benchmark-button:disabled,.period-button:disabled{opacity:.4;cursor:not-allowed}.benchmark-note{max-width:730px;margin:-18px 0 22px;color:var(--muted);font-size:12px}.benchmark-note:empty{display:none}.section-intro{max-width:730px;margin:10px 0 28px;color:var(--muted)}.performance-layout{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:18px}.chart-panel{position:relative;border:1px solid var(--line);border-radius:14px;padding:18px;background:#fbfcfc}.chart-legend{height:25px;display:flex;align-items:center;gap:18px;color:var(--muted);font-size:11px}.chart-legend>span:last-child{margin-left:auto}.line{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}.line.asset{background:var(--blue)}.line.benchmark{background:#8a969e}#growth-chart{display:block;width:100%;overflow:visible}#growth-chart path{fill:none;stroke-linecap:round;stroke-linejoin:round}#asset-path{stroke:var(--blue);stroke-width:3}#benchmark-path{stroke:#99a4ab;stroke-width:2}#chart-grid line{stroke:#e6eaeb;stroke-width:1}#chart-labels text{font-size:10px;fill:#7c888f}#hover-line{stroke:#91a0a8;stroke-dasharray:3 3;opacity:0;pointer-events:none}#asset-point{fill:var(--blue);stroke:white;stroke-width:2;opacity:0}#benchmark-point{fill:#89969e;stroke:white;stroke-width:2;opacity:0}.chart-hit{fill:transparent;cursor:crosshair}.chart-tooltip{position:absolute;top:72px;transform:translateX(-50%);display:none;min-width:155px;padding:10px 12px;background:var(--navy);color:#fff;border-radius:9px;box-shadow:var(--shadow);pointer-events:none;font-size:11px}.chart-tooltip.visible{display:flex;flex-direction:column}.chart-tooltip b{margin-bottom:4px}.ending-card{padding:24px;background:var(--blue-soft);border-radius:14px;display:flex;flex-direction:column}.ending-card>strong{margin:8px 0 2px;font-family:Georgia,serif;font-size:34px;font-weight:500;color:#173f91}.ending-card>small{color:#4d6d9f}.mini-comparison{margin-top:auto;padding-top:18px;border-top:1px solid #cfdbf3;display:flex;flex-direction:column;color:#4d6d9f;font-size:11px}.mini-comparison b{font-size:17px;color:#173f91}.metric-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:18px}.metric-card{padding:16px;border:1px solid var(--line);border-radius:12px}.metric-card>span{display:flex;justify-content:space-between;min-height:36px;color:var(--muted);font-size:11px;font-weight:700}.metric-card i{display:grid;place-items:center;width:17px;height:17px;border:1px solid var(--line);border-radius:50%;font-style:normal}.metric-card strong{display:block;font-family:Georgia,serif;font-size:25px;font-weight:500}.metric-card small{display:none}.risk-note{display:flex;gap:20px;margin-top:18px;padding:15px 18px;border-left:3px solid var(--amber);background:var(--amber-soft);color:#664b2e;font-size:13px}.risk-note strong{min-width:130px}.filing-list{display:flex;flex-direction:column;gap:10px}.filing-card{border:1px solid var(--line);border-radius:14px;overflow:hidden}.filing-card summary{list-style:none;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}.filing-card summary::-webkit-details-marker{display:none}.filing-card summary>div:first-child{display:grid;grid-template-columns:auto 1fr;gap:2px 11px;align-items:center}.filing-card summary strong{font-size:15px}.filing-card summary small{grid-column:2;color:var(--muted)}.filing-form{grid-row:1/3;padding:7px 9px;background:var(--green-soft);color:var(--green);border-radius:8px;font-weight:800}.filing-summary-meta{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:12px}.filing-summary-meta i{font-size:18px;transition:transform .2s}.filing-card[open] .filing-summary-meta i{transform:rotate(180deg)}.filing-body{padding:0 20px 22px;border-top:1px solid var(--line);background:#fbfcfc}.filing-items{display:flex;flex-wrap:wrap;gap:7px;padding:16px 0}.item-chip,.number-chip{padding:5px 8px;border-radius:7px;background:var(--paper);color:var(--muted);font-size:11px;text-decoration:none}.number-chip{background:var(--blue-soft);color:#2855a7;font-weight:750}.filing-columns{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:30px}.filing-columns h3{margin:16px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em}.number-list{display:flex;flex-wrap:wrap;gap:6px}.passages{display:flex;flex-direction:column;gap:8px}blockquote{margin:0;padding:14px 16px;border-left:2px solid #9db8ed;background:#fff}blockquote p{margin:0 0 7px;font-family:Georgia,serif;font-size:15px}blockquote a,.filing-columns aside a{color:var(--blue);font-size:10px;text-decoration:none}.filing-columns aside{padding:16px;border-radius:10px;background:var(--paper);display:flex;flex-direction:column;align-items:start;gap:8px;font-size:11px;color:var(--muted)}.filing-columns aside>span{text-transform:uppercase;letter-spacing:.08em}.filing-columns aside code{word-break:break-all;color:var(--ink)}.missing,.empty{color:var(--muted);font-size:12px;font-style:italic}.trust-section{background:#e9ece9}.trust-section>.eyebrow{color:var(--green)}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:28px}.trust-grid article{padding:20px;background:rgba(255,255,255,.6);border-radius:12px}.trust-grid article>span{font-family:Georgia,serif;color:var(--green);font-size:24px}.trust-grid h3{margin:8px 0 4px}.trust-grid p{margin:0;color:var(--muted);font-size:13px}footer{max-width:1240px;margin:auto;padding:28px;display:flex;justify-content:space-between;border-top:1px solid var(--line);color:var(--muted);font-size:12px}footer>div:first-child{display:flex;flex-direction:column}.footer-meta{display:flex;gap:20px}
 .freshness-group{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}.entity-chip{display:inline-flex;align-items:center;gap:6px}.entity-chip small{padding-right:6px;border-right:1px solid #b9c9e8;color:#60749a;font-size:8px;text-transform:uppercase;letter-spacing:.05em}.entity-mark{padding:1px 3px;border-radius:3px;background:#e8efff;color:inherit}.entity-mark.percentage{background:#e7f5ee}.entity-mark.date{background:#fff0da}.reaction-panel{margin:0 0 14px;padding:18px;border:1px solid #cfe0d8;border-radius:12px;background:#f3f8f5}.reaction-heading{display:flex;justify-content:space-between;gap:20px}.reaction-heading>div{display:flex;flex-direction:column}.reaction-heading span{color:var(--green);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.reaction-heading strong{font-size:13px}.reaction-heading>small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em}.reaction-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}.reaction-grid>div{padding:12px;border:1px solid #dbe8e1;border-radius:9px;background:#fff;display:flex;flex-direction:column}.reaction-grid span{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em}.reaction-grid strong{margin:3px 0;font-family:Georgia,serif;font-size:19px;font-weight:500}.reaction-grid small,.reaction-panel>p{color:var(--muted);font-size:10px}.reaction-panel>p{margin:12px 0 0}.reaction-empty{display:flex;flex-direction:column;margin:0 0 14px;padding:13px 15px;border:1px dashed #cfe0d8;border-radius:10px;color:var(--muted);font-size:11px}.reaction-empty strong{color:var(--ink)}.comparison-panel{margin:0 0 22px;padding:18px;border:1px solid #cddbed;border-radius:12px;background:#f5f8fd}.comparison-heading{display:flex;justify-content:space-between;gap:20px}.comparison-heading>div{display:flex;flex-direction:column}.comparison-heading span{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em}.comparison-heading strong{font-size:13px}.comparison-heading a,.change-quote a{color:var(--blue);font-size:10px;text-decoration:none}.change-counts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.change-count{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:750}.change-count.changed{background:#fff1d8;color:#825616}.change-count.added{background:var(--green-soft);color:var(--green)}.change-count.removed{background:#f8e9e7;color:#98473e}.change-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.change-card{padding:12px;border:1px solid var(--line);border-radius:9px;background:#fff}.change-card header{display:flex;justify-content:space-between;gap:10px}.change-card header>strong{font-size:11px;text-transform:uppercase;letter-spacing:.07em}.similarity{color:var(--muted);font-size:10px}.change-quote{margin-top:9px;padding-left:9px;border-left:2px solid #b9c8df}.change-quote>span{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em}.change-quote p{margin:2px 0 5px;font-family:Georgia,serif;font-size:13px;line-height:1.4}.comparison-empty{display:flex;flex-direction:column;margin:0 0 22px;padding:13px 15px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:11px}.comparison-empty strong{color:var(--ink)}.profile-category{margin:18px 0 0;color:var(--blue);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.09em}.hero-copy{margin-top:6px}.profile-meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;color:var(--muted);font-size:11px}.profile-meta a{color:var(--blue);text-decoration:none;border-bottom:1px solid #aac0eb}.metric-grid{grid-template-columns:repeat(4,1fr)}
 .timeline-panel{margin:0 0 20px;padding:18px;border:1px solid var(--line);border-radius:12px;background:#fbfcfc}.timeline-heading{display:flex;justify-content:space-between;gap:20px}.timeline-heading>div{display:flex;flex-direction:column}.timeline-heading span{color:var(--blue);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.timeline-heading strong{font-size:13px}.timeline-heading>small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em}.timeline-track{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(155px,1fr);gap:8px;margin-top:16px;padding-top:14px;overflow-x:auto;scrollbar-width:thin}.timeline-track:before{content:"";position:absolute;top:20px;left:12px;right:12px;height:1px;background:var(--line)}.timeline-event{position:relative;min-height:145px;padding:20px 12px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);text-decoration:none;display:flex;flex-direction:column}.timeline-event>i{position:absolute;top:-10px;left:14px;width:13px;height:13px;border:3px solid #fff;border-radius:50%;background:#8d989f;box-shadow:0 0 0 1px var(--line)}.timeline-event.positive>i{background:var(--green)}.timeline-event.negative>i{background:#a74e43}.timeline-event>span,.timeline-event>small{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em}.timeline-event>strong{margin:5px 0 2px;font-size:11px;line-height:1.35}.timeline-event>b{margin-top:auto;font-size:12px}.timeline-event>em{color:var(--muted);font-size:9px;font-style:normal}.timeline-panel>p{margin:11px 0 0;color:var(--muted);font-size:10px}
 .topbar .section-nav{margin-left:auto;gap:3px}.section-nav a{padding:7px 9px;border-radius:7px;color:var(--muted);font-size:11px;font-weight:750;text-decoration:none}.section-nav a:hover{background:var(--panel);color:var(--blue)}.trust-label{margin-left:22px}.company-hero{padding:46px 0 34px}.evidence-flow{display:flex;align-items:center;gap:9px;margin-top:18px;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.evidence-flow span{padding:5px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.62)}.evidence-flow i{color:var(--blue);font-style:normal}.brief-section{background:linear-gradient(135deg,#0d2436 0%,#132f43 100%)}.brief-intro{max-width:680px;margin:9px 0 0;color:#aebfca;font-size:13px}.brief-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;margin-top:26px;background:transparent;border:0;border-radius:0;overflow:visible}.brief-card{min-height:0;padding:24px;border:1px solid #476656;border-radius:13px;background:rgba(16,43,62,.82)}.brief-lead{grid-column:span 7;background:linear-gradient(145deg,#173a55,#122d41)}.brief-numbers{grid-column:span 5;background:#102f38}.brief-reading,.brief-limit{grid-column:span 6}.brief-limit{background:#302c2a;border-color:#5b4a3b}.brief-card>span,.brief-card-heading>span{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.11em}.brief-card.observed>span,.brief-card.observed .brief-card-heading>span{color:#80aaff}.brief-card.calculated>span{color:#5fd0aa}.brief-card.interpreted>span{color:#b7c9ff}.brief-card.guardrail>span{color:#e9b66d}.brief-card-heading{display:flex;justify-content:space-between;gap:18px}.brief-lead a,.brief-numbers a{color:#daefc6;font-size:10px;text-decoration:none;border-bottom:1px solid #6e8290}.filing-lead-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px 16px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}.filing-lead-header .eyebrow{margin:0 0 4px}.filing-lead-header h3{margin:0;font-size:18px;line-height:1.25}.filing-lead-header small{color:var(--muted)}.filing-lead-header a{color:var(--blue);font-size:11px;font-weight:750;text-decoration:none}.filing-lead .filing-body{border-top:0}.brief-card h3{max-width:540px;margin:18px 0 7px;font-family:Georgia,serif;font-size:26px;font-weight:500;line-height:1.15}.brief-card p{margin:11px 0;font-family:Georgia,serif;font-size:17px;line-height:1.48}.brief-lead>p{font-size:19px}.brief-meta{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 8px}.brief-meta span{padding:5px 7px;border:1px solid #466177;border-radius:6px;color:#bacad4;font-size:9px}.brief-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:19px 0 14px}.brief-metrics>div{padding:14px;border:1px solid #28514e;border-radius:10px;background:rgba(9,33,37,.55)}.brief-metrics strong{display:block;font-family:Georgia,serif;font-size:31px;font-weight:500;color:#77ddb8}.brief-metrics small{color:#9bb9ae;font-size:9px;text-transform:uppercase;letter-spacing:.06em}.brief-numbers p{color:#b8c9c4;font-family:inherit;font-size:11px}.claim-links{flex-wrap:wrap}.authority-row{align-items:center}.authority-row span b{color:#fff;font-size:9px}.authority-row>em{color:#627786;font-style:normal}.diagnostic-heading{display:flex;justify-content:space-between;align-items:end;margin-top:22px;padding-top:17px;border-top:1px solid var(--line)}.diagnostic-heading span{font-size:12px;font-weight:800}.diagnostic-heading small{color:var(--muted);font-size:10px}.metric-grid{grid-template-columns:repeat(3,1fr);margin-top:10px}.metric-card{background:#fbfcfc;transition:border-color .18s,transform .18s}.metric-card:hover{border-color:#b9c9d8;transform:translateY(-1px)}.trust-grid article>b{display:block;margin-top:7px;color:var(--green);font-size:8px;letter-spacing:.1em}#brief,#ask,#performance,#filings,#context,#page-nav,#method{scroll-margin-top:150px}.section-nav a:focus-visible,.brief-card a:focus-visible,.headline-card a:focus-visible{outline:3px solid #80aaff;outline-offset:3px}
@@ -2777,7 +2963,7 @@ def _css() -> str:
 @media(max-width:620px){.profile-meta{flex-direction:column;align-items:flex-start;gap:3px}.timeline-heading,.reaction-heading,.comparison-heading{flex-direction:column;gap:6px}.reaction-grid,.change-list{grid-template-columns:1fr}.timeline-track{grid-auto-columns:minmax(145px,72vw)}.topbar .section-nav,.company-search-link{display:none}.topbar .company-nav .site-link{margin-left:auto;color:var(--muted);font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}.company-nav .site-link+.site-link{margin-left:16px}.company-nav .site-link:hover{color:var(--blue)}.company-nav{margin-left:auto}.company-hero{padding:24px 0 18px;gap:13px}.hero-copy{font-size:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.profile-meta>span{display:none}.profile-meta{margin-top:8px}.evidence-flow{display:none}.market-observation{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);align-items:flex-start}.market-observation strong{font-size:29px}.brief-card{padding:19px}.brief-card h3{font-size:22px}.brief-card p,.brief-lead>p{font-size:16px}.brief-card-heading{flex-direction:column;gap:5px}.brief-metrics{grid-template-columns:1fr 1fr}.authority-row{gap:8px}.authority-row>em{display:none}.diagnostic-heading{align-items:start;flex-direction:column;gap:2px}.metric-grid{grid-template-columns:1fr 1fr}.metric-card{padding:13px}.trust-grid{gap:8px}}
 body{font-family:"Avenir Next","Segoe UI",sans-serif}.company-hero{border:0;border-radius:0;background:transparent;box-shadow:none;margin-bottom:0}.brief-section{border-radius:8px}.brief-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:0;border-top:1px solid #476656;border-bottom:1px solid #476656}.brief-card{border:0;border-radius:0;background:transparent}.brief-lead{border-right:1px solid #476656}.brief-metrics>div{padding:10px 0;border:0;border-radius:0;background:transparent}.brief-metrics>div+div{padding-left:18px;border-left:1px solid #28514e}.brief-boundary{grid-column:1/-1;margin:0;padding:17px 24px;color:#aebfca;font-size:12px}.brief-boundary strong{color:#e9b66d}.performance-section,.filings-section,.context-section{padding:58px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}.diagnostics-disclosure{margin-top:20px;border-top:1px solid var(--line)}.diagnostics-disclosure>summary,.source-details>summary{padding:14px 0;color:var(--blue);font-size:12px;font-weight:750;cursor:pointer}.metric-card{border-radius:3px;background:rgba(255,255,255,.55)}.filing-card{border-radius:4px;background:#fff}.filing-card summary{min-height:76px}.reaction-panel,.comparison-panel{border-width:0 0 0 3px;border-radius:0}.reaction-grid>div{border:0;border-left:1px solid #dbe8e1;border-radius:0;background:transparent}.reaction-grid>div:first-child{border-left:0}.comparison-clear{display:flex;flex-direction:column;margin-top:14px;color:var(--muted);font-size:12px}.comparison-clear strong{margin-bottom:3px;color:var(--ink)}.source-details{margin-top:8px;border-top:1px solid var(--line)}.filing-columns aside{border-radius:3px}.context-freshness{margin:-14px 0 20px;color:var(--muted);font-size:10px}.headline-list{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0;border-top:1px solid var(--line)}.headline-card{padding:20px 22px;border:0;border-right:1px solid var(--line);border-radius:0;background:transparent}.headline-card:last-child{border-right:0}.headline-card h3{margin:10px 0 14px}.headline-meta{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px 12px}.headline-meta span:first-child{color:var(--ink);font-weight:750}.headline-card>a{padding-top:2px}footer a{margin-top:5px;color:var(--blue);text-decoration:none}#brief,#ask,#performance,#filings,#context{scroll-margin-top:150px}
 .signal-section{padding:58px 0;border-top:1px solid var(--line)}.signal-badge{padding:8px 14px;border-radius:999px;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.signal-badge.urgent{background:#fbeceb;color:#a4322a;border:1px solid #e8b6b0}.signal-badge.watch{background:#fdf4e3;color:#8a6412;border:1px solid #e6d3a4}.signal-badge.calm{background:#eef5f0;color:#2f6b4a;border:1px solid #bcd8c7}.signal-badge.muted{background:#f2f3f4;color:var(--muted);border:1px solid var(--line)}.signal-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:26px 0 0;background:var(--line);border:1px solid var(--line)}.signal-stats>div{background:#fff;padding:18px 20px}.signal-stats b{display:block;font:500 30px/1 Georgia,serif}.signal-stats span{display:block;margin-top:7px;color:var(--muted);font-size:11px;line-height:1.5}.signal-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;margin-top:26px;align-items:start}.signal-why h3{margin:0 0 10px;font:500 17px/1.3 Georgia,serif}.signal-why ul{margin:0;padding-left:18px}.signal-why li{margin-bottom:7px;font-size:14px;line-height:1.6}.signal-boundary{margin-top:16px;padding:12px 15px;background:#f6f7f8;border-left:3px solid var(--blue);color:var(--muted);font-size:12.5px;line-height:1.6}.signal-chart{margin:0;padding:14px;border:1px solid var(--line);background:#fff}.signal-chart svg{width:100%;height:auto;display:block}.signal-chart .ax{stroke:#d8ddd3;stroke-width:1}.signal-chart .bar{stroke:#c8b48a;stroke-width:1;stroke-dasharray:3 3}.signal-chart .barlab{fill:#a08a5e;font-size:8px;text-anchor:end}.signal-chart .pt{fill:#9fb2c4}.signal-chart .pt.now{fill:var(--blue);stroke:#fff;stroke-width:1.5}.signal-chart figcaption{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:10px}.signal-footer{margin-top:22px;color:var(--muted);font-size:11px}@media(max-width:820px){.signal-grid{grid-template-columns:1fr}}.vol-section{padding:58px 0;border-top:1px solid var(--line)}.vol-bar{margin:26px 0 0}.vol-track{position:relative;height:44px;border:1px solid var(--line);background:#fff}.vol-band{position:absolute;top:0;bottom:0;background:var(--blue-soft);border-left:1px solid #aec2e9;border-right:1px solid #aec2e9}.vol-median{position:absolute;top:0;bottom:0;width:2px;background:var(--blue)}.vol-usual{position:absolute;top:-5px;bottom:-5px;width:1px;background:#a08a5e;border-left:1px dashed #a08a5e}.vol-scale{display:flex;justify-content:space-between;margin-top:6px;color:var(--muted);font-size:10px}@media(max-width:620px){.vol-section{padding:40px 0}}.ask-section{padding:58px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}.ask-validation{padding:7px 10px;border:1px solid #b9d8ca;border-radius:999px;color:var(--green);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.ask-layout{display:grid;grid-template-columns:minmax(0,5fr) minmax(320px,4fr);border:1px solid var(--line);background:var(--panel)}.ask-form{padding:28px;border-right:1px solid var(--line)}.ask-controls{display:grid;grid-template-columns:minmax(0,1fr) 128px minmax(0,150px);gap:12px}.ask-form label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.ask-form select,.ask-form textarea{width:100%;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);font:500 14px/1.5 "Avenir Next","Segoe UI",sans-serif}.ask-form select{height:43px;padding:0 11px}.ask-form textarea{resize:vertical;min-height:90px;padding:12px}.ask-form select:focus,.ask-form textarea:focus{outline:3px solid rgba(66,107,80,.14);border-color:var(--blue)}.ask-question{margin-top:17px}.ask-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ask-suggestions button{padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--blue);font-size:10px;cursor:pointer}.ask-suggestions button:hover{background:var(--blue-soft)}.ask-submit-row{display:flex;align-items:center;gap:13px;margin-top:20px}.ask-submit-row>button{min-width:120px;padding:11px 16px;border:0;border-radius:4px;background:var(--navy);color:#fff;font-weight:800;cursor:pointer}.ask-submit-row>button:disabled{opacity:.45;cursor:not-allowed}.ask-submit-row>span{color:var(--muted);font-size:10px}.ask-submit-row>span.ready{color:var(--green)}.ask-submit-row>span.error{color:#98473e}.ask-result{min-height:330px;padding:28px;background:#f8faf8;color:var(--muted);font-size:13px}.ask-result-kicker,.ask-answer-heading>span{margin:0;color:var(--green);font-size:10px;font-weight:850;letter-spacing:.1em}.ask-result>ol{margin:18px 0 0;padding:0;list-style:none}.ask-result>ol li{display:grid;grid-template-columns:25px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.ask-result>ol li span{color:var(--green);font-weight:850}.ask-result.loading{display:grid;place-items:center}.ask-result.error{display:grid;place-items:center;color:#98473e}.ask-answer-heading{display:flex;justify-content:space-between;gap:15px;padding-bottom:12px;border-bottom:1px solid var(--line)}.ask-answer-heading small{color:var(--muted)}.ask-result article{padding:15px 0;border-bottom:1px solid var(--line)}.ask-result article p{margin:0;color:var(--ink);font:500 17px/1.45 Georgia,serif}.ask-citations{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.ask-citations a{color:var(--blue);font-size:10px;text-decoration:none;border-bottom:1px solid #aec2e9}.ask-limitations{margin-top:15px}.ask-limitations>summary{color:var(--amber);font-size:11px;font-weight:800;cursor:pointer}.ask-limitations article p{font:inherit;color:var(--muted)}.ask-boundary{margin:14px 0 0;color:var(--muted);font-size:10px}.ask-boundary strong{color:var(--ink)}
-.ask-controls{margin-bottom:8px}.ask-scope-note{margin:0 0 22px;color:var(--muted);font-size:10px;line-height:1.5}.ask-scope-note[hidden]{display:none}.ask-step-heading{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}.ask-step-heading>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #b8c8df;border-radius:50%;color:var(--blue);font-size:10px;font-weight:850}.ask-step-heading>div{display:flex;flex-direction:column}.ask-step-heading strong{font-size:12px}.ask-step-heading small{color:var(--muted);font-size:10px}.ask-task-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:13px;border:1px solid var(--line)}.ask-task-tabs button{min-height:48px;padding:8px;border:0;border-left:1px solid var(--line);border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:10px;font-weight:750;cursor:pointer}.ask-task-tabs button:nth-child(-n+3){border-top:0}.ask-task-tabs button:nth-child(3n+1){border-left:0}.ask-task-tabs button:hover{background:var(--blue-soft);color:var(--blue)}.ask-task-tabs button.active{background:var(--navy);color:#fff}.ask-task-tabs button:focus-visible{position:relative;z-index:1;outline:3px solid rgba(66,107,80,.25);outline-offset:1px}.ask-task-preview{padding:15px 17px;border-width:0 1px 1px;border-style:solid;border-color:var(--line);background:#f8fafc;display:grid;grid-template-columns:1fr;gap:3px}.ask-task-preview>span{color:var(--blue);font-size:8px;font-weight:850;letter-spacing:.1em}.ask-task-preview>strong{font:500 18px/1.3 Georgia,serif}.ask-task-preview>p{margin:2px 0 0;color:var(--muted);font-size:11px}.ask-review-step{margin-top:23px}.ask-question{margin-top:10px}.ask-scope-groups{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.ask-scope-group{padding-top:12px;border-top:2px solid var(--green)}.ask-scope-group.out-scope{border-color:#b76a4f}.ask-scope-group>strong{color:var(--ink);font-size:11px}.ask-scope-group ul{margin:10px 0 0;padding-left:17px}.ask-scope-group li{margin:0 0 9px;font-size:11px;line-height:1.45}.ask-scope-group.in-scope li::marker{color:var(--green)}.ask-scope-group.out-scope li::marker{color:#b76a4f}.ask-control-flow{margin-top:18px;padding:12px;border:1px solid #cfe0d8;background:#fff;color:var(--green);font-size:9px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.ask-advanced,.ask-more-tasks{margin:0 0 18px}.ask-advanced>summary,.ask-more-tasks>summary{cursor:pointer;color:var(--green);font-size:12px;font-weight:750;padding:10px 0}.ask-advanced[open]>.ask-controls{margin-top:12px}.ask-controls{margin-bottom:8px}.ask-scope-note{margin:0 0 22px;color:var(--muted);font-size:10px;line-height:1.5}.ask-scope-note[hidden]{display:none}.ask-step-heading{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}.ask-step-heading>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #b8c8df;border-radius:50%;color:var(--blue);font-size:10px;font-weight:850}.ask-step-heading>div{display:flex;flex-direction:column}.ask-step-heading strong{font-size:12px}.ask-step-heading small{color:var(--muted);font-size:10px}.ask-task-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:13px;border:1px solid var(--line)}.ask-task-tabs button{min-height:48px;padding:8px;border:0;border-left:1px solid var(--line);border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:10px;font-weight:750;cursor:pointer}.ask-task-tabs button:nth-child(-n+3){border-top:0}.ask-task-tabs button:nth-child(3n+1){border-left:0}.ask-task-tabs button:hover{background:var(--blue-soft);color:var(--blue)}.ask-task-tabs button.active{background:var(--navy);color:#fff}.ask-task-tabs button:focus-visible{position:relative;z-index:1;outline:3px solid rgba(66,107,80,.25);outline-offset:1px}.ask-task-preview{padding:15px 17px;border-width:0 1px 1px;border-style:solid;border-color:var(--line);background:#f8fafc;display:grid;grid-template-columns:1fr;gap:3px}.ask-task-preview>span{color:var(--blue);font-size:8px;font-weight:850;letter-spacing:.1em}.ask-task-preview>strong{font:500 18px/1.3 Georgia,serif}.ask-task-preview>p{margin:2px 0 0;color:var(--muted);font-size:11px}.ask-review-step{margin-top:23px}.ask-question{margin-top:10px}.ask-scope-groups{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.ask-scope-group{padding-top:12px;border-top:2px solid var(--green)}.ask-scope-group.out-scope{border-color:#b76a4f}.ask-scope-group>strong{color:var(--ink);font-size:11px}.ask-scope-group ul{margin:10px 0 0;padding-left:17px}.ask-scope-group li{margin:0 0 9px;font-size:11px;line-height:1.45}.ask-scope-group.in-scope li::marker{color:var(--green)}.ask-scope-group.out-scope li::marker{color:#b76a4f}.ask-control-flow{margin-top:18px;padding:12px;border:1px solid #cfe0d8;background:#fff;color:var(--green);font-size:9px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:.05em}
 @media(max-width:900px){.brief-lead{border-right:0;border-bottom:1px solid #476656}.headline-card{border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:900px){.ask-layout{grid-template-columns:1fr}.ask-form{border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:620px){.ask-section,.performance-section,.filings-section,.context-section{padding:40px 0}.ask-controls{grid-template-columns:1fr}.ask-form,.ask-result{padding:20px}.ask-submit-row{align-items:flex-start;flex-direction:column}.ask-task-tabs{grid-template-columns:1fr 1fr}.ask-task-tabs button:nth-child(3){border-left:0}.ask-task-tabs button:nth-child(n+3){border-top:1px solid var(--line)}.ask-scope-groups{grid-template-columns:1fr}.brief-section{border-radius:4px}.reaction-grid>div{padding-left:0;border-left:0;border-top:1px solid #dbe8e1}.reaction-grid>div:first-child{border-top:0}.filing-summary-meta span:first-child{display:block}.filing-summary-meta span:nth-child(2){display:none}}

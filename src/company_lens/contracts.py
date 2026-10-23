@@ -232,9 +232,18 @@ class CompanySnapshot:
     deletes it otherwise, so this field is absent rather than misleading when
     nothing earned it. A band and a horizon, never a direction: it says how much
     movement to expect, not which way."""
+    benchmark_comparisons: dict[str, dict[str, Any]] = field(default_factory=dict)
+    """Optional alternative history benchmarks, keyed by symbol (e.g. QQQ).
+
+    Each entry mirrors `period_options` for one company/benchmark pair on
+    exactly matched dates, or records why the pair is unavailable. `benchmark`,
+    `performance`, filing reactions and AI evidence stay on the default
+    benchmark; these entries only feed the history comparison selector."""
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        if not self.benchmark_comparisons:
+            payload.pop("benchmark_comparisons")
         if self.evidence_scope is None:
             payload.pop("evidence_scope")
             payload.pop("headlines")

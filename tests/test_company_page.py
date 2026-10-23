@@ -200,8 +200,15 @@ def test_company_page_is_self_contained_and_source_linked(tmp_path) -> None:
     # connected yet" occupies the slot of a finding and reads as a broken one.
     assert "Not on this page yet" not in page
     assert "not connected" not in page
-    assert "Ask the evidence" in page
-    assert "Every answer is validated" in page
+    assert "Ask about this company" in page
+    assert "Citations and answer format checked" in page
+    assert '<details class="ask-advanced">' in page
+    primary_tasks = page.split(
+        'aria-label="Guided research questions">', 1
+    )[1].split("</div>", 1)[0]
+    assert primary_tasks.count('data-ask-task=') == 3
+    assert 'data-ask-task="limits"' not in primary_tasks
+    assert '<details class="ask-more-tasks">' in page
     assert 'id="ask-model"' in page
     assert 'id="ask-question"' in page
     assert 'id="ask-retry"' in page
@@ -239,7 +246,7 @@ def test_company_page_is_self_contained_and_source_linked(tmp_path) -> None:
     assert "company-lens-language" in page
     assert "document.documentElement.lang" in page
     assert '"zh": {' in page
-    assert '"ask.title": "向证据提问"' in page
+    assert '"ask.title": "你想了解这家公司的什么？"' in page  # noqa: RUF001
     assert "getElementById('ask-language').value" in page
     assert 'data-status-key="ask.checking_models"' in page
     assert 'data-i18n="ask.checking_models"' not in page

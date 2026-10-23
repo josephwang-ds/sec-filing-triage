@@ -135,6 +135,46 @@ def test_market_refresh_replaces_successful_symbols_and_keeps_failures(
 
     assert result.status == "partial"
     assert result.failed_tickers == ["BAD"]
-    assert set(result.refreshed_tickers) == {"ABC", "SPY"}
+    assert set(result.refreshed_tickers) == {"ABC", "QQQ", "SPY"}
     assert prices.loc[prices["ticker"] == "BAD", "date"].iloc[0] == old_date
     assert prices.loc[prices["ticker"] == "ABC", "date"].iloc[0] > old_date
+
+
+def test_market_refresh_keeps_last_good_qqq_when_its_fetch_fails(
+    tmp_path, monkeypatch
+) -> None:
+    pd.DataFrame([{"ticker": "ABC", "cik": 123, "name": "ABC Corp"}]).to_csv(
+        tmp_path / "universe.csv", index=False
+    )
+    old_date = pd.Timestamp("2024-01-02").date()
+    pd.DataFrame(
+        [
+            {"ticker": ticker, "date": old_date, "open": 10.0, "high": 11.0,
+             "low": 9.0, "close": 10.0, "volume": 100.0}
+            for ticker in ("ABC", "QQQ", "SPY")
+        ]
+    ).to_parquet(tmp_path / "prices.parquet", index=False)
+    requested = []
+
+    def fake_fetch(symbol, **kwargs):
+        requested.append(symbol)
+        if symbol == "QQQ":
+            raise RuntimeError("vendor unavailable")
+        return pd.DataFrame(
+            [{"ticker": symbol, "date": pd.Timestamp("2024-01-03").date(),
+              "open": 11.0, "high": 12.0, "low": 10.0, "close": 11.0,
+              "volume": 110.0}]
+        )
+
+    monkeypatch.setattr("company_lens.refresh.fetch_daily", fake_fetch)
+
+    result = refresh_market_data(
+        data_dir=tmp_path, cache_dir=tmp_path / "cache", tickers=["ABC"]
+    )
+    prices = pd.read_parquet(tmp_path / "prices.parquet")
+
+    assert sorted(requested) == ["ABC", "QQQ", "SPY"]
+    assert result.status == "partial"
+    assert result.failed_tickers == ["QQQ"]
+    assert prices.loc[prices["ticker"] == "QQQ", "date"].tolist() == [old_date]
+    assert prices.loc[prices["ticker"] == "SPY", "date"].max() > old_date
