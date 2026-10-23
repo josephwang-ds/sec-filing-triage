@@ -84,5 +84,6 @@ select = [
 "tests/test_events_api.py" = ["E501"]
 "tests/test_events_closure.py" = ["E501"]
 "tests/test_events_review.py" = ["E501"]
+"tests/test_events_drill.py" = ["E501"]
 # Full-width Chinese punctuation is an intentional document-splitting boundary.
 "src/company_lens/llm/retrieval.py" = ["RUF001"]

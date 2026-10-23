@@ -2,14 +2,23 @@ name: Events refresh
 
 # News and the SEC index only. This file does not build company pages and does
 # not deploy the site. A production cron trigger is intentionally omitted until
-# Codex enables it; GitHub schedule events are delayed and can be dropped, and
-# the durable blob store is not confirmed on this account.
+# Codex enables it. The manual drill prepares AAPL, JPM, and NVDA from the
+# committed service list. It does not read the Saturday universe cache and does
+# not download the full SEC ticker map.
 
 on:
   workflow_dispatch:
     inputs:
+      drill:
+        description: "Write to the drill blob instead of the live event prefix"
+        type: boolean
+        default: true
+      tickers:
+        description: "Tickers for this run. The first drill is AAPL JPM NVDA."
+        type: string
+        default: "AAPL JPM NVDA"
       tier:
-        description: "high_frequency or ordinary"
+        description: "high_frequency or ordinary. Ignored when tickers is set."
         type: string
         default: high_frequency
 
@@ -34,17 +43,33 @@ jobs:
 
       - run: pip install -e .
 
+      - name: Prepare the company list
+        env:
+          EVENT_TICKERS: ${{ inputs.tickers }}
+        run: |
+          set -euo pipefail
+          read -r -a symbols <<< "${EVENT_TICKERS}"
+          python scripts/prepare_events_universe.py \
+            --tickers "${symbols[@]}" \
+            --out "${{ runner.temp }}/events-universe.csv"
+
       - name: Refresh event data without deploying
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENT_TICKERS: ${{ inputs.tickers }}
+          EVENTS_BLOB_PREFIX: ${{ inputs.drill && 'lens-events-drill' || 'lens-events' }}
+          BLOB_READ_WRITE_TOKEN: ${{ inputs.drill && secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN || secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
           set -euo pipefail
+          read -r -a symbols <<< "${EVENT_TICKERS}"
           # runner.temp is a working copy. The script restores and pushes the
-          # durable checkpoint when BLOB_READ_WRITE_TOKEN is configured.
-          python scripts/refresh_events.py --check-config
+          # durable checkpoint when the blob token is configured.
+          python scripts/refresh_events.py --check-config --require-blob
           python scripts/refresh_events.py \
             --dataset all \
             --tier "${{ inputs.tier }}" \
-            --root "${{ runner.temp }}/events-store"
+            --universe "${{ runner.temp }}/events-universe.csv" \
+            --tickers "${symbols[@]}" \
+            --root "${{ runner.temp }}/events-store" \
+            --require-blob

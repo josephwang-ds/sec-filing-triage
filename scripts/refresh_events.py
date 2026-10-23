@@ -14,7 +14,7 @@ from company_lens.events.config_status import format_presence, presence
 from company_lens.events.policy import select_targets
 from company_lens.events.providers import EdgarRecentIndex, FinnhubEventSource
 from company_lens.events.run import BlobDurable, UnconfiguredDurable, run_refresh_entry
-from company_lens.universe import supported_companies
+from company_lens.universe import SupportedCompany, supported_companies
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,6 +32,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tickers", nargs="*", default=None)
     parser.add_argument("--watchlist", nargs="*", default=())
     parser.add_argument("--check-config", action="store_true")
+    parser.add_argument(
+        "--require-blob",
+        action="store_true",
+        help="Fail when the blob token is missing. Drill runs use this.",
+    )
     parser.add_argument("--now", default=None, help="ISO timestamp for a drill; default is current UTC")
     args = parser.parse_args(argv)
 
@@ -41,28 +46,44 @@ def main(argv: list[str] | None = None) -> int:
         print("durable_store=" + ("blob" if flags["BLOB_READ_WRITE_TOKEN"] else "not_configured"))
         wake = "named" if flags["EVENTS_RERUN_TOKEN"] and flags["EVENTS_RERUN_URL"] else "not_configured"
         print(f"independent_wake={wake}")
+        if args.require_blob and not flags["BLOB_READ_WRITE_TOKEN"]:
+            print("config_error=blob_missing")
+            return 2
         return 0
 
     now = datetime.fromisoformat(args.now) if args.now else datetime.now(UTC)
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
-    supported = _supported(args.universe, args.tickers)
-    if not supported:
-        print("no supported universe and no explicit tickers; fetches were not started")
-        return 0
-    targets, ignored = select_targets(supported, args.tier, args.watchlist)
+    companies, config_error = _load_companies(args.universe)
+    if config_error:
+        print(config_error)
+        return 2
+    chosen, ignored, config_error = _select_companies(
+        companies,
+        args.tickers,
+        args.tier,
+        args.watchlist,
+    )
+    if config_error:
+        print(config_error)
+        return 2
+    datasets = ("news", "sec_index") if args.dataset == "all" else (args.dataset,)
+    if "sec_index" in datasets:
+        missing_cik = [company.ticker for company in chosen if company.cik is None]
+        if missing_cik:
+            print("config_error=missing_cik tickers=" + ",".join(missing_cik))
+            return 2
     if ignored:
         print("watchlist ignored for paid fetch: " + ",".join(ignored))
-    datasets = ("news", "sec_index") if args.dataset == "all" else (args.dataset,)
-    sources = _sources(flags, args.universe, datasets)
-    if flags["BLOB_READ_WRITE_TOKEN"]:
-        transport = HttpBlobTransport(os.environ["BLOB_READ_WRITE_TOKEN"])
-        durable = BlobDurable(transport)
-        publish_transport = transport
-    else:
-        transport = None
-        durable = UnconfiguredDurable()
-        publish_transport = None
+    targets = [company.ticker for company in chosen]
+    print("fetch_targets=" + ",".join(targets))
+    if args.require_blob and not flags["BLOB_READ_WRITE_TOKEN"]:
+        print("config_error=blob_missing")
+        return 2
+    supported = set(targets)
+    ciks = {company.ticker: int(company.cik) for company in chosen if company.cik is not None}
+    sources = _sources(flags, datasets, ciks)
+    durable, publish_transport = open_durable(flags)
     result = run_refresh_entry(
         local_root=args.root,
         durable=durable,
@@ -95,32 +116,60 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _sources(flags: dict[str, bool], universe: Path, datasets: tuple[str, ...]) -> dict:
+def open_durable(flags: dict[str, bool]):
+    """Return the checkpoint store and the publish transport. Tests replace this."""
+    if flags["BLOB_READ_WRITE_TOKEN"]:
+        transport = HttpBlobTransport(os.environ["BLOB_READ_WRITE_TOKEN"])
+        return BlobDurable(transport), transport
+    return UnconfiguredDurable(), None
+
+
+def _sources(
+    flags: dict[str, bool],
+    datasets: tuple[str, ...],
+    ciks: dict[str, int],
+) -> dict:
     sources = {}
     if "news" in datasets and flags["FINNHUB_API_KEY"]:
         sources["news"] = FinnhubEventSource(os.environ["FINNHUB_API_KEY"])
     if "sec_index" in datasets and flags["EDGAR_USER_AGENT"]:
         sources["sec_index"] = EdgarRecentIndex(
             os.environ["EDGAR_USER_AGENT"],
-            ciks=_ciks(universe),
+            ciks=ciks,
         )
     return sources
 
 
-def _ciks(universe: Path) -> dict[str, int]:
+def _load_companies(universe: Path) -> tuple[list[SupportedCompany], str | None]:
     path = universe if universe.is_absolute() else ROOT / universe
-    return {
-        company.ticker: company.cik
-        for company in supported_companies(path)
-        if company.cik is not None
-    }
+    if not path.exists():
+        return [], f"config_error=universe_missing path={path}"
+    companies = supported_companies(path)
+    if not companies:
+        return [], f"config_error=universe_empty path={path}"
+    return companies, None
 
 
-def _supported(universe: Path, tickers: list[str] | None) -> set[str]:
-    if tickers:
-        return {ticker.strip().upper() for ticker in tickers if ticker.strip()}
-    path = universe if universe.is_absolute() else ROOT / universe
-    return {company.ticker for company in supported_companies(path)}
+def _select_companies(
+    companies: list[SupportedCompany],
+    tickers: list[str] | None,
+    tier: str,
+    watchlist: list[str],
+) -> tuple[list[SupportedCompany], list[str], str | None]:
+    """News and SEC share this list. Explicit tickers do not bypass the universe."""
+    by_ticker = {company.ticker: company for company in companies}
+    if tickers is not None:
+        wanted = [ticker.strip().upper() for ticker in tickers if ticker.strip()]
+        if not wanted:
+            return [], [], "config_error=tickers_empty"
+        unknown = [ticker for ticker in wanted if ticker not in by_ticker]
+        if unknown:
+            return [], [], "config_error=unknown_ticker tickers=" + ",".join(unknown)
+        return [by_ticker[ticker] for ticker in wanted], [], None
+    names, ignored = select_targets(set(by_ticker), tier, watchlist)
+    if not names:
+        return [], ignored, "config_error=universe_empty"
+    return [by_ticker[name] for name in names if name in by_ticker], ignored, None
 
 
 if __name__ == "__main__":

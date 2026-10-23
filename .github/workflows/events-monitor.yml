@@ -28,11 +28,14 @@ jobs:
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENTS_BLOB_PREFIX: lens-events-drill
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
           EVENTS_RERUN_TOKEN: ${{ secrets.EVENTS_RERUN_TOKEN }}
           EVENTS_RERUN_URL: ${{ secrets.EVENTS_RERUN_URL }}
         run: |
           set -euo pipefail
           # This workflow is not an independent wake. A rerun happens only when
           # EVENTS_RERUN_URL is configured, and the script calls that URL itself.
+          # The drill health set is the three prepared companies, not the other
+          # seventeen high-frequency names.
           python scripts/events_monitor.py --supported AAPL JPM NVDA

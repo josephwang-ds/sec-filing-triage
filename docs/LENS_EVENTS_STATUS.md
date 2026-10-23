@@ -6,7 +6,7 @@
 
 - planning_ready: yes
 - implementation_started: yes
-- code_ready: yes（入口、持久检查点、指针发布、动态 Ask 证据、预算和监控适配已接通；本地测试通过）
+- code_ready: yes（入口、持久检查点、一次提交记录、动态 Ask 证据、预算和监控适配已接通；本地测试通过）
 - mock_integration: yes（内存 Blob 与假执行器；不是真实存储）
 - staging_verified: no
 - production_enabled: no
@@ -23,9 +23,9 @@
 | origin | `https://github.com/josephwang-ds/sec-filing-triage.git` |
 | 分支 | `feat/lens-events-a1` |
 | 基线 SHA | `950f9ada1f82e4394ae7bedf39107c1c8b526e30`（`origin/main`：docs: plan Lens event research and Cursor implementation handoff） |
-| 最终 SHA | 见本文件提交后的 PR；实现提交在该基线之上 |
+| 最终 SHA | `18c2e0c10143111744c621d80749b915f4d422d6`（Publish each refresh as one committed generation.） |
 | 未纳入的本地提交 | `23b01c1`「Refresh on Wednesday too…」只存在于 `/Users/josephwang/dev/sec-filing-triage` 的本地 `main`，不在 `origin/main`，本轮不当作已批准调度 |
-| PR | draft，链接见 Cursor 交接 |
+| PR | draft：https://github.com/josephwang-ds/sec-filing-triage/pull/35 |
 | 生产变更 | 无 |
 
 ## A0 基础设施选择
@@ -34,8 +34,8 @@
 
 | 能力 | 观察证据 | 选择 / 缺口 |
 |---|---|---|
-| Vercel 项目 | GitHub secret 名称存在：`VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`。项目名仍是 `company-lens-josephjwang`。未读取值，未查询套餐账单 | 不升级套餐。页面与 Ask 仍走现有 Vercel 函数。Hobby cron 不承担高频任务 |
-| 持久存储 | 仓库里没有已配置的对象存储或数据库。Actions cache 只恢复 SEC/价格缓存 | 目标是 Vercel Blob 私有对象：不可变版本 + `x-if-match` 序号栅栏。配置名 `BLOB_READ_WRITE_TOKEN`。GitHub secrets 中没有该名称。本地与测试使用文件检查点，不把它当成生产库 |
+| Vercel 项目 | GitHub secret 名称存在：`VERCEL_TOKEN`、`VERCEL_ORG_ID`、`VERCEL_PROJECT_ID`。2026-10-23 打开团队总览：slug `josewang-projects`，显示名 josewang's projects，套餐显示 Hobby。项目 `company-lens-josephjwang` 在该团队中，域名 `lens.josephjwang.com`。Integrations 没有已安装项。团队 Git 页只有未连接的 Origin。账号 Authentication 里的 ChatGPT 是登录方式，不是 Blob token，也不是团队应用。未读取 secret 值，未读发票 | 不升级套餐。页面与 Ask 仍走现有 Vercel 函数。Hobby cron 不承担高频任务 |
+| 持久存储 | 仓库里没有已配置的对象存储或数据库。Actions cache 只恢复 SEC/价格缓存 | 目标是 Vercel Blob 私有对象。已提交的一代是 `lens-events/commit.json` 的一次 CAS；检查点快照、页面和证据是不可变对象；监控资格在 `lens-events/monitor.json`。配置名 `BLOB_READ_WRITE_TOKEN`。GitHub secrets 中没有该名称。本地与测试使用文件检查点，不把它当成生产库 |
 | 主任务执行器 | `.github/workflows/refresh.yml` 仍是周六 `20 7 * * 6`（07:20 UTC）全链路并部署 | 新任务在 `.github/workflows/events-refresh.yml`，只有 `workflow_dispatch`，不构建页面、不部署。生产 cron 未改 |
 | 独立监控 / 补跑 | `.github/workflows/events-monitor.yml` 也只有手动触发。`EVENTS_RERUN_TOKEN` 不在 secrets 里 | 独立唤醒未配置。监控可以告警并打印恢复入口，不会自称已经自动修好 |
 | 新闻来源 | `FINNHUB_API_KEY` 不在 GitHub secrets，本机环境也未设置。未发真实请求 | 代码接了 Finnhub company-news。没有 key 时状态是 `disabled`，不是「没有新闻」 |
@@ -61,7 +61,7 @@
 
 冷启动：新闻 7 天，SEC 索引 90 天。恢复时从成功水位回退至少 24 小时，按来源窗口拆开。补不回的区间记 `coverage_gap`。失败不推进成功水位。
 
-尚未启用、本轮新增的配置名（不含值）：`BLOB_READ_WRITE_TOKEN`、`EVENTS_RERUN_TOKEN`、`EVENTS_MONITOR_WEBHOOK`、`EVENTS_BLOB_MANIFEST_ETAG`。已有但本轮新闻路径用不到或未设置的名称：`FINNHUB_API_KEY`（GitHub 未配置）、`EDGAR_USER_AGENT`（名称存在，未用于本轮实拉）。
+尚未启用、本轮仍缺的配置名（不含值）：`BLOB_READ_WRITE_TOKEN`、`EVENTS_DRILL_BLOB_READ_WRITE_TOKEN`、`EVENTS_RERUN_TOKEN`、`EVENTS_MONITOR_WEBHOOK`、`EVENTS_RERUN_URL`。演练 token 只给 `lens-events-drill/`，不代替生产 token。入口按开始时读到的提交代发布，不再接受手工 manifest ETag，所以没有 `EVENTS_BLOB_MANIFEST_ETAG` 这个配置缺口。已有但本轮新闻路径用不到或未设置的名称：`FINNHUB_API_KEY`（GitHub 未配置）、`EDGAR_USER_AGENT`（名称存在，未用于本轮实拉）。
 
 ## 实施清单
 
@@ -103,11 +103,13 @@ Codex 复验 `dad74fc` 后，入口仍有五处代码缺陷。这一轮修版本
 | 公开健康与监控一致 | yes | yes：周末、休市、活跃窗口、stale、partial、缺口、pending、错误类、缺失任务。判断不读固定的 `cadence_seconds` | no | no | no |
 | 监控元数据与执行资格 | yes | yes：没有到期抓取的刷新仍保留 cooldown。两次监控只有一次 POST，且 POST 前已经写入 claim | no | no | no |
 
+「旧刷新不能覆盖新发布」记录的是 `4ee1542`。那一版里检查点和公开指针仍是两次 CAS。`18c2e0c` 改成一次提交同时切换检查点和页面。监控执行资格在 `lens-events/monitor.json`，不随这次提交改写。
+
 ## 2026-10-23 提交指针
 
 检查点和公开页面不再各做一次 CAS。事件正文、证据和检查点快照是不可变对象。`lens-events/commit.json` 用一次 CAS 指向这一代的检查点和页面。页面、Ask 的版本授权和恢复都读这张提交记录。监控的执行资格在 `lens-events/monitor.json`，刷新不会改它。CAS 失败或提交前中断时，候选文件可以留下，但读路径不会把它们当成已发布内容。仍是 mock，没有 staging、生产或 schedule。
 
-真实演练（仍未执行）：配置上述名称后，手动 `workflow_dispatch` `events-refresh.yml`，确认 Blob 里出现 `lens-events/checkpoint.json` 和 `lens-events/public/manifest.json`，再用另一个空工作目录跑第二次，核对水位不是冷启动。然后打开公司页和 Ask，确认新 `event_version` 不需要重新部署。最后单独 dispatch `events-monitor.yml`，在刷新停摆后看健康状态变差。不要启用 schedule。
+真实演练（仍未执行）：手动 `workflow_dispatch` `events-refresh.yml`，默认 `drill=true` 且 tickers 为 `AAPL JPM NVDA`。工作流先运行 `scripts/prepare_events_universe.py`，从 `data/events/service_companies.csv` 写出 ticker、name、CIK，不读周六 `data/build/universe.csv`，也不下载全量 SEC ticker 表。刷新写入独立前缀 `lens-events-drill/`，token 名称是 `EVENTS_DRILL_BLOB_READ_WRITE_TOKEN`。确认该前缀下的 `commit.json` 指向 `checkpoints/{hash}.json`，页面和证据 URL 在同一张提交记录上，`expected_tickers` 只有这三家。再用另一个空工作目录跑第二次，核对水位不是冷启动。监控用同一个 drill blob 和同样的三家。没有这枚 token 或名单时，入口返回配置错误，不发抓取请求。不要启用 schedule。生产前缀 `lens-events/` 仍用 `BLOB_READ_WRITE_TOKEN`，本轮不写它。
 
 ## 验收证据
 
@@ -120,7 +122,9 @@ ruff check src tests scripts
 PYTHONPATH=src python -m pytest -q
 ```
 
-结果：ruff 通过。pytest 全部通过（README 记录 804 tests；`tests/test_docs.py` 核对收集数）。解释器：`/Users/josephwang/dev/sec-filing-triage/.venv/bin/python`（3.12.14）。Node 可用，Ask / events 函数测试已执行。
+结果：ruff 通过。pytest 全部通过（第一轮 README 记录 804 tests；`tests/test_docs.py` 核对收集数）。解释器：`/Users/josephwang/dev/sec-filing-triage/.venv/bin/python`（3.12.14）。Node 可用，Ask / events 函数测试已执行。
+
+`18c2e0c` 上同一组命令再次跑过：ruff 通过，pytest 821 项通过。804 保留为第一轮记录。
 
 | ID | 环境 / 测试 | 结果 | 说明 |
 |---|---|---|---|

@@ -225,6 +225,19 @@ class FileEventStore:
     def read_monitor(self) -> dict | None:
         return _read_json(self._monitor_path())
 
+    def _expected_path(self) -> Path:
+        return self.root / "expected.json"
+
+    def read_expected_tickers(self) -> list[str]:
+        payload = _read_json(self._expected_path()) or {}
+        found = payload.get("tickers") or []
+        if not isinstance(found, list):
+            return []
+        return [str(ticker).strip().upper() for ticker in found if str(ticker).strip()]
+
+    def write_expected_tickers(self, tickers: list[str]) -> None:
+        _atomic_json(self._expected_path(), {"tickers": list(tickers)})
+
     def write_monitor(self, payload: dict) -> None:
         _atomic_json(self._monitor_path(), payload)
 
@@ -317,6 +330,9 @@ class FileEventStore:
         monitor = self.read_monitor()
         if monitor:
             payload["monitor"] = monitor
+        expected = self.read_expected_tickers()
+        if expected:
+            payload["expected_tickers"] = expected
         return payload
 
     def restore_workspace(self, payload: dict) -> None:
@@ -348,3 +364,5 @@ class FileEventStore:
             self.write_monitor(payload["monitor"])
         elif self._monitor_path().exists():
             self._monitor_path().unlink()
+        if isinstance(payload.get("expected_tickers"), list):
+            self.write_expected_tickers([str(ticker) for ticker in payload["expected_tickers"]])

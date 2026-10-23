@@ -4,7 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const BLOB_API = "https://vercel.com/api/blob";
-const COMMIT_PATH = "lens-events/commit.json";
+const EVENTS_PREFIX = String(process.env.EVENTS_BLOB_PREFIX || "lens-events").replace(/^\/+|\/+$/g, "") || "lens-events";
+const COMMIT_PATH = EVENTS_PREFIX + "/commit.json";
 const POINTER_PATH = COMMIT_PATH;
 const BUNDLED = readJson("public.json") || { companies: {}, health: null };
 
@@ -266,9 +267,15 @@ function tierFor(ticker, wanted) {
   return "ordinary";
 }
 
-function expectedTickers(expected) {
-  const source = expected && expected.length ? expected : HIGH_FREQUENCY;
-  return source.map((ticker) => String(ticker).toUpperCase());
+function expectedTickers(expected, checkpoint) {
+  if (expected && expected.length) {
+    return expected.map((ticker) => String(ticker).toUpperCase());
+  }
+  const recorded = checkpoint && checkpoint.expected_tickers;
+  if (Array.isArray(recorded) && recorded.length) {
+    return recorded.map((ticker) => String(ticker).toUpperCase());
+  }
+  return HIGH_FREQUENCY;
 }
 
 function sourceLevel(dataset, ticker, state, nowMs, tier) {
@@ -294,7 +301,7 @@ function sourceLevel(dataset, ticker, state, nowMs, tier) {
 }
 
 function healthFromCheckpoint(checkpoint, nowMs, expected) {
-  const wanted = expectedTickers(expected);
+  const wanted = expectedTickers(expected, checkpoint);
   const datasets = (checkpoint && checkpoint.datasets) || {};
   const names = ["news", "sec_index"];
   for (const name of Object.keys(datasets)) {

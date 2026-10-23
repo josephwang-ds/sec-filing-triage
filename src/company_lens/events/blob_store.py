@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 from typing import Any, Protocol
 from urllib.parse import quote
 
@@ -116,13 +118,42 @@ class HttpBlobTransport:
         return response.content, etag
 
 
-CHECKPOINT_PATH = "lens-events/checkpoint.json"
-COMMIT_PATH = "lens-events/commit.json"
-MONITOR_PATH = "lens-events/monitor.json"
+DEFAULT_EVENTS_PREFIX = "lens-events"
+COMMIT_PATH = f"{DEFAULT_EVENTS_PREFIX}/commit.json"
+MONITOR_PATH = f"{DEFAULT_EVENTS_PREFIX}/monitor.json"
 POINTER_PATH = COMMIT_PATH
-FEED_PREFIX = "lens-events/public/versions"
-EVIDENCE_PREFIX = "lens-events/evidence"
-CHECKPOINT_PREFIX = "lens-events/checkpoints"
+FEED_PREFIX = f"{DEFAULT_EVENTS_PREFIX}/public/versions"
+EVIDENCE_PREFIX = f"{DEFAULT_EVENTS_PREFIX}/evidence"
+CHECKPOINT_PREFIX = f"{DEFAULT_EVENTS_PREFIX}/checkpoints"
+CHECKPOINT_PATH = f"{DEFAULT_EVENTS_PREFIX}/checkpoint.json"
+
+
+def events_prefix() -> str:
+    """Blob namespace. A drill sets this so it does not publish over the live feed."""
+    raw = os.environ.get("EVENTS_BLOB_PREFIX", DEFAULT_EVENTS_PREFIX).strip().strip("/")
+    if not raw or not re.fullmatch(r"[A-Za-z0-9._-]+", raw):
+        return DEFAULT_EVENTS_PREFIX
+    return raw
+
+
+def commit_path() -> str:
+    return f"{events_prefix()}/commit.json"
+
+
+def monitor_path() -> str:
+    return f"{events_prefix()}/monitor.json"
+
+
+def feed_prefix() -> str:
+    return f"{events_prefix()}/public/versions"
+
+
+def evidence_prefix() -> str:
+    return f"{events_prefix()}/evidence"
+
+
+def checkpoint_prefix() -> str:
+    return f"{events_prefix()}/checkpoints"
 
 
 class MemoryBlob:
@@ -201,7 +232,7 @@ def _read_exact(transport: BlobTransport, pathname: str) -> tuple[dict, str | No
 
 def read_commit(transport: BlobTransport) -> tuple[dict, str | None]:
     """The only mutable publication record. Missing means nothing is committed."""
-    return _read_exact(transport, COMMIT_PATH)
+    return _read_exact(transport, commit_path())
 
 
 def read_pointer(transport: BlobTransport) -> tuple[dict, str | None]:
@@ -224,7 +255,7 @@ def read_generation(transport: BlobTransport) -> tuple[dict | None, str | None, 
     body, _read_etag = transport.read_url(str(url))
     payload = json.loads(body.decode())
     if not isinstance(payload, dict):
-        raise BlobRequestError(502, COMMIT_PATH)
+        raise BlobRequestError(502, commit_path())
     return payload, etag, commit
 
 
@@ -245,7 +276,7 @@ def push_checkpoint(transport: BlobTransport, payload: dict, *, expected_etag: s
 
 def pull_monitor(transport: BlobTransport) -> tuple[dict | None, str | None]:
     """Monitor claim and cooldown. This object is not part of a publication."""
-    payload, etag = _read_exact(transport, MONITOR_PATH)
+    payload, etag = _read_exact(transport, monitor_path())
     if not payload:
         return None, None
     return payload, etag
@@ -255,14 +286,14 @@ def push_monitor(transport: BlobTransport, payload: dict, *, expected_etag: str 
     """CAS the monitor record. A mismatch does not change the committed feed."""
     try:
         return transport.put(
-            MONITOR_PATH,
+            monitor_path(),
             checkpoint_document(payload),
             if_match=expected_etag,
             overwrite=expected_etag is not None,
         )
     except BlobRequestError as exc:
         if exc.status in {409, 412}:
-            raise BlobRequestError(exc.status, MONITOR_PATH) from None
+            raise BlobRequestError(exc.status, monitor_path()) from None
         raise
 
 
@@ -317,7 +348,7 @@ def commit_generation(
     if base_tickers is None:
         current, etag = read_commit(transport)
         if (etag or None) != (expected_etag or None):
-            raise BlobRequestError(412, COMMIT_PATH)
+            raise BlobRequestError(412, commit_path())
         base_tickers = current.get("tickers") or {}
         base_checkpoint = {
             "pathname": current.get("checkpoint_pathname"),
@@ -329,7 +360,7 @@ def commit_generation(
     if checkpoint_payload is not None:
         raw = checkpoint_document(checkpoint_payload)
         digest = hashlib.sha256(raw).hexdigest()[:20]
-        checkpoint_pathname = f"{CHECKPOINT_PREFIX}/{digest}.json"
+        checkpoint_pathname = f"{checkpoint_prefix()}/{digest}.json"
         stored = _put_immutable(transport, checkpoint_pathname, raw)
         checkpoint_url = stored.get("url")
     for ticker, release in sorted((releases or {}).items()):
@@ -341,10 +372,10 @@ def commit_generation(
         feed_body = json.dumps(feed, ensure_ascii=False, sort_keys=True).encode()
         evidence_body = json.dumps(release["evidence"], ensure_ascii=False, sort_keys=True).encode()
         evidence_path = (
-            f"{EVIDENCE_PREFIX}/{symbol}/{version_id}/"
+            f"{evidence_prefix()}/{symbol}/{version_id}/"
             f"{hashlib.sha256(evidence_body).hexdigest()[:20]}.json"
         )
-        feed_path = f"{FEED_PREFIX}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
+        feed_path = f"{feed_prefix()}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
         feed_meta = _put_immutable(transport, feed_path, feed_body)
         evidence_meta = _put_immutable(transport, evidence_path, evidence_body)
         previous = tickers.get(symbol) if isinstance(tickers.get(symbol), dict) else {}
@@ -372,14 +403,14 @@ def commit_generation(
     body = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()
     try:
         pointer = transport.put(
-            COMMIT_PATH,
+            commit_path(),
             body,
             if_match=expected_etag,
             overwrite=expected_etag is not None,
         )
     except BlobRequestError as exc:
         if exc.status in {409, 412}:
-            raise BlobRequestError(exc.status, COMMIT_PATH) from None
+            raise BlobRequestError(exc.status, commit_path()) from None
         raise
     return {"etag": pointer.get("etag"), "manifest": manifest}
 

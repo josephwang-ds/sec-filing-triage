@@ -8,9 +8,9 @@ from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from company_lens.events.blob_store import (
-    COMMIT_PATH,
     BlobRequestError,
     commit_generation,
+    commit_path,
     pull_monitor,
     push_checkpoint,
     push_monitor,
@@ -205,6 +205,9 @@ def run_refresh_entry(
             skipped=skipped,
         )
     try:
+        store.write_expected_tickers(
+            sorted({ticker.strip().upper() for ticker in tickers if str(ticker).strip()})
+        )
         payload = store.export_workspace(datasets)
         if publish_transport is not None:
             commit_generation(
@@ -219,7 +222,7 @@ def run_refresh_entry(
         else:
             durable.push(payload, pulled.etag)
     except BlobRequestError as exc:
-        if exc.pathname == COMMIT_PATH and exc.status in {409, 412}:
+        if exc.pathname == commit_path() and exc.status in {409, 412}:
             return RunResult(status="stale_writer", durable="conflict", reports=reports, skipped=skipped)
         raise
     return RunResult(status="stored", durable="checkpoint", reports=reports, skipped=skipped)

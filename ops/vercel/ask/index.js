@@ -658,12 +658,13 @@ async function readPublishedEvidence(ticker, version) {
   const headers = { authorization: "Bearer " + token, "x-api-version": "12" };
   try {
     const listed = await fetch(
-      "https://vercel.com/api/blob?prefix=" + encodeURIComponent("lens-events/commit.json") + "&limit=5",
+      "https://vercel.com/api/blob?prefix=" + encodeURIComponent((String(process.env.EVENTS_BLOB_PREFIX || "lens-events").replace(/^\/+|\/+$/g, "") || "lens-events") + "/commit.json") + "&limit=5",
       { headers },
     );
     if (!listed.ok) return { configured: true, error: true };
     const payload = await listed.json();
-    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === "lens-events/commit.json");
+    const commitPath = (String(process.env.EVENTS_BLOB_PREFIX || "lens-events").replace(/^\/+|\/+$/g, "") || "lens-events") + "/commit.json";
+    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === commitPath);
     if (!match || !match.url) return { configured: true, missing: true };
     const commitResponse = await fetch(match.url, { headers });
     if (!commitResponse.ok) return { configured: true, error: true };

@@ -22,7 +22,12 @@ from company_lens.events.run import BlobDurable, MonitorDurable
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--supported", nargs="*", default=list(HIGH_FREQUENCY_TICKERS))
+    parser.add_argument(
+        "--supported",
+        nargs="*",
+        default=None,
+        help="Expected tickers. Defaults to the checkpoint list, then the full high-frequency set.",
+    )
     parser.add_argument("--http-status", type=int, default=200)
     parser.add_argument("--now", default=None)
     parser.add_argument("--cooldown-until", default=None)
@@ -31,7 +36,6 @@ def main(argv: list[str] | None = None) -> int:
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
     flags = presence()
-    supported = {ticker.upper() for ticker in args.supported}
     if not flags["BLOB_READ_WRITE_TOKEN"]:
         payload = {
             "action": {
@@ -63,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
             "note": "no durable checkpoint has been stored",
         }, sort_keys=True))
         return 2
+    supported = _expected(args.supported, pulled.payload)
     disabled = set()
     if not flags["FINNHUB_API_KEY"]:
         disabled.add("news")
@@ -106,6 +111,15 @@ def main(argv: list[str] | None = None) -> int:
     print("rerun_requested=" + ("true" if decision.get("rerun_requested") else "false"))
     print("independent_wake=" + str(decision.get("independent_wake") or "external_url"))
     return 0 if report.get("ok") else 2
+
+
+def _expected(explicit: list[str] | None, payload: dict) -> set[str]:
+    if explicit:
+        return {ticker.strip().upper() for ticker in explicit if ticker.strip()}
+    recorded = payload.get("expected_tickers") or []
+    if isinstance(recorded, list) and recorded:
+        return {str(ticker).strip().upper() for ticker in recorded if str(ticker).strip()}
+    return set(HIGH_FREQUENCY_TICKERS)
 
 
 def _aware(value: str) -> datetime:
