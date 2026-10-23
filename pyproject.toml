@@ -76,5 +76,11 @@ select = [
 "tests/test_build_universe.py" = ["E402"]
 # Self-contained HTML and minified CSS/JS are intentionally embedded as long literals.
 "src/company_lens/web/page.py" = ["E501"]
+# Event copy, policy prose, and fixtures are long on purpose.
+"src/company_lens/events/*.py" = ["E501", "RUF001"]
+"scripts/refresh_events.py" = ["E501"]
+"scripts/events_monitor.py" = ["E501"]
+"tests/test_events_a1.py" = ["E501"]
+"tests/test_events_api.py" = ["E501"]
 # Full-width Chinese punctuation is an intentional document-splitting boundary.
 "src/company_lens/llm/retrieval.py" = ["RUF001"]

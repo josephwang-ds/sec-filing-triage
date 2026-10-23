@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NVDA events</title>
+<style>
+:root{--paper:#f5f4ec;--ink:#183c35;--muted:#657567;--line:#d8ddd3;--blue:#426b50;--navy:#183c35}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:1100px;margin:auto;padding:24px 20px 80px}
+button,a{font:inherit}
+
+.events-section{padding:58px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.events-section h2{margin:0;font-family:Georgia,serif;font-size:34px;font-weight:500}
+.events-section h3{margin:0 0 8px;font-family:Georgia,serif;font-size:22px;font-weight:500}
+.events-status,.event-actions,.event-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.events-version,.events-freshness,.events-note,.events-gap{color:var(--muted);font-size:12px}
+.event-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr);gap:28px}
+.event-card{min-width:0;max-width:100%;padding:16px 0;border-top:1px solid var(--line)}
+.event-card h3{font:500 20px/1.35 Georgia,serif;overflow-wrap:anywhere}
+.event-card p{overflow-wrap:anywhere}
+.event-ask{padding:8px 12px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.event-ask:disabled{cursor:not-allowed;opacity:.6}
+.event-card a{color:var(--blue)}
+.coverage-tier,.event-badge{padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px}
+#events{scroll-margin-top:150px}
+@media(max-width:900px){.event-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:390px){
+.events-section{padding:32px 0}
+.events-section h2{font-size:28px}
+.event-card h3{font-size:18px}
+.events-status,.events-freshness,.event-actions{flex-direction:column;align-items:flex-start}
+.event-layout,.event-card,.event-meta{max-width:100%}
+}
+
+</style>
+</head>
+<body>
+<header class="topbar"><strong>Company Lens</strong>
+<button id="language-toggle" type="button" aria-pressed="false">中文</button></header>
+<main><section class="events-section" id="events" data-ticker="NVDA" data-events-endpoint="/api/events" data-manifest-version="fbd42eb2965280f21004" data-storage="local" aria-labelledby="events-title"><div class="section-heading"><div><p class="eyebrow" data-i18n-en="EVENTS AND WHAT IS NEXT" data-i18n-zh="事件与接下来关注">EVENTS AND WHAT IS NEXT</p><h2 id="events-title" data-i18n-en="What happened, and what to watch" data-i18n-zh="最近发生了什么，接下来看什么">What happened, and what to watch</h2></div><div class="events-status"><span class="context-status stale" data-status="stale" data-i18n-en="Last good copy" data-i18n-zh="保留上次成功结果">Last good copy</span><span class="coverage-tier" data-i18n-en="High-frequency coverage" data-i18n-zh="高频覆盖">High-frequency coverage</span></div></div><p class="events-version"><span data-i18n-en="Feed version" data-i18n-zh="事件版本">Feed version</span> <code>fbd42eb2965280f21004</code></p><p class="section-intro" data-i18n-en="Recent items come from the published event feed. They are separate from the filed results above and from the price history below." data-i18n-zh="最近的条目来自已发布的事件源，与上方的正式财报、下方的历史行情彼此独立。">Recent items come from the published event feed. They are separate from the filed results above and from the price history below.</p><p class="events-freshness"><span data-i18n-en="Last successful check" data-i18n-zh="上次成功检查">Last successful check</span> <span>2026-10-23T18:00:00+00:00</span> <span><span data-i18n-en="New York" data-i18n-zh="纽约">New York</span> 2026-10-23 14:00 EDT</span> <span><span data-i18n-en="Shanghai" data-i18n-zh="上海">Shanghai</span> 2026-10-24 02:00 CST</span></p><p class="events-note" data-i18n-en="First load covers a bounded recent window, not the full history." data-i18n-zh="首次只覆盖一段有限的近期窗口，不是全部历史。">First load covers a bounded recent window, not the full history.</p><div class="event-layout"><div><h3 data-i18n-en="Recent" data-i18n-zh="最近发生">Recent</h3><div class="event-list"><article class="event-card"><p class="event-meta"><span>Example Wire</span><span>2025-10-23 02:13 EDT</span></p><p class="event-original" data-i18n-en="Original English title" data-i18n-zh="原始英文标题">Original English title</p><h3>NVIDIA last good headline</h3><p>Kept after the next check failed.</p><p class="event-reason" data-i18n-en="New headline from the configured news provider since the previous check. Not a trading signal." data-i18n-zh="自上次检查后，配置的新闻源出现了新标题。这不是交易信号。">New headline from the configured news provider since the previous check. Not a trading signal.</p><div class="event-actions"><a href="https://example.com/nvda/1" target="_blank" rel="noopener noreferrer" data-i18n-en="Read source" data-i18n-zh="查看来源">Read source</a><button type="button" class="event-ask" data-event-id="91c4784694926dfca652" data-event-version="fbd42eb2965280f21004" data-i18n-en="Ask AI about this event" data-i18n-zh="让 AI 解读此事件">Ask AI about this event</button></div><p class="event-ask-result" role="status"></p></article></div></div><div><h3 data-i18n-en="What to watch next" data-i18n-zh="接下来关注">What to watch next</h3><p class="empty" data-i18n-en="No confirmed upcoming date is in this feed. An empty list is not a claim that nothing is scheduled." data-i18n-zh="这个事件源里没有已确认的未来日期。空白并不表示没有日程。">No confirmed upcoming date is in this feed. An empty list is not a claim that nothing is scheduled.</p></div></div><script type="application/json" id="events-feed">{"ai_enabled": true, "checked_at": "2026-10-23T18:00:00+00:00", "checked_at_display": {"utc": "2026-10-23T18:00:00+00:00", "new_york": "2026-10-23 14:00 EDT", "shanghai": "2026-10-24 02:00 CST"}, "coverage_gaps": [], "coverage_through": "2026-10-23T18:00:00+00:00", "coverage_tier": "high_frequency", "events": [{"ask_enabled": true, "duplicate_group_id": "b8dcac5ba4985ad4", "excerpt": "Kept after the next check failed.", "id": "91c4784694926dfca652", "manifest_version": "fbd42eb2965280f21004", "precision_note": null, "publisher": "Example Wire", "significance": {"en": "New headline from the configured news provider since the previous check. Not a trading signal.", "zh": "\u81ea\u4e0a\u6b21\u68c0\u67e5\u540e\uff0c\u914d\u7f6e\u7684\u65b0\u95fb\u6e90\u51fa\u73b0\u4e86\u65b0\u6807\u9898\u3002\u8fd9\u4e0d\u662f\u4ea4\u6613\u4fe1\u53f7\u3002"}, "source_kind": "news_provider", "source_published_at": "2025-10-23T06:13:21+00:00", "source_url": "https://example.com/nvda/1", "status": "reported", "time_precision": "second", "title": "NVIDIA last good headline", "title_language": "en", "title_only": false, "when": {"en": "2025-10-23T06:13:21+00:00", "new_york": "2025-10-23 02:13 EDT", "precision": "second", "shanghai": "2025-10-23 14:13 CST"}}], "initialization": true, "manifest_version": "fbd42eb2965280f21004", "schema_version": "company-lens.events-public.v1", "status": "stale", "status_label": {"en": "Last good copy", "zh": "\u4fdd\u7559\u4e0a\u6b21\u6210\u529f\u7ed3\u679c"}, "storage": "local", "ticker": "NVDA", "tier_label": {"en": "High-frequency coverage", "zh": "\u9ad8\u9891\u8986\u76d6"}, "upcoming": []}</script><script>
+(function () {
+  const section = document.getElementById("events");
+  if (!section) return;
+  const endpoint = section.dataset.eventsEndpoint;
+  const ticker = section.dataset.ticker;
+  section.querySelectorAll(".event-ask").forEach((button) => {
+    button.addEventListener("click", () => askEvent(button));
+  });
+  if (!endpoint || !ticker) return;
+  const url = endpoint + "?ticker=" + encodeURIComponent(ticker);
+    fetch(url, {headers: {Accept: "application/json"}})
+    .then((response) => response.ok ? response.json() : Promise.reject(new Error("feed")))
+    .then((feed) => {
+      if (!feed || feed.ticker !== ticker) return;
+      const current = section.dataset.manifestVersion || "";
+      const next = feed.manifest_version || "";
+      if (next && next !== current) {
+        const node = document.getElementById("events-feed");
+        if (node) node.textContent = JSON.stringify(feed);
+        section.dataset.manifestVersion = next;
+        const version = section.querySelector(".events-version code");
+        if (version) version.textContent = next;
+        const list = section.querySelector(".event-list");
+        if (list) {
+          const events = (feed.events || []).slice(0, 3);
+          list.innerHTML = events.map(cardHtml).join("");
+          list.querySelectorAll(".event-ask").forEach((button) => {
+            button.addEventListener("click", () => askEvent(button));
+          });
+        }
+        if (typeof applyLanguage === "function") applyLanguage(typeof uiLanguage === "string" ? uiLanguage : "en", false);
+      }
+    })
+    .catch(() => {
+      const note = document.createElement("p");
+      note.className = "events-note";
+      note.dataset.i18nEn = "Showing the last published feed from this page. A newer feed could not be loaded.";
+      note.dataset.i18nZh = "正在显示本页上次发布的事件。更新的事件源没有载入。";
+      note.textContent = note.dataset.i18nEn;
+      section.appendChild(note);
+    });
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
+  }
+
+  function cardHtml(event) {
+    const title = escapeHtml(event.title);
+    const publisher = escapeHtml(event.publisher);
+    const when = escapeHtml((event.when && (event.when.new_york || event.when.en)) || "");
+    const version = escapeHtml(event.manifest_version);
+    const id = escapeHtml(event.id);
+    const ask = event.ask_enabled && version
+      ? '<button type="button" class="event-ask" data-event-id="' + id + '" data-event-version="' + version + '">Ask AI about this event</button>'
+      : '<button type="button" class="event-ask" disabled>AI stays off until this card and the server share one event version.</button>';
+    const href = String(event.source_url || "");
+    const link = href.indexOf("https://") === 0 || href.indexOf("http://") === 0
+      ? '<a href="' + escapeHtml(href) + '" rel="noopener noreferrer" target="_blank">Read source</a>'
+      : "";
+    return '<article class="event-card"><p class="event-meta"><span>' + publisher + "</span><span>" + when +
+      '</span></p><h3>' + title + '</h3><div class="event-actions">' + link + ask +
+      '</div><p class="event-ask-result" role="status"></p></article>';
+  }
+
+  function askEvent(button) {
+    if (button.disabled || !button.dataset.eventVersion) return;
+    const result = button.closest("article").querySelector(".event-ask-result");
+    const language = document.documentElement.lang === "zh-CN" ? "Chinese" : "English";
+    const question = language === "Chinese"
+      ? "这条事件的证据写了什么？哪些内容证据没有给出？"
+      : "What does this event's evidence say, and what does it not establish?";
+    const model = document.getElementById("ask-model");
+    result.textContent = language === "Chinese" ? "正在按当前版本询问…" : "Asking about this version…";
+    fetch("/api/ask", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", Accept: "application/json"},
+      body: JSON.stringify({
+        ticker: ticker,
+        provider: model && model.value ? model.value : "openai",
+        language: language,
+        depth: "beginner",
+        question: question,
+        event_version: button.dataset.eventVersion,
+        event_id: button.dataset.eventId
+      })
+    }).then(async (response) => {
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || payload.error || "ask failed");
+      const lines = (payload.answer || []).map((claim) => claim.text).filter(Boolean);
+      result.textContent = lines.join(" ") || (language === "Chinese" ? "没有可显示的回答。" : "No answer text.");
+    }).catch((error) => {
+      result.textContent = error.message || "The event explanation is unavailable. The card stays.";
+    });
+  }
+})();
+</script></section></main>
+<script>
+let uiLanguage = "en";
+function applyLanguage(language, persist) {
+  uiLanguage = language === "zh" ? "zh" : "en";
+  document.documentElement.lang = uiLanguage === "zh" ? "zh-CN" : "en";
+  document.querySelectorAll("[data-i18n-en]").forEach((element) => {
+    element.textContent = uiLanguage === "zh" ? element.dataset.i18nZh : element.dataset.i18nEn;
+  });
+  const toggle = document.getElementById("language-toggle");
+  toggle.textContent = uiLanguage === "zh" ? "EN" : "中文";
+  toggle.setAttribute("aria-pressed", String(uiLanguage === "zh"));
+}
+document.getElementById("language-toggle").addEventListener("click", () => {
+  applyLanguage(uiLanguage === "zh" ? "en" : "zh", true);
+});
+const initial = new URLSearchParams(location.search).get("lang") === "zh" ? "zh" : "en";
+applyLanguage(initial, false);
+</script>
+</body></html>

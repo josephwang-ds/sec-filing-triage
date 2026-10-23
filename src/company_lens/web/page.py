@@ -21,6 +21,7 @@ from company_lens.contracts import (
     FilingTimelinePoint,
     HeadlineBrief,
 )
+from company_lens.events.render import events_stylesheet, render_events_section
 from company_lens.profiles import DEMO_PROFILES
 from company_lens.web.financials import financial_results_section
 
@@ -234,6 +235,7 @@ def _document(snapshot: CompanySnapshot) -> str:
   </nav>
   <nav class="section-nav" aria-label="Page storyline">
         <a href="#brief" data-i18n="nav.overview">Overview</a>
+        <a href="#events" data-i18n="nav.events">Events</a>
         <a href="#performance" data-i18n="nav.history">History</a>
         <a href="#filings" data-i18n="nav.filings">Filings</a>
         <a href="#ask" data-i18n="nav.ask">Ask AI</a>{context_nav}
@@ -281,6 +283,8 @@ def _document(snapshot: CompanySnapshot) -> str:
       </section>
 
   {financial_results_section(snapshot.financial_results)}
+
+  {render_events_section(_event_feed(snapshot), ticker=snapshot.ticker)}
 
   <section class="performance-section" id="performance" aria-labelledby="performance-title"
   data-benchmark-scope="history">
@@ -373,6 +377,11 @@ def _document(snapshot: CompanySnapshot) -> str:
 
 
 
+def _event_feed(snapshot: CompanySnapshot) -> dict | None:
+    feed = snapshot.provenance.get("event_feed") if isinstance(snapshot.provenance, dict) else None
+    return feed if isinstance(feed, dict) else None
+
+
 def _nav_links(snapshot: CompanySnapshot) -> str:
     """The section list, numbered from what the page actually contains.
 
@@ -382,6 +391,7 @@ def _nav_links(snapshot: CompanySnapshot) -> str:
     number or points at a section that is not there.
     """
     entries = [("#brief", "nav.overview", "Overview"),
+               ("#events", "nav.events", "Events"),
                ("#performance", "nav.history", "History"),
                ("#filings", "nav.filings", "Filings")]
     if snapshot.disclosure_signal:
@@ -1211,6 +1221,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "nav.research": "How this is audited",
                 "nav.find": "Find a company",
                 "nav.overview": "Overview",
+                "nav.events": "Events",
                 "nav.ask": "Ask AI",
                 "nav.history": "History",
                 "nav.filings": "Filings",
@@ -1652,6 +1663,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "nav.research": "审计方法",
                 "nav.find": "查找公司",
                 "nav.overview": "概览",
+                "nav.events": "事件",
                 "nav.ask": "问 AI",
                 "nav.history": "历史表现",
                 "nav.filings": "公司披露",
@@ -3020,7 +3032,7 @@ h1,h2{letter-spacing:-.035em}h1 em{color:#6b8051}
 @media(max-width:650px){.index-topbar>div{justify-content:flex-start}.index-hero h1{font-size:44px}.method-links{grid-template-columns:1fr}.index-topbar{gap:18px}main{padding-top:28px}}
 
 
-"""
+""" + events_stylesheet()
 
 
 def _index_css() -> str:

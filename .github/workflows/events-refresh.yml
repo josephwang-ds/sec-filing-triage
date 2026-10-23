@@ -1,0 +1,48 @@
+name: Events refresh
+
+# News and the SEC index only. This file does not build company pages and does
+# not deploy the site. A production cron trigger is intentionally omitted until
+# Codex enables it; GitHub schedule events are delayed and can be dropped, and
+# the durable blob store is not confirmed on this account.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "high_frequency or ordinary"
+        type: string
+        default: high_frequency
+
+permissions:
+  contents: read
+
+concurrency:
+  group: events-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -e .
+
+      - name: Refresh event data without deploying
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          set -euo pipefail
+          python scripts/refresh_events.py --check-config
+          python scripts/refresh_events.py \
+            --dataset all \
+            --tier "${{ inputs.tier }}" \
+            --root "${{ runner.temp }}/events-store"

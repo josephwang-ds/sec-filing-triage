@@ -2,8 +2,11 @@
 
 The public HTML bundle is deployed at <https://lens.josephjwang.com>. The refresh
 that keeps it current, and the production deploy at the end of it, run from
-GitHub Actions: `.github/workflows/refresh.yml` on weekdays after the US close,
-with `.github/workflows/freshness.yml` watching the published result.
+GitHub Actions: `.github/workflows/refresh.yml` on Saturday at 07:20 UTC,
+with `.github/workflows/freshness.yml` checking the published pages weekly.
+That Saturday job is the production schedule. It is not a weekday cron, and it
+is not the news cadence in `docs/LENS_EVENTS_PLAN.md`. The event workflows are
+manual until a durable store and an independent wake are enabled.
 
 This replaced a systemd timer on a Vultr worker. What that arrangement was, and
 why its failure is the reason the second workflow exists, is at the end of this

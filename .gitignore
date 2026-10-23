@@ -17,6 +17,7 @@ venv/
 # data/sample/ IS committed — it is what makes `make demo` work offline.
 data/cache/
 data/build/
+data/events-store/
 data/vercel-cli/
 build/
 dist/

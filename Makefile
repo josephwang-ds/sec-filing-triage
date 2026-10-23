@@ -16,7 +16,7 @@ PYTHON ?= $(shell   test -x .venv/bin/python && echo .venv/bin/python ||   comma
 # the project.
 export PYTHONPATH := $(CURDIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
 
-.PHONY: help install lock install-locked predictions score-predictions demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-all vercel-bundle vercel-deploy run company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
+.PHONY: help install lock install-locked predictions score-predictions demo earnings-calendar ladder-chart overview-page research-page self-relative-evidence text-cache volatility-cache volatility-evidence quick audit doctor test lint ingest refresh-filings refresh-fundamentals refresh-headlines refresh-events refresh-all vercel-bundle vercel-deploy run company company-featured company-pages evidence nlp-eval llm-eval llm-eval-provider-dry-run llm-eval-openai-dry-run clean
 
 help:
 	@echo "make install   install the package and dev dependencies"
@@ -32,6 +32,7 @@ help:
 	@echo "make refresh-filings  incrementally check SEC for new 8-Ks (needs network)"
 	@echo "make refresh-fundamentals  refresh the AAPL annual Company Facts pilot"
 	@echo "make refresh-headlines  refresh bounded Finnhub headline metadata"
+	@echo "make refresh-events  refresh news/SEC event checkpoints; does not deploy"
 	@echo "make refresh-all  locked SEC + market refresh and static page rebuild"
 	@echo "make predictions   rank the next session's filings and publish them"
 	@echo "make score-predictions  append outcomes once reaction windows close"
@@ -157,6 +158,10 @@ refresh-fundamentals: check-python
 	  echo 'EDGAR_USER_AGENT is not set. The SEC requires a real name and email.'; \
 	  echo '  export EDGAR_USER_AGENT="Your Name you@example.com"'; exit 1; }
 	PYTHONPATH=src $(PYTHON) scripts/refresh_fundamentals.py --tickers AAPL
+
+refresh-events: check-python
+	PYTHONPATH=src $(PYTHON) scripts/refresh_events.py --check-config
+	PYTHONPATH=src $(PYTHON) scripts/refresh_events.py --dataset all --tier high_frequency
 
 refresh-headlines: check-python
 	@test -n "$$FINNHUB_API_KEY" || { \

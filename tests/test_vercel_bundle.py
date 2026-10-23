@@ -25,7 +25,10 @@ def test_vercel_bundle_contains_public_html_but_not_snapshot_json(tmp_path) -> N
     assert config["version"] == 3
     assert config["routes"][0] == {"src": "/", "dest": "/index.html"}
     assert config["routes"][-1]["status"] == 404
-    assert not (output / "functions").exists()
+    events = output / "functions" / "api" / "events.func"
+    assert (events / "index.js").is_file()
+    assert (events / "public.json").is_file()
+    assert not (output / "functions" / "api" / "ask.func").exists()
 
 
 def test_vercel_bundle_packages_private_grounded_ask_function(tmp_path) -> None:

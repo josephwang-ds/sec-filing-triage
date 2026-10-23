@@ -1,0 +1,39 @@
+name: Events monitor
+
+# Reads task checkpoints. A page that returns HTTP 200 is not a pass.
+# EVENTS_RERUN_TOKEN is not a repository secret today, so this job alerts and
+# prints the recovery entry. It does not wake the refresh workflow by itself.
+# A production cron trigger is intentionally omitted.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -e .
+
+      - name: Report event health without claiming a repair
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          EVENTS_RERUN_TOKEN: ${{ secrets.EVENTS_RERUN_TOKEN }}
+        run: |
+          set -euo pipefail
+          python scripts/events_monitor.py \
+            --allow-empty \
+            --root "${{ runner.temp }}/events-store" \
+            --supported AAPL JPM NVDA
+          echo "auto_repair=false"
+          echo "recovery=gh workflow run events-refresh.yml"

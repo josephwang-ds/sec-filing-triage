@@ -238,7 +238,10 @@ def test_company_page_is_self_contained_and_source_linked(tmp_path) -> None:
     assert "IntersectionObserver" in page
     assert 'class="filing-card filing-lead"' in page
     assert page.index('id="brief"') < page.index('id="performance"')
+    assert page.index('id="earnings"') < page.index('id="events"') < page.index('id="performance"')
     assert page.index('id="performance"') < page.index('id="filings"')
+    assert "The published event feed is unavailable" in page
+    assert "no important events" not in page.lower()
     assert page.index('id="filings"') < page.index('id="ask"')
     assert 'id="language-toggle"' in page
     assert 'data-i18n="ask.title"' in page
