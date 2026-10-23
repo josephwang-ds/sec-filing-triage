@@ -48,7 +48,7 @@ the public page rather than quietly not shipping.
 A point-in-time event dataset built from SEC timestamps; a reusable audit library
 that fails the build rather than logging a warning; a ranker; and a
 source-backed company page with a controlled AI question-answering box that
-refuses to answer beyond its evidence. 749 tests. No price predictions, no
+refuses to answer beyond its evidence. 766 tests. No price predictions, no
 trading strategy, no buy or sell recommendations anywhere — the model predicts
 *how big* a reaction will be, never which direction, because direction is a bet
 against desks with faster data and more capital.
@@ -96,6 +96,18 @@ filing queue. It is the part with a measured result, and most of this README.
 built on that same foundation — a live page per issuer with performance history,
 filing changes, cited evidence, and a controlled grounded-LLM Q&A. It is a
 product surface over the pipeline, not a generic research agent.
+
+Financial result cards disclose the accounting concept, unit, exact current/prior
+periods, and YoY formula. Revenue and net-income growth may include a covered-sample
+reference: the equal-weight median of at least five other issuers with the same
+SEC SIC first three digits, accounting concept, currency and annual/quarterly grain.
+Period ends must be within 45 days and durations within 15 days; later filings,
+zero/loss-base growth and missing comparisons are excluded. CIK deduplicates share
+classes. This uses latest cached reports, not reconstructed historical cohorts or a
+complete industry census. The reference is withheld when coverage is insufficient.
+Stock return comparisons separately show company/ETF cumulative returns and their
+gap in percentage points, over common trading dates. Financial cards and sample
+references are not added to the grounded Q&A evidence in this release.
 
 Its grounded Q&A lets a reader choose the **evidence scope** — core financials
 (SEC filings and long-term fundamentals), plus company news, plus market
@@ -522,7 +534,7 @@ embargo sweep, and writes a self-contained HTML report.
 
 ```bash
 make quick           # smaller, no leakage study, ~30s
-make test            # 749 tests (~12 min; the nested model selection dominates)
+make test            # 766 tests (~12 min; the nested model selection dominates)
 make audit           # the leakage checks as an exit code
 make llm-eval        # frozen English/Chinese grounded-output scorecard
 make llm-eval-openai-dry-run  # inspect 20-case paid benchmark scope; sends nothing
@@ -774,7 +786,7 @@ src/filing_triage/
                    and hyperparameter sensitivity grid
   report.py        self-contained HTML
   synth.py         the offline corpus
-tests/             749 tests; test_guards, test_pipeline, test_uncertainty,
+tests/             766 tests; test_guards, test_pipeline, test_uncertainty,
                    test_prediction_log and test_ingest_integration are the
                    ones that matter
 predictions/       one file per refresh: the ranking, committed before the

@@ -296,6 +296,12 @@ def _document(snapshot: CompanySnapshot) -> str:
     over the exact same dates. Historical context, not expected return.</p>
     <p class="section-intro" id="benchmark-definition">{html.escape(_benchmark_definition(snapshot.benchmark))}</p>
     <p class="benchmark-note" id="benchmark-note" aria-live="polite"></p>
+    <details class="diagnostics-disclosure"><summary data-i18n-en="Return definition and comparison" data-i18n-zh="回报口径与比较方法">Return definition and comparison</summary>
+      <p data-i18n-en="Cumulative return = ending adjusted close / starting adjusted close − 1; it is not an annual or quarterly financial growth rate. Company and selected ETF use only their common trading dates, shown above the chart. Return gap subtracts the ETF return from company return, in percentage points. SPY provides broad US large-cap market context; QQQ provides Nasdaq-100 context, not a matched industry peer portfolio."
+      data-i18n-zh="累计回报 = 期末复权收盘价 ÷ 期初复权收盘价 − 1；不是年度或季度财务增速。公司与所选 ETF 仅使用双方共同交易日，具体日期显示在图表上方。回报差为公司回报减去 ETF 回报，单位为百分点。SPY 提供美国大盘背景；QQQ 提供纳斯达克 100 背景，不代表同行业可比公司组合。">Cumulative return = ending adjusted close / starting adjusted close − 1; company and ETF use common trading dates.</p>
+      <p data-i18n-en="Prices are vendor-adjusted; dividends are included only when supplied by that vendor. USD illustration, before fees and taxes. No currency conversion or valuation/earnings comparison is implied."
+      data-i18n-zh="价格采用供应商复权数据；仅当供应商数据包含分红时才反映分红。图中按美元展示，未扣费用与税费；不涉及汇率换算，也不代表估值或财务业绩比较。">Vendor-adjusted prices; dividends only when supplied by the vendor; USD, before fees and taxes.</p>
+    </details>
     <div class="performance-layout">
       <div class="chart-panel">
         <div class="chart-legend">
@@ -314,6 +320,7 @@ def _document(snapshot: CompanySnapshot) -> str:
       </div>
       <aside class="ending-card">
         <span data-i18n="performance.ending_value">Ending value</span><strong id="ending-value"></strong>
+        <small id="history-return-comparison"></small>
         <small id="relative-copy"></small>
         <div class="mini-comparison"><span id="benchmark-ending-label">{html.escape(snapshot.benchmark)} ending value</span>
         <b id="benchmark-ending"></b></div>
@@ -1557,7 +1564,8 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "citation.source": "Source passage",
                 "footer.tagline": "Understand the evidence before forming a view.",
                 "footer.how": "How to read this lens",
-                "performance.relative": "{value} vs {benchmark} over this period",
+                "performance.returns": "{ticker}: {asset}; {benchmark}: {market} cumulative return",
+                "performance.relative": "Return gap vs {benchmark}: {value} percentage points",
                 "performance.benchmark_ending": "{benchmark} ending value",
                 "benchmark.definition.SPY": (
                     "SPY tracks the S&P 500: use it to compare this stock with large US "
@@ -1918,7 +1926,8 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "citation.source": "来源段落",
                 "footer.tagline": "先理解证据，再形成自己的判断。",
                 "footer.how": "如何阅读 Company Lens",
-                "performance.relative": "本期相对 {benchmark}：{value}",
+                "performance.returns": "累计回报：{ticker} {asset}；{benchmark} {market}",
+                "performance.relative": "本期回报差（公司减 {benchmark}）：{value} 个百分点",
                 "performance.benchmark_ending": "{benchmark} 期末价值",
                 "benchmark.definition.SPY": (
                     "SPY 跟踪标普 500，用来比较这只股票与美国大型公司整体在同一时期的表现。"
@@ -2150,8 +2159,11 @@ function renderHistory(label) {{
   );
   document.getElementById('ending-value').textContent = money(p.ending_value);
   document.getElementById('benchmark-ending').textContent = money(p.initial_investment * (1 + p.benchmark.total_return));
+  document.getElementById('history-return-comparison').textContent = tr('performance.returns', {{
+    ticker, asset: pct(p.asset.total_return), market: pct(p.benchmark.total_return), benchmark: selected,
+  }});
   document.getElementById('relative-copy').textContent = tr('performance.relative', {{
-    value: pct(p.relative_total_return), benchmark: selected,
+    value: `${{(p.relative_total_return * 100).toFixed(1)}}`, benchmark: selected,
   }});
   document.getElementById('cagr').textContent = pct(p.asset.cagr);
   document.getElementById('volatility').textContent = plainPct(p.asset.annualized_volatility);

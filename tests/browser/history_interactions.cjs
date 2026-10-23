@@ -26,11 +26,14 @@ async function check(path, available) {
     const element = selector => document.querySelector(selector);
     assert.deepEqual(errors, [], 'page initialization must work');
     assert.equal(element('[data-benchmark="QQQ"]').disabled, !available);
+    assert.match(element('#relative-copy').textContent, /percentage points/);
+    assert.match(element('#history-return-comparison').textContent, /SPY:.*cumulative return/);
     const briefReturn = element('#total-return').textContent;
     const spyEnding = element('#benchmark-ending').textContent;
     if (available) {
       element('[data-benchmark="QQQ"]').click();
       assert.equal(element('#legend-benchmark').textContent, 'QQQ');
+      assert.match(element('#history-return-comparison').textContent, /QQQ:/);
       assert.equal(element('#total-return').textContent, briefReturn);
       assert.notEqual(element('#benchmark-ending').textContent, spyEnding);
       assert.match(element('#benchmark-note').textContent, /stay on SPY/);
@@ -38,6 +41,8 @@ async function check(path, available) {
     element('#ask-question').value = 'Keep my edited question';
     element('#language-toggle').click();
     assert.equal(document.documentElement.lang, 'zh-CN');
+    assert.match(element('#relative-copy').textContent, /个百分点/);
+    assert.match(element('#history-return-comparison').textContent, /累计回报/);
     assert.equal(element('#legend-benchmark').textContent, available ? 'QQQ' : 'SPY');
     assert.equal(element('#ask-question').value, 'Keep my edited question');
     element('[data-period="1Y"]').click();

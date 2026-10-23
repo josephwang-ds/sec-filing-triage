@@ -6,6 +6,13 @@ from __future__ import annotations
 
 import html
 
+DEFINITIONS = {
+    "revenue": ("Reported revenue before expenses; not stock performance.", "报告列示的收入，未扣除费用；不是股价回报。"),
+    "net_income": ("Reported net income after expenses and taxes; the exact SEC concept is shown below.", "报告列示的税后净利润；具体 SEC 会计标签见下方。"),
+    "eps": ("Diluted earnings per share; not total profit or a growth rate.", "考虑稀释后的每股收益；不是利润总额或增长率。"),
+    "gross_profit": ("Revenue less cost of revenue, in dollars; not gross margin percent.", "收入减去营业成本的金额；不是毛利率。"),
+}
+
 LABELS = {
     "revenue": ("Revenue", "收入"),
     "net_income": ("Net income", "净利润"),
@@ -25,6 +32,51 @@ def _money(value: float, unit: str, chinese: bool = False) -> str:
     if unit == "USD/shares":
         return f"{value:,.2f} 美元/股" if chinese else f"${value:,.2f} / share"
     return f"{value / 1e8:,.2f} 亿美元" if chinese else f"${value / 1e9:,.2f}B"
+
+
+def _metric_context(metric: dict) -> str:
+    en, zh = DEFINITIONS[metric["id"]]
+    context = _text(en, zh, "p")
+    context += _text(
+        f"Current: {metric['start']} — {metric['end']} · {metric['unit']}",
+        f"本期：{metric['start']} — {metric['end']} · {metric['unit']}", "small")
+    if metric["prior_start"]:
+        context += _text(
+            f"Prior year: {metric['prior_start']} — {metric['prior_end']}",
+            f"上年同期：{metric['prior_start']} — {metric['prior_end']}", "p")
+    reference = metric.get("reference")
+    if reference:
+        n, minimum = reference["n"], reference["minimum"]
+        if reference["status"] == "available":
+            context += _text(
+                f"Covered SIC {reference['sic_group']} sample median YoY: {reference['median_yoy']:+.1%} (n={n}, excluding this company). Gap: {reference['gap_pp']:+.1f} percentage points.",
+                f"本站 SIC {reference['sic_group']} 类别样本同比中位数：{reference['median_yoy']:+.1%}（{n} 家，不含本公司）。差值：{reference['gap_pp']:+.1f} 个百分点。", "p")
+        else:
+            reasons = {
+                "no_company_growth": ("No comparable company growth rate.", "本公司没有可比同比增长率。"),
+                "missing_classification": ("SEC SIC classification is missing.", "缺少 SEC SIC 分类。"),
+                "insufficient_sample": (f"Only {n} eligible companies; at least {minimum} required.", f"符合条件的公司仅 {n} 家，至少需要 {minimum} 家。"),
+            }
+            en_reason, zh_reason = reasons[reference["reason"]]
+            context += _text("Category reference unavailable. " + en_reason, "暂无类别参考。" + zh_reason, "p")
+        context += '<details class="metric-method"><summary>' + _text("Reference method and sources", "参考口径与来源") + '</summary>'
+        context += _text(
+            f"As of {reference['as_of']}. Latest cached filings only; one issuer per CIK (share classes deduplicated); SEC SIC first 3 digits, same annual/quarterly grain, exact accounting concept and currency. Period ends within 45 days; durations within 15 days. Later filings, missing comparisons and zero/loss bases excluded. Equal-weight median of company YoY rates; not aggregate industry growth, a full industry census, or a matched business peer set. Historical peer filings are not reconstructed.",
+            f"截至 {reference['as_of']}。仅使用最新缓存报告，按 CIK 去重同一公司的不同股类：SEC SIC 前三位相同，年度／单季粒度、会计标签和币种相同；期末相差不超过 45 天，期间长度相差不超过 15 天。剔除之后披露、缺少同比、零基数及涉及亏损的样本。取公司同比的等权中位数，不是行业汇总增速、全行业统计或严格业务可比公司组；不重建同类公司历史报告。", "p")
+        if reference["members"]:
+            context += '<ul>'
+            for member in reference["members"]:
+                url = html.escape(member["source_url"], quote=True)
+                label = html.escape(f"{member['ticker']} · {member['period_end']} · {member['yoy']:+.1%}")
+                context += f'<li><a href="{url}" target="_blank" rel="noopener noreferrer">{label} ↗</a></li>'
+            context += '</ul>'
+        context += '</details>'
+    context += '<details class="metric-method"><summary>' + _text("Metric definition", "指标口径") + '</summary>'
+    context += _text(
+        "YoY = current / prior-year value − 1. Compared with the same period a year ago, not the previous quarter. Percentage-point gap = company growth − sample median growth. Consolidated reported facts; company-specific accounting and business mixes may differ.",
+        "同比 = 本期 ÷ 上年同期 − 1；比较去年同期，不是上一季度。百分点差 = 公司增速 − 样本中位增速。采用报告中的合并财务事实；不同公司的会计处理和业务构成仍可能不同。", "p")
+    context += '<code>' + html.escape(metric["concept"]) + '</code></details>'
+    return context
 
 
 def financial_results_section(report: dict | None) -> str:
@@ -50,6 +102,10 @@ def financial_results_section(report: dict | None) -> str:
         f"{kind_zh}截至 {report['period_end']} · 披露于 {report['filed']} · {report['form']}",
         "p",
     )
+    if report.get("sic_description"):
+        summary += _text(
+            f"SEC industry registration: {report['sic_description']} (SIC {report.get('sic', '')}). SIC is a broad classification, not a curated peer list.",
+            f"SEC 行业登记：{report['sic_description']}（SIC {report.get('sic', '')}）。SIC 是分类参考，不是人工筛选的可比公司名单。", "p")
     cards = []
     for metric in report["metrics"]:
         key, unit, value, old = metric["id"], metric["unit"], metric["value"], metric["prior_value"]
@@ -81,6 +137,7 @@ def financial_results_section(report: dict | None) -> str:
             + _text(en, zh, "h3")
             + _text(_money(value, unit), _money(value, unit, True), "strong")
             + comparison
+            + _metric_context(metric)
             + "</article>"
         )
     if not cards:

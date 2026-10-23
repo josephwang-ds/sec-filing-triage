@@ -129,6 +129,9 @@ def build_financial_results(facts: dict, submissions: dict, cik: int) -> dict:
         "basis": "as_reported_same_filing",
         "reason": None,
         "financial_issuer": financial_issuer,
+        "sic": str(submissions.get("sic", "")),
+        "cik": str(cik),
+        "sic_description": str(submissions.get("sicDescription", "")),
     }
 
 
