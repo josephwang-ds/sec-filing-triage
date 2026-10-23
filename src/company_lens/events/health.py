@@ -243,19 +243,17 @@ def acquire_monitor_turn(
     claim_seconds: int = 120,
 ) -> dict[str, Any]:
     """Persist the right to call the executor. A lost compare-and-swap must not POST."""
-    payload = copy.deepcopy(pulled.payload)
-    monitor = dict(payload.get("monitor") or {})
+    payload = copy.deepcopy(pulled.payload or {})
     now = as_utc(now)
-    cooldown = monitor.get("cooldown_until")
+    cooldown = payload.get("cooldown_until")
     if cooldown and now < as_utc(datetime.fromisoformat(str(cooldown))):
         return {"acquired": False, "reason": "cooldown"}
-    claim_until = monitor.get("claim_until")
+    claim_until = payload.get("claim_until")
     if claim_until and now < as_utc(datetime.fromisoformat(str(claim_until))):
         return {"acquired": False, "reason": "claimed"}
     token = secrets.token_hex(8)
-    monitor["claim_token"] = token
-    monitor["claim_until"] = (now + timedelta(seconds=claim_seconds)).isoformat()
-    payload["monitor"] = monitor
+    payload["claim_token"] = token
+    payload["claim_until"] = (now + timedelta(seconds=claim_seconds)).isoformat()
     try:
         pushed = durable.push(payload, pulled.etag)
     except BlobRequestError as exc:
@@ -295,9 +293,7 @@ def request_monitor_rerun(
     )
     if outcome.get("rerun_requested") and outcome.get("cooldown_until"):
         payload = claim["payload"]
-        monitor = dict(payload.get("monitor") or {})
-        monitor["cooldown_until"] = outcome["cooldown_until"]
-        payload["monitor"] = monitor
+        payload["cooldown_until"] = outcome["cooldown_until"]
         try:
             durable.push(payload, claim["etag"])
             outcome = {**outcome, "cooldown_persisted": True}

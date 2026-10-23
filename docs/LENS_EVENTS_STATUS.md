@@ -103,6 +103,10 @@ Codex 复验 `dad74fc` 后，入口仍有五处代码缺陷。这一轮修版本
 | 公开健康与监控一致 | yes | yes：周末、休市、活跃窗口、stale、partial、缺口、pending、错误类、缺失任务。判断不读固定的 `cadence_seconds` | no | no | no |
 | 监控元数据与执行资格 | yes | yes：没有到期抓取的刷新仍保留 cooldown。两次监控只有一次 POST，且 POST 前已经写入 claim | no | no | no |
 
+## 2026-10-23 提交指针
+
+检查点和公开页面不再各做一次 CAS。事件正文、证据和检查点快照是不可变对象。`lens-events/commit.json` 用一次 CAS 指向这一代的检查点和页面。页面、Ask 的版本授权和恢复都读这张提交记录。监控的执行资格在 `lens-events/monitor.json`，刷新不会改它。CAS 失败或提交前中断时，候选文件可以留下，但读路径不会把它们当成已发布内容。仍是 mock，没有 staging、生产或 schedule。
+
 真实演练（仍未执行）：配置上述名称后，手动 `workflow_dispatch` `events-refresh.yml`，确认 Blob 里出现 `lens-events/checkpoint.json` 和 `lens-events/public/manifest.json`，再用另一个空工作目录跑第二次，核对水位不是冷启动。然后打开公司页和 Ask，确认新 `event_version` 不需要重新部署。最后单独 dispatch `events-monitor.yml`，在刷新停摆后看健康状态变差。不要启用 schedule。
 
 ## 验收证据

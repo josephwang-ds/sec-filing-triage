@@ -17,7 +17,7 @@ from company_lens.events.health import (
     request_monitor_rerun,
 )
 from company_lens.events.policy import HIGH_FREQUENCY_TICKERS
-from company_lens.events.run import BlobDurable
+from company_lens.events.run import BlobDurable, MonitorDurable
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,7 +47,9 @@ def main(argv: list[str] | None = None) -> int:
         print("independent_wake=not_configured")
         print("rerun_requested=false")
         return 2
-    durable = BlobDurable(HttpBlobTransport(os.environ["BLOB_READ_WRITE_TOKEN"]))
+    transport = HttpBlobTransport(os.environ["BLOB_READ_WRITE_TOKEN"])
+    durable = BlobDurable(transport)
+    monitor = MonitorDurable(transport)
     pulled = durable.pull()
     if pulled.status == "read_error":
         print(json.dumps({
@@ -80,16 +82,20 @@ def main(argv: list[str] | None = None) -> int:
         if override and now < _aware(override):
             decision = {**decision, "reason": "cooldown", "rerun_requested": False}
         else:
-            def executor() -> object:
-                return _post_rerun(os.environ["EVENTS_RERUN_URL"], os.environ["EVENTS_RERUN_TOKEN"])
+            held = monitor.pull()
+            if held.status == "read_error":
+                decision = {**decision, "reason": "monitor_unreadable", "rerun_requested": False}
+            else:
+                def executor() -> object:
+                    return _post_rerun(os.environ["EVENTS_RERUN_URL"], os.environ["EVENTS_RERUN_TOKEN"])
 
-            decision = request_monitor_rerun(
-                durable,
-                pulled,
-                decision,
-                executor=executor,
-                now=now,
-            )
+                decision = request_monitor_rerun(
+                    monitor,
+                    held,
+                    decision,
+                    executor=executor,
+                    now=now,
+                )
     elif not configured:
         decision = {**decision, "rerun_requested": False, "independent_wake": "not_configured"}
     public = {

@@ -628,7 +628,7 @@ def test_blob_pointer_rejects_a_stale_match_and_hides_the_token():
     publish_releases(
         transport,
         {"AAPL": {"version_id": "v1", "feed": {"ticker": "AAPL", "manifest_version": "v1"}, "evidence": {"evidence": {"event_version": "v1"}}}},
-        observed_etag=None,
+        observed_etag=second["etag"],
     )
 
 

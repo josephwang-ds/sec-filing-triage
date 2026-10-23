@@ -167,6 +167,12 @@ def test_ask_reads_a_newly_published_version_without_rebuilding_the_function(tmp
     new = _bundle("version-new", "New version headline")
     publish_releases(blob, {"AAPL": old}, observed_etag=None)
     publish_releases(blob, {"AAPL": new}, observed_etag=pull_etag(blob))
+    blob.put(
+        "lens-events/evidence/AAPL/version-shadow.json",
+        json.dumps({"evidence": {"event_version": "version-shadow", "events": [{"title": "shadow headline"}]}}).encode(),
+        if_match=None,
+        overwrite=False,
+    )
     dump = {
         path: {"body": item["body"].decode(), "pathname": path, "url": item["url"]}
         for path, item in blob.objects.items()
@@ -204,6 +210,10 @@ def test_ask_reads_a_newly_published_version_without_rebuilding_the_function(tmp
         "  if (fresh.record.evidence.event_version !== 'version-new') process.exit(2);\n"
         "  if (fresh.record.evidence.events.some((event) => event.title === 'Old version headline')) process.exit(3);\n"
         "  if (prior.record.evidence.events.some((event) => event.title === 'New version headline')) process.exit(4);\n"
+        "  const shadow = await handler.resolveEventPacket({\n"
+        "    ticker: 'AAPL', event_version: 'version-shadow', event_id: 'evt-shadow',\n"
+        "    question: 'What does the evidence say about this event?'});\n"
+        "  if (!shadow.payload || shadow.payload.error !== 'event_version_unavailable') process.exit(5);\n"
         "  process.stdout.write(fresh.record.evidence.events[0].title);\n"
         "})().catch((error) => { console.error(error); process.exit(1); });\n"
     )

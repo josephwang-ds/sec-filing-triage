@@ -4,8 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const BLOB_API = "https://vercel.com/api/blob";
-const POINTER_PATH = "lens-events/public/manifest.json";
-const CHECKPOINT_PATH = "lens-events/checkpoint.json";
+const COMMIT_PATH = "lens-events/commit.json";
+const POINTER_PATH = COMMIT_PATH;
 const BUNDLED = readJson("public.json") || { companies: {}, health: null };
 
 function readJson(name) {
@@ -36,6 +36,19 @@ async function readExact(pathname) {
     const match = ((payload && payload.blobs) || []).find((item) => item.pathname === pathname);
     if (!match || !match.url) return { configured: true, missing: true };
     const body = await fetch(match.url, { headers: blobHeaders() });
+    if (!body.ok) return { configured: true, error: true };
+    return { configured: true, body: await body.json() };
+  } catch (error) {
+    return { configured: true, error: true };
+  }
+}
+
+async function readCommittedCheckpoint() {
+  const commit = await readExact(COMMIT_PATH);
+  if (!commit.configured || commit.error || commit.missing || !commit.body) return commit;
+  if (!commit.body.checkpoint_url) return commit;
+  try {
+    const body = await fetch(commit.body.checkpoint_url, { headers: blobHeaders() });
     if (!body.ok) return { configured: true, error: true };
     return { configured: true, body: await body.json() };
   } catch (error) {
@@ -332,7 +345,7 @@ async function handler(request, response) {
   }
   const view = param(request, "view");
   if (view === "health") {
-    const checkpoint = await readExact(CHECKPOINT_PATH);
+    const checkpoint = await readCommittedCheckpoint();
     if (!checkpoint.configured) {
       const health = BUNDLED.health || { naive_http_ok: true, ok: false, overall: "not_configured", sources: [] };
       return send(response, 200, health);

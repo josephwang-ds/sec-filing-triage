@@ -655,19 +655,24 @@ function clientSuppliedEvidence(input) {
 async function readPublishedEvidence(ticker, version) {
   const token = process.env.BLOB_READ_WRITE_TOKEN || "";
   if (!token) return { configured: false };
-  const pathname = "lens-events/evidence/" + ticker + "/" + version + ".json";
+  const headers = { authorization: "Bearer " + token, "x-api-version": "12" };
   try {
     const listed = await fetch(
-      "https://vercel.com/api/blob?prefix=" + encodeURIComponent(pathname) + "&limit=5",
-      { headers: { authorization: "Bearer " + token, "x-api-version": "12" } },
+      "https://vercel.com/api/blob?prefix=" + encodeURIComponent("lens-events/commit.json") + "&limit=5",
+      { headers },
     );
     if (!listed.ok) return { configured: true, error: true };
     const payload = await listed.json();
-    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === pathname);
+    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === "lens-events/commit.json");
     if (!match || !match.url) return { configured: true, missing: true };
-    const body = await fetch(match.url, {
-      headers: { authorization: "Bearer " + token, "x-api-version": "12" },
-    });
+    const commitResponse = await fetch(match.url, { headers });
+    if (!commitResponse.ok) return { configured: true, error: true };
+    const commit = await commitResponse.json();
+    const entry = commit && commit.tickers && commit.tickers[ticker];
+    const versions = (entry && entry.versions) || {};
+    const authorized = versions[version];
+    if (!authorized || !authorized.evidence_url) return { configured: true, missing: true };
+    const body = await fetch(authorized.evidence_url, { headers });
     if (body.status === 404) return { configured: true, missing: true };
     if (!body.ok) return { configured: true, error: true };
     const record = await body.json();

@@ -11,8 +11,10 @@ from tests.test_events_a1 import NOW, _row
 from tests.test_events_closure import ROOT, Clock, _run, _source
 
 from company_lens.events.blob_store import (
+    BlobRequestError,
     MemoryBlob,
     pull_checkpoint,
+    pull_monitor,
     push_checkpoint,
     read_pointer,
     read_published,
@@ -20,7 +22,8 @@ from company_lens.events.blob_store import (
 from company_lens.events.health import judge_checkpoint, request_monitor_rerun
 from company_lens.events.policy import HIGH_FREQUENCY_TICKERS
 from company_lens.events.refresh import FetchResult
-from company_lens.events.run import BlobDurable
+from company_lens.events.run import BlobDurable, MonitorDurable
+from company_lens.events.store import FileEventStore
 
 
 def test_an_older_refresh_cannot_replace_a_newer_published_page(tmp_path):
@@ -369,9 +372,9 @@ def test_public_health_matches_the_python_monitor_judgment(tmp_path):
         "global.fetch = async (url) => {\n"
         "  const text = String(url);\n"
         "  if (text.includes('vercel.com/api/blob')) {\n"
-        "    return { ok: true, status: 200, json: async () => ({ blobs: [{ pathname: 'lens-events/checkpoint.json', url: 'https://blob.test/checkpoint' }] }) };\n"
+        "    return { ok: true, status: 200, json: async () => ({ blobs: [{ pathname: 'lens-events/commit.json', url: 'https://blob.test/commit' }] }) };\n"
         "  }\n"
-        "  if (text === 'https://blob.test/checkpoint') {\n"
+        "  if (text === 'https://blob.test/commit') {\n"
         "    return { ok: true, status: 200, json: async () => stale.checkpoint };\n"
         "  }\n"
         "  return { ok: false, status: 404, json: async () => ({}) };\n"
@@ -412,43 +415,30 @@ def test_public_health_matches_the_python_monitor_judgment(tmp_path):
 
 def test_two_monitors_claim_before_post_and_only_one_requests_a_rerun():
     blob = MemoryBlob()
-    payload = {
-        "schema_version": 1,
-        "datasets": {
-            "news": {
-                "states": {
-                    "AAPL": {
-                        "key": "AAPL",
-                        "last_successful_check_at": (NOW - timedelta(hours=6)).isoformat(),
-                        "status": "current",
-                    }
-                }
-            }
-        },
-    }
-    push_checkpoint(blob, payload, expected_etag=None)
-    durable = BlobDurable(blob)
-    pulled = durable.pull()
+    push_checkpoint(blob, {"datasets": {}, "schema_version": 1}, expected_etag=None)
+    committed, commit_etag = pull_checkpoint(blob)
+    monitor = MonitorDurable(blob)
+    held = monitor.pull()
     calls: list[str] = []
 
     def executor():
-        current, _etag = pull_checkpoint(blob)
-        assert current["monitor"]["claim_until"]
-        assert "cooldown_until" not in current["monitor"]
+        current, _etag = pull_monitor(blob)
+        assert current["claim_until"]
+        assert "cooldown_until" not in current
         calls.append("post")
         return type("Response", (), {"status_code": 202})()
 
     decision = {"action": "rerun_eligible", "rerun_requested": False}
-    first = request_monitor_rerun(durable, pulled, decision, executor=executor, now=NOW)
-    second = request_monitor_rerun(durable, pulled, decision, executor=executor, now=NOW)
+    first = request_monitor_rerun(monitor, held, decision, executor=executor, now=NOW)
+    second = request_monitor_rerun(monitor, held, decision, executor=executor, now=NOW)
     assert first["rerun_requested"] is True
     assert first["cooldown_persisted"] is True
     assert second["rerun_requested"] is False
     assert second["reason"] == "conflict"
     assert calls == ["post"]
     third = request_monitor_rerun(
-        durable,
-        durable.pull(),
+        monitor,
+        monitor.pull(),
         decision,
         executor=executor,
         now=NOW + timedelta(minutes=5),
@@ -456,6 +446,196 @@ def test_two_monitors_claim_before_post_and_only_one_requests_a_rerun():
     assert third["rerun_requested"] is False
     assert third["reason"] == "cooldown"
     assert calls == ["post"]
+    saved, _etag = pull_monitor(blob)
+    assert saved["cooldown_until"]
+    assert saved["claim_token"]
+    again, again_etag = pull_checkpoint(blob)
+    assert again == committed
+    assert again_etag == commit_etag
+
+
+def test_an_older_run_cannot_publish_over_a_commit_made_after_its_checkpoint_read(tmp_path):
+    blob = MemoryBlob()
+    nested = {}
+
+    def publish_newer():
+        fresh = _source({"AAPL": [_row("AAPL", 1, title="new headline")]})
+        nested["result"] = _run(
+            tmp_path / "fresh",
+            blob,
+            {"news": fresh},
+            ["AAPL"],
+            NOW,
+            datasets=("news",),
+        )
+
+    older = _run(
+        tmp_path / "older",
+        blob,
+        {"news": _source({"AAPL": [_row("AAPL", 1, title="old headline")]})},
+        ["AAPL"],
+        NOW,
+        datasets=("news",),
+        after_checkpoint_read=publish_newer,
+    )
+    assert nested["result"].status == "stored"
+    assert older.status == "stale_writer"
+    page = read_published(blob, "AAPL")
+    commit, _etag = read_pointer(blob)
     saved, _etag = pull_checkpoint(blob)
-    assert saved["monitor"]["cooldown_until"]
-    assert saved["monitor"]["claim_token"]
+    version = nested["result"].reports[0].outcomes[0].version_id
+    assert page["events"][0]["title"] == "new headline"
+    assert "old headline" not in json.dumps(page)
+    assert commit["tickers"]["AAPL"]["version_id"] == version
+    assert page["manifest_version"] == version
+    assert saved["datasets"]["news"]["states"]["AAPL"]["version_id"] == version
+
+
+def test_monitor_claim_during_fetch_leaves_page_and_checkpoint_on_one_commit(tmp_path):
+    blob = MemoryBlob()
+    observed = {}
+
+    class ClaimingSource:
+        name = "claim"
+        max_window_days = 30
+
+        def __init__(self):
+            self.started = False
+
+        def lookback_floor(self, now):
+            del now
+            return None
+
+        def fetch(self, ticker, start, end):
+            del ticker, start, end
+            if not self.started:
+                self.started = True
+                monitor = MonitorDurable(blob)
+                calls: list[str] = []
+
+                def executor():
+                    current, _etag = pull_monitor(blob)
+                    assert current["claim_until"]
+                    assert "cooldown_until" not in current
+                    calls.append("post")
+                    return type("Response", (), {"status_code": 202})()
+
+                decision = request_monitor_rerun(
+                    monitor,
+                    monitor.pull(),
+                    {"action": "rerun_eligible", "rerun_requested": False},
+                    executor=executor,
+                    now=NOW,
+                )
+                observed["decision"] = decision
+                observed["posts"] = calls
+            return FetchResult(ok=True, items=[_row("AAPL", 1, title="committed headline")])
+
+    result = _run(
+        tmp_path / "refresh",
+        blob,
+        {"news": ClaimingSource()},
+        ["AAPL"],
+        NOW,
+        datasets=("news",),
+    )
+    assert result.status == "stored"
+    assert observed["decision"]["rerun_requested"] is True
+    assert observed["posts"] == ["post"]
+    page = read_published(blob, "AAPL")
+    commit, _etag = read_pointer(blob)
+    saved, _etag = pull_checkpoint(blob)
+    version = saved["datasets"]["news"]["states"]["AAPL"]["version_id"]
+    assert page["manifest_version"] == version
+    assert page["events"][0]["title"] == "committed headline"
+    assert commit["tickers"]["AAPL"]["version_id"] == version
+    assert commit["checkpoint_url"]
+    restarted = FileEventStore(tmp_path / "restart")
+    restarted.restore_workspace(BlobDurable(blob).pull().payload)
+    assert restarted.read_state("news", "AAPL")["version_id"] == version
+    monitor_state, _etag = pull_monitor(blob)
+    assert monitor_state["claim_token"]
+    assert monitor_state["cooldown_until"]
+
+
+class _CommitBlob(MemoryBlob):
+    def __init__(self) -> None:
+        super().__init__()
+        self.fail_commit = False
+
+    def put(self, pathname, body, *, if_match, overwrite):
+        if self.fail_commit and pathname == "lens-events/commit.json":
+            self.fail_commit = False
+            raise BlobRequestError(503, pathname)
+        return super().put(pathname, body, if_match=if_match, overwrite=overwrite)
+
+
+def test_candidates_remain_unpublished_until_the_commit_and_a_restart_matches(tmp_path):
+    blob = _CommitBlob()
+    first = _source({"AAPL": [_row("AAPL", 1, title="first headline")]})
+    _run(tmp_path / "first", blob, {"news": first}, ["AAPL"], NOW, datasets=("news",))
+    original = read_published(blob, "AAPL")
+    assert original["events"][0]["title"] == "first headline"
+
+    def stop_after_candidates():
+        bodies = [item["body"].decode() for item in blob.objects.values()]
+        assert any("second headline" in body for body in bodies)
+        raise RuntimeError("stop before commit")
+
+    second = _source({"AAPL": [_row("AAPL", 2, title="second headline")]})
+    try:
+        _run(
+            tmp_path / "second",
+            blob,
+            {"news": second},
+            ["AAPL"],
+            NOW + timedelta(minutes=31),
+            datasets=("news",),
+            before_commit=stop_after_candidates,
+        )
+    except RuntimeError as exc:
+        assert "stop before commit" in str(exc)
+    else:
+        raise AssertionError("the run committed after the interrupt")
+    assert read_published(blob, "AAPL")["manifest_version"] == original["manifest_version"]
+    assert "second headline" not in json.dumps(read_published(blob, "AAPL"))
+    saved, _etag = pull_checkpoint(blob)
+    assert saved["datasets"]["news"]["states"]["AAPL"]["version_id"] == original["manifest_version"]
+
+    blob.fail_commit = True
+    third = _source({"AAPL": [_row("AAPL", 3, title="third headline")]})
+    try:
+        _run(
+            tmp_path / "third",
+            blob,
+            {"news": third},
+            ["AAPL"],
+            NOW + timedelta(minutes=62),
+            datasets=("news",),
+        )
+    except BlobRequestError as exc:
+        assert exc.status == 503
+    else:
+        raise AssertionError("the commit put was accepted")
+    assert read_published(blob, "AAPL")["events"][0]["title"] == "first headline"
+    assert any("third headline" in item["body"].decode() for item in blob.objects.values())
+
+    fourth = _source({"AAPL": [_row("AAPL", 3, title="third headline")]})
+    stored = _run(
+        tmp_path / "fourth",
+        blob,
+        {"news": fourth},
+        ["AAPL"],
+        NOW + timedelta(minutes=93),
+        datasets=("news",),
+    )
+    assert stored.status == "stored"
+    page = read_published(blob, "AAPL")
+    commit, _etag = read_pointer(blob)
+    restarted = FileEventStore(tmp_path / "restart")
+    restarted.restore_workspace(BlobDurable(blob).pull().payload)
+    version = restarted.read_state("news", "AAPL")["version_id"]
+    assert page["events"][0]["title"] == "third headline"
+    assert page["manifest_version"] == version
+    assert commit["tickers"]["AAPL"]["version_id"] == version
+    assert "second headline" not in json.dumps(page)

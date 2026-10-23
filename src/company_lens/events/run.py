@@ -8,11 +8,13 @@ from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from company_lens.events.blob_store import (
+    COMMIT_PATH,
     BlobRequestError,
-    publish_releases,
-    pull_checkpoint,
+    commit_generation,
+    pull_monitor,
     push_checkpoint,
-    read_pointer,
+    push_monitor,
+    read_generation,
 )
 from company_lens.events.calendar import as_utc
 from company_lens.events.policy import coverage_tier, next_check
@@ -22,10 +24,19 @@ from company_lens.events.store import FileEventStore
 
 
 class DurablePull:
-    def __init__(self, status: str, payload: dict | None = None, etag: str | None = None) -> None:
+    def __init__(
+        self,
+        status: str,
+        payload: dict | None = None,
+        etag: str | None = None,
+        tickers: dict | None = None,
+        checkpoint_ref: dict | None = None,
+    ) -> None:
         self.status = status
         self.payload = payload
         self.etag = etag
+        self.tickers = {} if tickers is None else tickers
+        self.checkpoint_ref = {} if checkpoint_ref is None else checkpoint_ref
 
 
 class DurableStore(Protocol):
@@ -42,15 +53,45 @@ class BlobDurable:
 
     def pull(self) -> DurablePull:
         try:
-            payload, etag = pull_checkpoint(self.transport)
+            payload, etag, commit = read_generation(self.transport)
         except (BlobRequestError, OSError, ValueError):
             return DurablePull("read_error")
-        if payload is None:
+        if payload is None and etag is None:
             return DurablePull("missing")
-        return DurablePull("ok", payload, etag)
+        if payload is None:
+            payload = {"budget": {"day": None, "scope": "dataset-utc-day", "used": {}}, "datasets": {}, "schema_version": 1}
+        return DurablePull(
+            "ok",
+            payload,
+            etag,
+            tickers=dict(commit.get("tickers") or {}),
+            checkpoint_ref={
+                "pathname": commit.get("checkpoint_pathname"),
+                "url": commit.get("checkpoint_url"),
+            },
+        )
 
     def push(self, payload: dict, expected_etag: str | None) -> dict:
         return push_checkpoint(self.transport, payload, expected_etag=expected_etag)
+
+
+class MonitorDurable:
+    """Claim and cooldown. Updating this object does not move the commit pointer."""
+
+    def __init__(self, transport: Any) -> None:
+        self.transport = transport
+
+    def pull(self) -> DurablePull:
+        try:
+            payload, etag = pull_monitor(self.transport)
+        except (BlobRequestError, OSError, ValueError):
+            return DurablePull("read_error")
+        if payload is None:
+            return DurablePull("missing", {}, None)
+        return DurablePull("ok", payload, etag)
+
+    def push(self, payload: dict, expected_etag: str | None) -> dict:
+        return push_monitor(self.transport, payload, expected_etag=expected_etag)
 
 
 class UnconfiguredDurable:
@@ -104,11 +145,15 @@ def run_refresh_entry(
     daily_request_budget: int = 500,
     time_budget_seconds: float = 600,
     publish_transport: Any | None = None,
+    after_checkpoint_read: Any | None = None,
+    before_commit: Any | None = None,
 ) -> RunResult:
-    """Restore, refresh each dataset on its own cadence, then persist.
+    """Restore from the committed generation, refresh, then commit once.
 
-    ``publish_transport`` is the blob client for the public pointer. It is the
-    same transport as a ``BlobDurable`` in production. Tests pass the memory blob.
+    The commit etag is fixed when the checkpoint is loaded. A later read of the
+    commit record cannot make this run eligible to replace that generation.
+    ``after_checkpoint_read`` runs in that window so tests can commit another
+    generation before this run publishes.
     """
     pulled = durable.pull()
     if pulled.status == "read_error":
@@ -116,50 +161,42 @@ def run_refresh_entry(
     store = FileEventStore(local_root)
     if pulled.status == "ok" and pulled.payload is not None:
         store.restore_workspace(pulled.payload)
-    # Captured with the checkpoint generation. Re-reading the pointer after a
-    # newer run publishes would let this older result replace that page.
-    observed_pointer_etag: str | None = None
-    if publish_transport is not None and pulled.status in {"ok", "missing"}:
-        _pointer, observed_pointer_etag = read_pointer(publish_transport)
+    if after_checkpoint_read is not None and pulled.status in {"ok", "missing"}:
+        after_checkpoint_read()
     reports: list[RefreshReport] = []
     skipped: list[dict[str, str]] = []
     clock = clock or (lambda: datetime.now(UTC))
-    try:
-        for dataset in datasets:
-            due = []
-            tier_map = {}
-            for ticker in tickers:
-                tier = coverage_tier(ticker, supported)
-                tier_map[ticker] = tier if tier != "unsupported" else "ordinary"
-                state = store.read_state(dataset, ticker)
-                if is_due(dataset, tier_map[ticker], state, now):
-                    due.append(ticker)
-                else:
-                    skipped.append({"dataset": dataset, "ticker": ticker, "reason": "not_due"})
-            source = sources.get(dataset)
-            if source is None:
-                _mark_disabled(store, dataset, due, now)
-                continue
-            reports.append(
-                refresh_feed(
-                    store=store,
-                    source=source,
-                    dataset=dataset,
-                    tickers=due,
-                    now=now,
-                    watchlist=watchlist,
-                    allowed=supported,
-                    sleep=sleep,
-                    clock=clock,
-                    daily_request_budget=daily_request_budget,
-                    time_budget_seconds=time_budget_seconds,
-                    tiers=tier_map,
-                )
+    for dataset in datasets:
+        due = []
+        tier_map = {}
+        for ticker in tickers:
+            tier = coverage_tier(ticker, supported)
+            tier_map[ticker] = tier if tier != "unsupported" else "ordinary"
+            state = store.read_state(dataset, ticker)
+            if is_due(dataset, tier_map[ticker], state, now):
+                due.append(ticker)
+            else:
+                skipped.append({"dataset": dataset, "ticker": ticker, "reason": "not_due"})
+        source = sources.get(dataset)
+        if source is None:
+            _mark_disabled(store, dataset, due, now)
+            continue
+        reports.append(
+            refresh_feed(
+                store=store,
+                source=source,
+                dataset=dataset,
+                tickers=due,
+                now=now,
+                watchlist=watchlist,
+                allowed=supported,
+                sleep=sleep,
+                clock=clock,
+                daily_request_budget=daily_request_budget,
+                time_budget_seconds=time_budget_seconds,
+                tiers=tier_map,
             )
-    except Exception:
-        if pulled.status in {"ok", "missing"}:
-            _push_quiet(durable, store.export_workspace(datasets), pulled.etag)
-        raise
+        )
     if pulled.status == "not_configured":
         return RunResult(
             status="not_configured",
@@ -168,26 +205,24 @@ def run_refresh_entry(
             skipped=skipped,
         )
     try:
+        payload = store.export_workspace(datasets)
         if publish_transport is not None:
-            _publish_pointer(
+            commit_generation(
                 publish_transport,
-                store,
-                supported,
-                observed_etag=observed_pointer_etag,
+                expected_etag=pulled.etag,
+                checkpoint_payload=payload,
+                releases=_news_releases(store, supported),
+                base_tickers=pulled.tickers,
+                base_checkpoint=pulled.checkpoint_ref,
+                before_commit=before_commit,
             )
-        durable.push(store.export_workspace(datasets), pulled.etag)
+        else:
+            durable.push(payload, pulled.etag)
     except BlobRequestError as exc:
-        if exc.status in {409, 412}:
+        if exc.pathname == COMMIT_PATH and exc.status in {409, 412}:
             return RunResult(status="stale_writer", durable="conflict", reports=reports, skipped=skipped)
         raise
     return RunResult(status="stored", durable="checkpoint", reports=reports, skipped=skipped)
-
-
-def _push_quiet(durable: DurableStore, payload: dict, etag: str | None) -> None:
-    try:
-        durable.push(payload, etag)
-    except BlobRequestError:
-        return
 
 
 def _mark_disabled(store: FileEventStore, dataset: str, tickers: list[str], now: datetime) -> None:
@@ -213,18 +248,8 @@ def _mark_disabled(store: FileEventStore, dataset: str, tickers: list[str], now:
         )
 
 
-def _publish_pointer(
-    transport: Any,
-    store: FileEventStore,
-    supported: set[str],
-    *,
-    observed_etag: str | None,
-) -> None:
-    """Publish the news feed. SEC state stays in the checkpoint, not this pointer.
-
-    ``observed_etag`` is the pointer generation from the start of this run.
-    It is not refreshed here.
-    """
+def _news_releases(store: FileEventStore, supported: set[str]) -> dict:
+    """News objects for the next commit. SEC state stays in the checkpoint snapshot."""
     releases = {}
     dataset = "news"
     manifest = store.read_manifest(dataset)
@@ -247,9 +272,7 @@ def _publish_pointer(
             "feed": feed,
             "version_id": document["version_id"],
         }
-    if not releases:
-        return
-    publish_releases(transport, releases, observed_etag=observed_etag)
+    return releases
 
 
 def production_sleep(seconds: float) -> None:

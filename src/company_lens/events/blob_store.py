@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Protocol
+from typing import Any, Protocol
 from urllib.parse import quote
 
 import requests
@@ -117,9 +117,12 @@ class HttpBlobTransport:
 
 
 CHECKPOINT_PATH = "lens-events/checkpoint.json"
-POINTER_PATH = "lens-events/public/manifest.json"
+COMMIT_PATH = "lens-events/commit.json"
+MONITOR_PATH = "lens-events/monitor.json"
+POINTER_PATH = COMMIT_PATH
 FEED_PREFIX = "lens-events/public/versions"
 EVIDENCE_PREFIX = "lens-events/evidence"
+CHECKPOINT_PREFIX = "lens-events/checkpoints"
 
 
 class MemoryBlob:
@@ -171,43 +174,6 @@ def checkpoint_document(store_root_payload: dict) -> bytes:
     return json.dumps(store_root_payload, ensure_ascii=False, sort_keys=True).encode()
 
 
-def push_checkpoint(transport: BlobTransport, payload: dict, *, expected_etag: str | None) -> dict:
-    """CAS-publish the checkpoint. A 412 means a newer writer already stored one."""
-    try:
-        meta = transport.put(
-            CHECKPOINT_PATH,
-            checkpoint_document(payload),
-            if_match=expected_etag,
-            overwrite=expected_etag is not None,
-        )
-    except BlobRequestError as exc:
-        if exc.status == 412:
-            raise BlobRequestError(412, CHECKPOINT_PATH) from None
-        raise
-    return meta
-
-
-def pull_checkpoint(transport: BlobTransport) -> tuple[dict | None, str | None]:
-    """Return the checkpoint and its etag. Missing objects are an empty start, not an error."""
-    try:
-        found = transport.get_prefix(CHECKPOINT_PATH)
-    except BlobRequestError as exc:
-        if exc.status == 404:
-            return None, None
-        raise
-    if not found:
-        return None, None
-    url = found[0].get("url")
-    etag = found[0].get("etag")
-    if not url:
-        return None, etag if isinstance(etag, str) else None
-    body, read_etag = transport.read_url(str(url))
-    payload = json.loads(body.decode())
-    if not isinstance(payload, dict):
-        raise BlobRequestError(502, CHECKPOINT_PATH)
-    return payload, str(read_etag or etag or "") or None
-
-
 def _exact_blob(found: list[dict], pathname: str) -> dict | None:
     for item in found:
         if item.get("pathname") == pathname or str(item.get("url") or "").endswith(pathname):
@@ -215,27 +181,94 @@ def _exact_blob(found: list[dict], pathname: str) -> dict | None:
     return None
 
 
-def read_pointer(transport: BlobTransport) -> tuple[dict, str | None]:
-    """The only current-feed pointer. Missing means nothing has been published."""
+def _read_exact(transport: BlobTransport, pathname: str) -> tuple[dict, str | None]:
+    """Return one object. Missing is an empty document, not a read failure."""
     try:
-        found = transport.get_prefix(POINTER_PATH)
+        found = transport.get_prefix(pathname)
     except BlobRequestError as exc:
         if exc.status == 404:
             return {}, None
         raise
-    chosen = _exact_blob(found, POINTER_PATH)
+    chosen = _exact_blob(found, pathname)
     if chosen is None or not chosen.get("url"):
         return {}, None
     body, etag = transport.read_url(str(chosen["url"]))
     payload = json.loads(body.decode())
     if not isinstance(payload, dict):
-        raise BlobRequestError(502, POINTER_PATH)
+        raise BlobRequestError(502, pathname)
     return payload, str(chosen.get("etag") or etag or "") or None
 
 
+def read_commit(transport: BlobTransport) -> tuple[dict, str | None]:
+    """The only mutable publication record. Missing means nothing is committed."""
+    return _read_exact(transport, COMMIT_PATH)
+
+
+def read_pointer(transport: BlobTransport) -> tuple[dict, str | None]:
+    """Page reads use the commit record. There is no second feed pointer."""
+    return read_commit(transport)
+
+
+def read_generation(transport: BlobTransport) -> tuple[dict | None, str | None, dict]:
+    """Checkpoint body, commit etag, and the commit record from one generation.
+
+    The checkpoint object is immutable. Its identity is the commit etag, not a
+    second compare-and-swap token.
+    """
+    commit, etag = read_commit(transport)
+    if not commit:
+        return None, None, {}
+    url = commit.get("checkpoint_url")
+    if not url:
+        return None, etag, commit
+    body, _read_etag = transport.read_url(str(url))
+    payload = json.loads(body.decode())
+    if not isinstance(payload, dict):
+        raise BlobRequestError(502, COMMIT_PATH)
+    return payload, etag, commit
+
+
+def pull_checkpoint(transport: BlobTransport) -> tuple[dict | None, str | None]:
+    """Return the committed checkpoint and the commit etag. A missing commit is an empty start."""
+    payload, etag, _commit = read_generation(transport)
+    return payload, etag
+
+
+def push_checkpoint(transport: BlobTransport, payload: dict, *, expected_etag: str | None) -> dict:
+    """Store a checkpoint by committing it. The etag is the caller's generation."""
+    return commit_generation(
+        transport,
+        expected_etag=expected_etag,
+        checkpoint_payload=payload,
+    )
+
+
+def pull_monitor(transport: BlobTransport) -> tuple[dict | None, str | None]:
+    """Monitor claim and cooldown. This object is not part of a publication."""
+    payload, etag = _read_exact(transport, MONITOR_PATH)
+    if not payload:
+        return None, None
+    return payload, etag
+
+
+def push_monitor(transport: BlobTransport, payload: dict, *, expected_etag: str | None) -> dict:
+    """CAS the monitor record. A mismatch does not change the committed feed."""
+    try:
+        return transport.put(
+            MONITOR_PATH,
+            checkpoint_document(payload),
+            if_match=expected_etag,
+            overwrite=expected_etag is not None,
+        )
+    except BlobRequestError as exc:
+        if exc.status in {409, 412}:
+            raise BlobRequestError(exc.status, MONITOR_PATH) from None
+        raise
+
+
 def read_published(transport: BlobTransport, ticker: str) -> dict | None:
-    """Read the feed URL stored on the pointer. Never a mutable per-ticker path."""
-    manifest, _etag = read_pointer(transport)
+    """Read the feed URL stored on the commit. A candidate file is not a publication."""
+    manifest, _etag = read_commit(transport)
     entry = (manifest.get("tickers") or {}).get(ticker.upper())
     if not isinstance(entry, dict) or not entry.get("feed_url"):
         return None
@@ -263,51 +296,103 @@ def _put_immutable(transport: BlobTransport, pathname: str, body: bytes) -> dict
         return {"etag": found.get("etag"), "pathname": pathname, "url": found.get("url")}
 
 
-def publish_releases(
+def commit_generation(
     transport: BlobTransport,
-    releases: dict[str, dict],
     *,
-    observed_etag: str | None,
+    expected_etag: str | None,
+    checkpoint_payload: dict | None = None,
+    releases: dict[str, dict] | None = None,
+    base_tickers: dict | None = None,
+    base_checkpoint: dict | None = None,
+    before_commit: Any = None,
 ) -> dict:
-    """Write immutable version objects, then swing the pointer with ``if_match``.
+    """Write immutable candidates, then swing the commit pointer once.
 
-    A stale ``observed_etag`` fails before any served object is replaced. Other
-    tickers already on the pointer stay there when this batch publishes a subset.
+    ``expected_etag`` is the generation the caller already read. This function
+    does not adopt a newer etag. When ``base_tickers`` is omitted, the commit
+    record is read only to copy that same generation, and a mismatch fails
+    before the pointer moves. A failed compare-and-swap leaves candidates in
+    place and leaves the previous commit as the publication.
     """
-    current, etag = read_pointer(transport)
-    if (etag or None) != (observed_etag or None):
-        raise BlobRequestError(412, POINTER_PATH)
-    tickers = dict(current.get("tickers") or {})
-    for ticker, release in sorted(releases.items()):
+    if base_tickers is None:
+        current, etag = read_commit(transport)
+        if (etag or None) != (expected_etag or None):
+            raise BlobRequestError(412, COMMIT_PATH)
+        base_tickers = current.get("tickers") or {}
+        base_checkpoint = {
+            "pathname": current.get("checkpoint_pathname"),
+            "url": current.get("checkpoint_url"),
+        }
+    tickers = json.loads(json.dumps(base_tickers or {}))
+    checkpoint_pathname = (base_checkpoint or {}).get("pathname")
+    checkpoint_url = (base_checkpoint or {}).get("url")
+    if checkpoint_payload is not None:
+        raw = checkpoint_document(checkpoint_payload)
+        digest = hashlib.sha256(raw).hexdigest()[:20]
+        checkpoint_pathname = f"{CHECKPOINT_PREFIX}/{digest}.json"
+        stored = _put_immutable(transport, checkpoint_pathname, raw)
+        checkpoint_url = stored.get("url")
+    for ticker, release in sorted((releases or {}).items()):
         symbol = ticker.upper()
         version_id = str(release["version_id"])
         feed = dict(release["feed"])
         feed["ai_enabled"] = True
         feed["manifest_version"] = version_id
-        evidence_path = f"{EVIDENCE_PREFIX}/{symbol}/{version_id}.json"
         feed_body = json.dumps(feed, ensure_ascii=False, sort_keys=True).encode()
         evidence_body = json.dumps(release["evidence"], ensure_ascii=False, sort_keys=True).encode()
+        evidence_path = (
+            f"{EVIDENCE_PREFIX}/{symbol}/{version_id}/"
+            f"{hashlib.sha256(evidence_body).hexdigest()[:20]}.json"
+        )
         feed_path = f"{FEED_PREFIX}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
         feed_meta = _put_immutable(transport, feed_path, feed_body)
         evidence_meta = _put_immutable(transport, evidence_path, evidence_body)
+        previous = tickers.get(symbol) if isinstance(tickers.get(symbol), dict) else {}
+        versions = dict(previous.get("versions") or {})
+        versions[version_id] = {
+            "evidence_pathname": evidence_path,
+            "evidence_url": evidence_meta.get("url"),
+        }
         tickers[symbol] = {
             "evidence_pathname": evidence_path,
             "evidence_url": evidence_meta.get("url"),
             "feed_pathname": feed_path,
             "feed_url": feed_meta.get("url"),
             "version_id": version_id,
+            "versions": versions,
         }
-    manifest = {"schema_version": "company-lens.events-pointer.v1", "tickers": tickers}
+    manifest = {
+        "checkpoint_pathname": checkpoint_pathname,
+        "checkpoint_url": checkpoint_url,
+        "schema_version": "company-lens.events-commit.v1",
+        "tickers": tickers,
+    }
+    if before_commit is not None:
+        before_commit()
     body = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()
     try:
         pointer = transport.put(
-            POINTER_PATH,
+            COMMIT_PATH,
             body,
-            if_match=etag,
-            overwrite=etag is not None,
+            if_match=expected_etag,
+            overwrite=expected_etag is not None,
         )
     except BlobRequestError as exc:
-        if exc.status == 412:
-            raise BlobRequestError(412, POINTER_PATH) from None
+        if exc.status in {409, 412}:
+            raise BlobRequestError(exc.status, COMMIT_PATH) from None
         raise
     return {"etag": pointer.get("etag"), "manifest": manifest}
+
+
+def publish_releases(
+    transport: BlobTransport,
+    releases: dict[str, dict],
+    *,
+    observed_etag: str | None,
+) -> dict:
+    """Commit feed and evidence objects. The observed etag is not refreshed."""
+    return commit_generation(
+        transport,
+        expected_etag=observed_etag,
+        releases=releases,
+    )
