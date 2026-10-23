@@ -116,7 +116,8 @@ def test_event_version_does_not_fall_through_to_another_version(tmp_path):
     resolved = subprocess.run(
         ["node", "-e", """
 const handler = require(process.argv[1]);
-const packet = handler.resolveEventPacket({
+(async () => {
+const packet = await handler.resolveEventPacket({
   ticker: "AAPL",
   event_version: "version-old",
   event_id: "evt-old",
@@ -126,6 +127,7 @@ if (packet.record.evidence.event_version !== "version-old") process.exit(2);
 const titles = packet.record.evidence.events.map((event) => event.title);
 if (titles.includes("New version headline")) process.exit(3);
 process.stdout.write(titles.join("|"));
+})().catch((error) => { console.error(error); process.exit(1); });
 """, str(tmp_path / "index.js")],
         capture_output=True, text=True, timeout=30,
     )

@@ -24,16 +24,15 @@ jobs:
 
       - run: pip install -e .
 
-      - name: Report event health without claiming a repair
+      - name: Report durable checkpoint health
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           EVENTS_RERUN_TOKEN: ${{ secrets.EVENTS_RERUN_TOKEN }}
+          EVENTS_RERUN_URL: ${{ secrets.EVENTS_RERUN_URL }}
         run: |
           set -euo pipefail
-          python scripts/events_monitor.py \
-            --allow-empty \
-            --root "${{ runner.temp }}/events-store" \
-            --supported AAPL JPM NVDA
-          echo "auto_repair=false"
-          echo "recovery=gh workflow run events-refresh.yml"
+          # This workflow is not an independent wake. A rerun happens only when
+          # EVENTS_RERUN_URL is configured, and the script calls that URL itself.
+          python scripts/events_monitor.py --supported AAPL JPM NVDA

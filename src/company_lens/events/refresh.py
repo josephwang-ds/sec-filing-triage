@@ -12,8 +12,15 @@ from typing import Any, Protocol
 
 from company_lens.events.calendar import as_utc
 from company_lens.events.contracts import SCHEMA_VERSION, version_id
+from company_lens.events.evidence import build_event_evidence
 from company_lens.events.normalize import merge_events, normalize_item
-from company_lens.events.policy import NEWS_COLD_DAYS, NEWS_OVERLAP, SEC_COLD_DAYS, SEC_OVERLAP
+from company_lens.events.policy import (
+    NEWS_COLD_DAYS,
+    NEWS_OVERLAP,
+    SEC_COLD_DAYS,
+    SEC_OVERLAP,
+    interval_at,
+)
 from company_lens.events.store import FileEventStore, LeaseHeld, StaleWriter
 
 COLD_DAYS = {"news": NEWS_COLD_DAYS, "sec_index": SEC_COLD_DAYS}
@@ -134,6 +141,19 @@ def _backoff(attempt: int, retry_after: float | None, rng: Any) -> float:
     return jittered
 
 
+def _pending(
+    ticker: str, error_class: str, attempts: int, requests: int
+) -> TickerOutcome:
+    return TickerOutcome(
+        ticker,
+        "pending",
+        error_class=error_class,
+        attempts=attempts,
+        requests=requests,
+        pending=True,
+    )
+
+
 def _fetch_windows(
     source: EventSource,
     ticker: str,
@@ -143,7 +163,11 @@ def _fetch_windows(
     sleep: Any,
     rng: Any,
     deadline: datetime,
+    clock: Any,
     requests_left: list[int],
+    store: FileEventStore,
+    dataset: str,
+    day: str,
 ) -> tuple[list[dict[str, Any]], TickerOutcome | None, int, int]:
     items: list[dict[str, Any]] = []
     attempts = 0
@@ -151,15 +175,15 @@ def _fetch_windows(
     for start, end in windows:
         attempt = 0
         while True:
+            if clock() >= deadline:
+                return items, _pending(ticker, "time_budget", attempts, requests), attempts, requests
             if requests_left[0] <= 0:
-                return items, TickerOutcome(
-                    ticker, "pending", error_class="budget", attempts=attempts, requests=requests,
-                    pending=True,
-                ), attempts, requests
+                return items, _pending(ticker, "budget", attempts, requests), attempts, requests
             attempt += 1
             attempts += 1
             requests += 1
             requests_left[0] -= 1
+            store.charge_budget(dataset, day, 1)
             try:
                 result = source.fetch(ticker, start, end)
             except Exception as exc:  # noqa: BLE001 - one window must not abort other issuers
@@ -179,7 +203,13 @@ def _fetch_windows(
             delay = _backoff(attempt, result.retry_after, rng)
             if delay > 120:
                 delay = 120
+            remaining = (deadline - clock()).total_seconds()
+            if delay > remaining:
+                # Wait the full Retry-After on a later run. A shorter sleep would retry early.
+                return items, _pending(ticker, "retry_wait", attempts, requests), attempts, requests
             sleep(delay)
+            if clock() >= deadline:
+                return items, _pending(ticker, "time_budget", attempts, requests), attempts, requests
     return items, None, attempts, requests
 
 
@@ -220,8 +250,10 @@ def refresh_feed(
     time_budget_seconds: float = 600,
     max_items: int | None = None,
     sleep: Any = lambda _seconds: None,
+    clock: Any | None = None,
     rng: Any | None = None,
     owner: str = "events-refresh",
+    tiers: dict[str, str] | None = None,
     lease_ttl_seconds: float = 300,
     crash_after: str | None = None,
     quota_degraded: bool = False,
@@ -229,14 +261,19 @@ def refresh_feed(
     """Pull each ticker from its own watermark. Publishing one ticker is independent."""
     if dataset not in COLD_DAYS:
         raise ValueError(f"unsupported dataset {dataset}")
-    started = datetime.now(UTC)
     generator = rng
     if generator is None:
         import random
 
         generator = random.Random(0)
+    clock = clock or (lambda: datetime.now(UTC))
+    opened = clock()
     now = as_utc(now)
     seen_at = now.isoformat()
+    day = now.date().isoformat()
+    already_used = store.budget_used(dataset, day)
+    requests_left = [max(0, daily_request_budget - already_used)]
+    deadline = clock() + timedelta(seconds=time_budget_seconds)
     targets = [ticker.strip().upper() for ticker in tickers if ticker.strip()]
     if allowed is not None:
         targets = [ticker for ticker in targets if ticker in allowed]
@@ -245,12 +282,10 @@ def refresh_feed(
         for ticker in (watchlist or [])
         if ticker.strip() and ticker.strip().upper() not in targets
     ]
-    requests_left = [daily_request_budget]
     outcomes: list[TickerOutcome] = []
-    deadline = started + timedelta(seconds=time_budget_seconds)
 
     for ticker in targets:
-        if outcomes and (time_budget_seconds <= 0 or datetime.now(UTC) > deadline):
+        if clock() >= deadline:
             outcomes.append(TickerOutcome(ticker, "pending", error_class="time_budget", pending=True))
             continue
         try:
@@ -272,8 +307,11 @@ def refresh_feed(
                     requests_left=requests_left,
                     max_items=max_items,
                     sleep=sleep,
+                    clock=clock,
                     rng=generator,
                     deadline=deadline,
+                    day=day,
+                    tiers=tiers or {},
                     crash_after=crash_after,
                     quota_degraded=quota_degraded,
                 )
@@ -283,13 +321,13 @@ def refresh_feed(
         finally:
             store.release_lease(dataset, ticker, lease["token"])
 
-    elapsed = int((datetime.now(UTC) - started).total_seconds() * 1000)
+    elapsed = int(max(0.0, (clock() - opened).total_seconds()) * 1000)
     return RefreshReport(
         dataset=dataset,
         redeployed=False,
         outcomes=outcomes,
         watchlist_ignored=ignored,
-        requests=daily_request_budget - requests_left[0],
+        requests=sum(item.requests for item in outcomes),
         elapsed_ms=elapsed,
     )
 
@@ -307,8 +345,11 @@ def _refresh_one(
     requests_left: list[int],
     max_items: int | None,
     sleep: Any,
+    clock: Any,
     rng: Any,
     deadline: datetime,
+    day: str,
+    tiers: dict[str, str],
     crash_after: str | None,
     quota_degraded: bool,
 ) -> TickerOutcome:
@@ -332,7 +373,11 @@ def _refresh_one(
         sleep=sleep,
         rng=rng,
         deadline=deadline,
+        clock=clock,
         requests_left=requests_left,
+        store=store,
+        dataset=dataset,
+        day=day,
     )
     state["attempt"] = int(state.get("attempt") or 0) + attempts
     state["last_attempt_at"] = seen_at
@@ -403,6 +448,8 @@ def _refresh_one(
     else:
         state["coverage_through"] = now.isoformat()
         state["last_successful_check_at"] = seen_at
+    step = interval_at(dataset, tiers.get(ticker, "ordinary"), now)
+    state["cadence_seconds"] = int(step.total_seconds()) if step is not None else 12 * 60 * 60
     document = {
         "content_hash": version_id(ticker, merged),
         "coverage_gaps": gaps,
@@ -414,6 +461,8 @@ def _refresh_one(
         "ticker": ticker,
         "version_id": version_id(ticker, merged),
     }
+    document["evidence"] = build_event_evidence(document)
+    document["evidence_ready"] = True
     if content_same and previous_doc is not None and not pending and not gaps:
         state["version_id"] = previous_doc.get("version_id")
         store.write_state(dataset, ticker, _public_state(state), expected_revision)

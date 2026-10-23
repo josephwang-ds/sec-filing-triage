@@ -215,3 +215,99 @@ class FileEventStore:
 
     def read_failure(self, dataset: str, key: str) -> dict | None:
         return _read_json(self._failure_path(dataset, key))
+
+    def _budget_path(self) -> Path:
+        return self.root / "budget.json"
+
+    def read_budget(self) -> dict:
+        found = _read_json(self._budget_path())
+        if found is None:
+            return {"day": None, "scope": "dataset-utc-day", "used": {}}
+        found.setdefault("used", {})
+        found.setdefault("scope", "dataset-utc-day")
+        return found
+
+    def write_budget(self, payload: dict) -> None:
+        _atomic_json(self._budget_path(), payload)
+
+    def budget_used(self, dataset: str, day: str) -> int:
+        budget = self.read_budget()
+        if budget.get("day") != day:
+            return 0
+        return int((budget.get("used") or {}).get(dataset) or 0)
+
+    def charge_budget(self, dataset: str, day: str, amount: int = 1) -> int:
+        """Count one provider attempt. Failures are charged too. The UTC day resets the counter."""
+        budget = self.read_budget()
+        if budget.get("day") != day:
+            budget = {"day": day, "scope": "dataset-utc-day", "used": {}}
+        used = dict(budget.get("used") or {})
+        used[dataset] = int(used.get(dataset) or 0) + amount
+        budget["used"] = used
+        budget["day"] = day
+        budget["scope"] = "dataset-utc-day"
+        self.write_budget(budget)
+        return used[dataset]
+
+    def export_workspace(self, datasets: tuple[str, ...]) -> dict:
+        """Snapshot the working copy. The local directory is not the durable store."""
+        exported: dict[str, dict] = {}
+        for dataset in datasets:
+            manifest = self.read_manifest(dataset)
+            state_dir = self.root / "state" / dataset
+            states = {}
+            if state_dir.exists():
+                for path in sorted(state_dir.glob("*.json")):
+                    states[path.stem] = _read_json(path)
+            versions = {}
+            for pointer in (manifest.get("tickers") or {}).values():
+                if not isinstance(pointer, dict):
+                    continue
+                version_id = pointer.get("version_id")
+                if not isinstance(version_id, str):
+                    continue
+                document = self.read_version(dataset, version_id)
+                if document is not None:
+                    versions[version_id] = document
+            failure_dir = self.root / "failures" / dataset
+            failures = {}
+            if failure_dir.exists():
+                for path in sorted(failure_dir.glob("*.json")):
+                    failures[path.stem] = _read_json(path)
+            exported[dataset] = {
+                "failures": failures,
+                "manifest": manifest,
+                "states": states,
+                "versions": versions,
+            }
+        return {
+            "budget": self.read_budget(),
+            "datasets": exported,
+            "schema_version": 1,
+        }
+
+    def restore_workspace(self, payload: dict) -> None:
+        """Replace this working copy from a durable checkpoint. Does not publish by itself."""
+        if payload.get("schema_version") != 1 or not isinstance(payload.get("datasets"), dict):
+            raise StoreError("checkpoint schema is not readable")
+        for dataset, body in payload["datasets"].items():
+            if not isinstance(body, dict):
+                raise StoreError("checkpoint dataset is not an object")
+            manifest = body.get("manifest") or {
+                "dataset": dataset,
+                "fence": 0,
+                "schema_version": 1,
+                "tickers": {},
+            }
+            _atomic_json(self._manifest_path(dataset), manifest)
+            for ticker, state in (body.get("states") or {}).items():
+                if isinstance(state, dict):
+                    _atomic_json(self._state_path(dataset, str(ticker)), state)
+            for version_id, document in (body.get("versions") or {}).items():
+                if isinstance(document, dict):
+                    _atomic_json(self._version_path(dataset, str(version_id)), document)
+            for ticker, failure in (body.get("failures") or {}).items():
+                if isinstance(failure, dict):
+                    _atomic_json(self._failure_path(dataset, str(ticker)), failure)
+        if isinstance(payload.get("budget"), dict):
+            self.write_budget(payload["budget"])

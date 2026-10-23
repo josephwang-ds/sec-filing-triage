@@ -7,6 +7,7 @@ is not used unless ``BLOB_READ_WRITE_TOKEN`` is set.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Protocol
 from urllib.parse import quote
@@ -116,6 +117,54 @@ class HttpBlobTransport:
 
 
 CHECKPOINT_PATH = "lens-events/checkpoint.json"
+POINTER_PATH = "lens-events/public/manifest.json"
+FEED_PREFIX = "lens-events/public/versions"
+EVIDENCE_PREFIX = "lens-events/evidence"
+
+
+class MemoryBlob:
+    """In-memory stand-in for the Blob HTTP rules used by the publisher.
+
+    A pathname written with ``overwrite`` false is not replaced. ``if_match``
+    replaces a pathname only when the etag matches; a mismatch leaves the body
+    untouched. This is the SDK's documented put behavior, not a live store call.
+    """
+
+    def __init__(self) -> None:
+        self.objects: dict[str, dict] = {}
+        self._serial = 0
+
+    def put(self, pathname: str, body: bytes, *, if_match: str | None, overwrite: bool) -> dict:
+        current = self.objects.get(pathname)
+        if current is not None and if_match is None and not overwrite:
+            raise BlobRequestError(409, pathname)
+        if if_match is not None and (current is None or current["etag"] != if_match):
+            raise BlobRequestError(412, pathname)
+        if current is not None and not overwrite and if_match is None:
+            raise BlobRequestError(409, pathname)
+        self._serial += 1
+        etag = f"etag-{self._serial}"
+        stored = {
+            "body": body,
+            "etag": etag,
+            "pathname": pathname,
+            "url": f"https://blob.test/{pathname}",
+        }
+        self.objects[pathname] = stored
+        return {"etag": etag, "pathname": pathname, "url": stored["url"]}
+
+    def get_prefix(self, prefix: str) -> list[dict]:
+        return [
+            {"etag": item["etag"], "pathname": path, "url": item["url"]}
+            for path, item in self.objects.items()
+            if path.startswith(prefix)
+        ]
+
+    def read_url(self, url: str) -> tuple[bytes, str]:
+        for item in self.objects.values():
+            if item["url"] == url:
+                return item["body"], item["etag"]
+        raise BlobRequestError(404, "blob-url")
 
 
 def checkpoint_document(store_root_payload: dict) -> bytes:
@@ -159,34 +208,106 @@ def pull_checkpoint(transport: BlobTransport) -> tuple[dict | None, str | None]:
     return payload, str(read_etag or etag or "") or None
 
 
-def publish_public_feeds(
+def _exact_blob(found: list[dict], pathname: str) -> dict | None:
+    for item in found:
+        if item.get("pathname") == pathname or str(item.get("url") or "").endswith(pathname):
+            return item
+    return None
+
+
+def read_pointer(transport: BlobTransport) -> tuple[dict, str | None]:
+    """The only current-feed pointer. Missing means nothing has been published."""
+    try:
+        found = transport.get_prefix(POINTER_PATH)
+    except BlobRequestError as exc:
+        if exc.status == 404:
+            return {}, None
+        raise
+    chosen = _exact_blob(found, POINTER_PATH)
+    if chosen is None or not chosen.get("url"):
+        return {}, None
+    body, etag = transport.read_url(str(chosen["url"]))
+    payload = json.loads(body.decode())
+    if not isinstance(payload, dict):
+        raise BlobRequestError(502, POINTER_PATH)
+    return payload, str(chosen.get("etag") or etag or "") or None
+
+
+def read_published(transport: BlobTransport, ticker: str) -> dict | None:
+    """Read the feed URL stored on the pointer. Never a mutable per-ticker path."""
+    manifest, _etag = read_pointer(transport)
+    entry = (manifest.get("tickers") or {}).get(ticker.upper())
+    if not isinstance(entry, dict) or not entry.get("feed_url"):
+        return None
+    body, _etag = transport.read_url(str(entry["feed_url"]))
+    payload = json.loads(body.decode())
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("manifest_version") != entry.get("version_id"):
+        return None
+    return payload
+
+
+def _put_immutable(transport: BlobTransport, pathname: str, body: bytes) -> dict:
+    try:
+        return transport.put(pathname, body, if_match=None, overwrite=False)
+    except BlobRequestError as exc:
+        if exc.status != 409:
+            raise
+        found = _exact_blob(transport.get_prefix(pathname), pathname)
+        if found is None or not found.get("url"):
+            raise
+        existing, _etag = transport.read_url(str(found["url"]))
+        if existing != body:
+            raise BlobRequestError(409, pathname) from None
+        return {"etag": found.get("etag"), "pathname": pathname, "url": found.get("url")}
+
+
+def publish_releases(
     transport: BlobTransport,
-    feeds: dict[str, dict],
+    releases: dict[str, dict],
     *,
-    expected_etag: str | None,
+    observed_etag: str | None,
 ) -> dict:
-    """Write one private object per ticker and CAS-update the manifest pointer."""
-    written = []
-    for ticker, feed in sorted(feeds.items()):
-        pathname = f"{PUBLIC_PREFIX}/{ticker.upper()}.json"
-        body = json.dumps(feed, ensure_ascii=False, sort_keys=True).encode()
-        meta = transport.put(pathname, body, if_match=None, overwrite=True)
-        written.append({"pathname": pathname, "url": meta.get("url")})
-    manifest = {
-        "feeds": written,
-        "schema_version": "company-lens.events-blob.v1",
-        "tickers": sorted(feeds),
-    }
-    body = json.dumps(manifest, sort_keys=True).encode()
+    """Write immutable version objects, then swing the pointer with ``if_match``.
+
+    A stale ``observed_etag`` fails before any served object is replaced. Other
+    tickers already on the pointer stay there when this batch publishes a subset.
+    """
+    current, etag = read_pointer(transport)
+    if (etag or None) != (observed_etag or None):
+        raise BlobRequestError(412, POINTER_PATH)
+    tickers = dict(current.get("tickers") or {})
+    for ticker, release in sorted(releases.items()):
+        symbol = ticker.upper()
+        version_id = str(release["version_id"])
+        feed = dict(release["feed"])
+        feed["ai_enabled"] = True
+        feed["manifest_version"] = version_id
+        evidence_path = f"{EVIDENCE_PREFIX}/{symbol}/{version_id}.json"
+        feed_body = json.dumps(feed, ensure_ascii=False, sort_keys=True).encode()
+        evidence_body = json.dumps(release["evidence"], ensure_ascii=False, sort_keys=True).encode()
+        feed_path = f"{FEED_PREFIX}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
+        feed_meta = _put_immutable(transport, feed_path, feed_body)
+        evidence_meta = _put_immutable(transport, evidence_path, evidence_body)
+        tickers[symbol] = {
+            "evidence_pathname": evidence_path,
+            "evidence_url": evidence_meta.get("url"),
+            "feed_pathname": feed_path,
+            "feed_url": feed_meta.get("url"),
+            "version_id": version_id,
+        }
+    manifest = {"schema_version": "company-lens.events-pointer.v1", "tickers": tickers}
+    body = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()
     try:
         pointer = transport.put(
-            f"{PUBLIC_PREFIX}/manifest.json",
+            POINTER_PATH,
             body,
-            if_match=expected_etag,
-            overwrite=expected_etag is not None,
+            if_match=etag,
+            overwrite=etag is not None,
         )
     except BlobRequestError as exc:
         if exc.status == 412:
-            raise BlobRequestError(412, f"{PUBLIC_PREFIX}/manifest.json") from None
+            raise BlobRequestError(412, POINTER_PATH) from None
         raise
     return {"etag": pointer.get("etag"), "manifest": manifest}

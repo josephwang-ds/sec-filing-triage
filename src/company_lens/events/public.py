@@ -56,10 +56,10 @@ def _when_display(event: dict) -> dict[str, str]:
     return {"en": dual["utc"], "new_york": dual["new_york"], "precision": event.get("time_precision"), "shanghai": dual["shanghai"]}
 
 
-def public_event(event: dict, *, manifest_version: str | None) -> dict:
+def public_event(event: dict, *, manifest_version: str | None, ai_enabled: bool) -> dict:
     code = str(event.get("significance_code") or "new_provider_headline")
     return {
-        "ask_enabled": bool(manifest_version),
+        "ask_enabled": bool(ai_enabled and manifest_version),
         "duplicate_group_id": event.get("duplicate_group_id"),
         "excerpt": event.get("excerpt") or None,
         "id": event["id"],
@@ -90,6 +90,7 @@ def public_feed(
     """One ticker's public feed. `storage` says whether this is live or the build snapshot."""
     version = None if document is None else document.get("version_id")
     events = [] if document is None else list(document.get("events") or [])
+    ai_enabled = bool(version) and bool((document or {}).get("evidence_ready"))
     status = "unavailable" if document is None and not state else str((state or {}).get("status") or "current")
     if storage == "unavailable":
         status = "unavailable"
@@ -99,13 +100,15 @@ def public_feed(
         checked_display = format_dual(datetime.fromisoformat(checked))
     gaps = list((document or {}).get("coverage_gaps") or (state or {}).get("coverage_gaps") or [])
     return {
-        "ai_enabled": bool(version),
+        "ai_enabled": ai_enabled,
         "checked_at": checked,
         "checked_at_display": checked_display,
         "coverage_gaps": gaps,
         "coverage_through": (state or {}).get("coverage_through"),
         "coverage_tier": tier,
-        "events": [public_event(event, manifest_version=version) for event in events],
+        "events": [
+            public_event(event, manifest_version=version, ai_enabled=ai_enabled) for event in events
+        ],
         "initialization": bool((document or state or {}).get("initialization")),
         "manifest_version": version,
         "schema_version": "company-lens.events-public.v1",

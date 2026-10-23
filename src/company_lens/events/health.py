@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from company_lens.events.calendar import as_utc, price_status
@@ -120,26 +120,63 @@ def public_health(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def monitor_action(report: dict[str, Any], *, rerun_configured: bool) -> dict[str, Any]:
-    """A missed schedule is an alert unless a separate rerun credential is configured.
+    """Eligibility only. Calling the executor is a separate step with its own response.
 
-    This function does not call the network. A caller that sees ``action=rerun``
-    may invoke the protected workflow; without the credential it must not claim
-    that repair already happened.
+    A GitHub workflow is not an independent wake. ``rerun_configured`` means an
+    external executor URL and credential exist.
     """
     if report.get("ok"):
-        return {"action": "none", "auto_repair": False, "overall": report.get("overall")}
+        return {
+            "action": "none",
+            "auto_repair": False,
+            "overall": report.get("overall"),
+            "rerun_requested": False,
+        }
     if rerun_configured and report.get("overall") in {"critical", "attention", "degraded"}:
         return {
-            "action": "rerun",
+            "action": "rerun_eligible",
             "auto_repair": False,
             "configured": True,
             "overall": report.get("overall"),
-            "recovery": "workflow_dispatch events-refresh.yml",
+            "rerun_requested": False,
         }
     return {
         "action": "alert",
         "auto_repair": False,
         "configured": False,
+        "independent_wake": "not_configured",
         "overall": report.get("overall"),
-        "recovery": "workflow_dispatch events-refresh.yml",
+        "rerun_requested": False,
+    }
+
+
+def execute_rerun(
+    decision: dict[str, Any],
+    *,
+    executor: Any | None,
+    now: datetime,
+    cooldown_until: str | None,
+    cooldown_seconds: int = 1800,
+) -> dict[str, Any]:
+    """Call the external executor once. Cooldown and a missing executor do not claim a rerun."""
+    if decision.get("action") != "rerun_eligible" or executor is None:
+        return {**decision, "rerun_requested": False}
+    if cooldown_until:
+        until = datetime.fromisoformat(cooldown_until)
+        if as_utc(now) < as_utc(until):
+            return {
+                **decision,
+                "reason": "cooldown",
+                "rerun_requested": False,
+            }
+    response = executor()
+    status_code = int(getattr(response, "status_code", 0) or 0)
+    accepted = 200 <= status_code < 300
+    return {
+        **decision,
+        "action": "rerun" if accepted else "rerun_failed",
+        "auto_repair": False,
+        "cooldown_until": (as_utc(now) + timedelta(seconds=cooldown_seconds)).isoformat(),
+        "executor_status": status_code,
+        "rerun_requested": accepted,
     }

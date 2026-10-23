@@ -6,7 +6,8 @@
 
 - planning_ready: yes
 - implementation_started: yes
-- code_ready: yes（本地测试与 lint 通过；不是生产验收）
+- code_ready: yes（入口、持久检查点、指针发布、动态 Ask 证据、预算和监控适配已接通；本地测试通过）
+- mock_integration: yes（内存 Blob 与假执行器；不是真实存储）
 - staging_verified: no
 - production_enabled: no
 - reliability_verified: no
@@ -76,9 +77,25 @@
 - [ ] 真实 Finnhub / SEC / Blob 演练
 - [ ] 生产定时器与 48 小时观测
 
+## 2026-10-23 验收修复
+
+Codex 复核 `2abce6c` 时，单测通过但入口没有形成闭环。这一轮改的是入口，不是把断言放宽。
+
+| 项 | 实现 | mock 集成 | 真实 staging | 生产 | 48 小时 |
+|---|---|---|---|---|---|
+| 持久检查点恢复 | yes | yes：两个临时目录共用一个内存 Blob，第二轮从旧水位继续；读失败不覆盖旧检查点。新闻和 SEC 都在检查点里 | no | no | no |
+| 指针原子发布 | yes | yes：stale etag 返回 412，读路径仍是 new；部分发布保留其他公司。官方 Blob put 使用 `x-api-version: 12`、默认不覆盖、`x-if-match` 条件替换。没有对本账号的真实 store 调用 | no | no | no |
+| 动态 Ask 证据 | yes | yes：不重建函数，发布后 Ask 读到新版本，旧版本不混入。缺版本或读失败是 409 | no | no | no |
+| 频率、重试、预算 | yes | yes：未到期跳过、跨 runner 预算累计、429 不提前重试、窗口中途超时不推进水位。生产入口使用 `time.sleep` | no | no | no |
+| 监控与补跑 | yes | yes：空检查点不是健康；未配置不报已补跑；配置齐备时调用外部执行器并受冷却限制。GitHub workflow 不是独立唤醒 | no | no | no |
+
+缺的配置名：`BLOB_READ_WRITE_TOKEN`、`FINNHUB_API_KEY`、`EVENTS_RERUN_URL`、`EVENTS_RERUN_TOKEN`。缺配置只说明真实演练还没做，不说明代码没接上。
+
+真实演练（仍未执行）：配置上述名称后，手动 `workflow_dispatch` `events-refresh.yml`，确认 Blob 里出现 `lens-events/checkpoint.json` 和 `lens-events/public/manifest.json`，再用另一个空工作目录跑第二次，核对水位不是冷启动。然后打开公司页和 Ask，确认新 `event_version` 不需要重新部署。最后单独 dispatch `events-monitor.yml`，在刷新停摆后看健康状态变差。不要启用 schedule。
+
 ## 验收证据
 
-环境说明：下列 pytest 是 mock/local。没有生产数据删除演练，没有真实模型请求，没有真实 Finnhub/SEC/Blob 调用。
+环境说明：下面原表是第一轮的 mock/local 测试。持久恢复、原子发布、动态 Ask 和监控补跑以本节上面的「验收修复」为准；那些项目不能只凭第一轮单测写成通过。没有生产数据删除演练，没有真实模型请求，没有真实 Finnhub、SEC 或 Blob 调用。
 
 命令：
 

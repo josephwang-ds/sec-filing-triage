@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from company_lens.events.blob_store import BlobRequestError, publish_public_feeds, push_checkpoint
+from company_lens.events.blob_store import BlobRequestError, push_checkpoint
 from company_lens.events.calendar import (
     NY,
     SHANGHAI,
@@ -554,7 +554,8 @@ def test_health_does_not_treat_http_200_as_fresh_and_monitor_does_not_pretend_to
     assert quiet["action"] == "alert"
     assert quiet["auto_repair"] is False
     armed = monitor_action(report, rerun_configured=True)
-    assert armed["action"] == "rerun"
+    assert armed["action"] == "rerun_eligible"
+    assert armed["rerun_requested"] is False
     assert armed["auto_repair"] is False
 
 
@@ -608,8 +609,8 @@ class _Transport:
 def test_time_budget_queues_later_tickers(tmp_path):
     source = ScriptedSource({"AAPL": [_row("AAPL", 1)], "JPM": [_row("JPM", 1)]})
     report = _refresh(tmp_path, source, tickers=("AAPL", "JPM"), time_budget_seconds=0)
-    assert report.outcomes[0].ticker == "AAPL"
-    assert report.outcomes[1].error_class == "time_budget"
+    assert [item.error_class for item in report.outcomes] == ["time_budget", "time_budget"]
+    assert FileEventStore(tmp_path).current_version("news", "AAPL") is None
     assert FileEventStore(tmp_path).current_version("news", "JPM") is None
 
 
@@ -622,7 +623,13 @@ def test_blob_pointer_rejects_a_stale_match_and_hides_the_token():
     assert "Bearer" not in str(caught.value)
     second = push_checkpoint(transport, {"fence": 2}, expected_etag=first["etag"])
     assert second["etag"] != first["etag"]
-    publish_public_feeds(transport, {"AAPL": {"ticker": "AAPL"}}, expected_etag=None)
+    from company_lens.events.blob_store import publish_releases
+
+    publish_releases(
+        transport,
+        {"AAPL": {"version_id": "v1", "feed": {"ticker": "AAPL", "manifest_version": "v1"}, "evidence": {"evidence": {"event_version": "v1"}}}},
+        observed_etag=None,
+    )
 
 
 def test_request_budget_stops_without_advancing_a_failed_ticker(tmp_path):

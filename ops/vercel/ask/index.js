@@ -652,7 +652,35 @@ function clientSuppliedEvidence(input) {
   ].some((key) => Object.prototype.hasOwnProperty.call(input || {}, key));
 }
 
-function resolveEventPacket(input) {
+async function readPublishedEvidence(ticker, version) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN || "";
+  if (!token) return { configured: false };
+  const pathname = "lens-events/evidence/" + ticker + "/" + version + ".json";
+  try {
+    const listed = await fetch(
+      "https://vercel.com/api/blob?prefix=" + encodeURIComponent(pathname) + "&limit=5",
+      { headers: { authorization: "Bearer " + token, "x-api-version": "12" } },
+    );
+    if (!listed.ok) return { configured: true, error: true };
+    const payload = await listed.json();
+    const match = ((payload && payload.blobs) || []).find((item) => item.pathname === pathname);
+    if (!match || !match.url) return { configured: true, missing: true };
+    const body = await fetch(match.url, {
+      headers: { authorization: "Bearer " + token, "x-api-version": "12" },
+    });
+    if (body.status === 404) return { configured: true, missing: true };
+    if (!body.ok) return { configured: true, error: true };
+    const record = await body.json();
+    if (!record || !record.evidence || record.evidence.event_version !== version) {
+      return { configured: true, missing: true };
+    }
+    return { configured: true, record };
+  } catch (error) {
+    return { configured: true, error: true };
+  }
+}
+
+async function resolveEventPacket(input) {
   if (clientSuppliedEvidence(input)) {
     return {
       payload: {
@@ -664,10 +692,23 @@ function resolveEventPacket(input) {
   }
   const ticker = String((input && input.ticker) || "").trim().toUpperCase();
   const version = String(input && input.event_version != null ? input.event_version : "").trim();
-  const versions = EVENT_EVIDENCE.companies && EVENT_EVIDENCE.companies[ticker]
-    && EVENT_EVIDENCE.companies[ticker].versions;
-  const record = versions && versions[version];
-  if (!record) {
+  const published = await readPublishedEvidence(ticker, version);
+  if (published.configured && published.error) {
+    return {
+      payload: {
+        error: "event_version_unavailable",
+        message: "This event version could not be read. Refresh the page and ask again. A different version was not substituted.",
+      },
+      status: 409,
+    };
+  }
+  let record = published.configured ? published.record : null;
+  if (!published.configured) {
+    const versions = EVENT_EVIDENCE.companies && EVENT_EVIDENCE.companies[ticker]
+      && EVENT_EVIDENCE.companies[ticker].versions;
+    record = versions && versions[version];
+  }
+  if (!record || record.evidence.event_version !== version) {
     return {
       payload: {
         error: "event_version_unavailable",
@@ -687,7 +728,7 @@ function resolveEventPacket(input) {
 }
 
 async function answerFromEventVersion(response, args) {
-  const resolved = resolveEventPacket(args.input);
+  const resolved = await resolveEventPacket(args.input);
   if (!resolved.record) return send(response, resolved.status, resolved.payload);
   const provider = PROVIDERS[args.providerName];
   if (!provider || !process.env[provider.key]) {
