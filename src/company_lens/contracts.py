@@ -239,9 +239,12 @@ class CompanySnapshot:
     exactly matched dates, or records why the pair is unavailable. `benchmark`,
     `performance`, filing reactions and AI evidence stay on the default
     benchmark; these entries only feed the history comparison selector."""
+    financial_results: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        if self.financial_results is None:
+            payload.pop("financial_results")
         if not self.benchmark_comparisons:
             payload.pop("benchmark_comparisons")
         if self.evidence_scope is None:

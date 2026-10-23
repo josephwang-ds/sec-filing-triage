@@ -15,6 +15,7 @@ from company_lens.contracts import (
     HeadlineBrief,
 )
 from company_lens.filings import build_filing_briefs, build_filing_timeline
+from company_lens.financial_results import load_financial_results
 from company_lens.fundamentals import try_load_fundamentals
 from company_lens.llm import ImportedDocument, deterministic_explanation, import_headline_index
 from company_lens.performance import historical_picture
@@ -214,6 +215,7 @@ def _assemble_snapshot(
         disclosure_signal=_disclosure_signal(root, ticker),
         volatility_forecast=_volatility_forecast(root, ticker),
         benchmark_comparisons=benchmark_comparisons,
+        financial_results=load_financial_results(root, ticker),
     )
 
 

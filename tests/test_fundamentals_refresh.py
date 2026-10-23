@@ -47,6 +47,9 @@ def test_refresh_fundamentals_defaults_to_aapl_and_writes_atomically(tmp_path) -
     payload = json.loads(artifact.read_text())
     assert payload["status"] == "available"
     assert payload["schema_version"] == "company-lens.fundamentals.v1"
+    results = json.loads((tmp_path / "financial_results" / "aapl.json").read_text())
+    assert results["period_kind"] == "annual"
+    assert results["source_url"].startswith("https://www.sec.gov/Archives/")
     assert client.facts_calls == [(320193, True)]
     provenance = json.loads((tmp_path / "provenance.json").read_text())
     assert provenance["fundamentals_refresh"]["refreshed_tickers"] == ["AAPL"]

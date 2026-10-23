@@ -241,7 +241,6 @@ outline-offset:4px}}
 <a href="index.html">Company Lens</a>
 <a href="overview.html">Overview</a>
 <a href="research.html">Research</a>
-<a href="earnings.html">Reporting calendar</a>
 <a href="https://www.josephjwang.com/">Joseph Wang ↗</a>
 </nav>
 <a class="back" href="index.html">&larr; Company Lens</a>

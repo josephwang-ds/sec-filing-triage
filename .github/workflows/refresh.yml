@@ -124,7 +124,6 @@ jobs:
           COMPANY_LENS_PYTHON: python
           COMPANY_LENS_LOCK_FILE: ${{ runner.temp }}/company-lens-refresh.lock
           COMPANY_LENS_HEADLINE_INDEX: ${{ github.workspace }}/data/build/headlines.json
-          COMPANY_LENS_FUNDAMENTALS_TICKERS: AAPL
           VERCEL_BUNDLE_ROOT: ${{ github.workspace }}/data/build/vercel_frontend
           VERCEL_GLOBAL_CONFIG: ${{ runner.temp }}/vercel-cli
         run: |

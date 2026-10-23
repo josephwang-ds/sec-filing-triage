@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from company_lens.refresh import refresh_fundamentals
+from company_lens.universe import supported_companies
 
 
 def main() -> int:
@@ -17,6 +18,9 @@ def main() -> int:
         help="tickers to refresh (default: AAPL)",
     )
     parser.add_argument("--data-dir", default="data/build")
+    parser.add_argument(
+        "--all", action="store_true", help="refresh every company in the local universe"
+    )
     parser.add_argument("--universe", default=None)
     parser.add_argument("--requested-years", type=int, default=10)
     parser.add_argument(
@@ -31,7 +35,14 @@ def main() -> int:
     result = refresh_fundamentals(
         data_dir=data_dir,
         universe_path=args.universe,
-        tickers=args.tickers,
+        tickers=(
+            [
+                company.ticker
+                for company in supported_companies(args.universe or Path(data_dir) / "universe.csv")
+            ]
+            if args.all
+            else args.tickers
+        ),
         requested_years=args.requested_years,
     )
     print(

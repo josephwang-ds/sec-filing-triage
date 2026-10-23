@@ -48,7 +48,7 @@ the public page rather than quietly not shipping.
 A point-in-time event dataset built from SEC timestamps; a reusable audit library
 that fails the build rather than logging a warning; a ranker; and a
 source-backed company page with a controlled AI question-answering box that
-refuses to answer beyond its evidence. 735 tests. No price predictions, no
+refuses to answer beyond its evidence. 749 tests. No price predictions, no
 trading strategy, no buy or sell recommendations anywhere — the model predicts
 *how big* a reaction will be, never which direction, because direction is a bet
 against desks with faster data and more capital.
@@ -522,7 +522,7 @@ embargo sweep, and writes a self-contained HTML report.
 
 ```bash
 make quick           # smaller, no leakage study, ~30s
-make test            # 735 tests (~12 min; the nested model selection dominates)
+make test            # 749 tests (~12 min; the nested model selection dominates)
 make audit           # the leakage checks as an exit code
 make llm-eval        # frozen English/Chinese grounded-output scorecard
 make llm-eval-openai-dry-run  # inspect 20-case paid benchmark scope; sends nothing
@@ -725,7 +725,7 @@ and no second path.
 | [`lens.josephjwang.com`](https://lens.josephjwang.com) | the company pages, one per issuer in the current universe |
 | [`/research.html`](https://lens.josephjwang.com/research.html) | the audited findings, generated from `evidence/real_run` so they cannot drift |
 | [`/overview.html`](https://lens.josephjwang.com/overview.html) | the same result in plain words, for a reader with no finance or ML background |
-| [`/earnings.html`](https://lens.josephjwang.com/earnings.html) | expected reporting dates, inferred from each issuer's own cadence |
+| Company pages → Financial results | actual filed 10-Q / 10-K results, same-filing year-over-year comparisons; the estimated calendar is retired |
 
 The refresh commits two things as well as deploying: `data/last-refresh.json`, so
 a run that does not happen leaves a trace, and that run's `predictions/` file,
@@ -774,7 +774,7 @@ src/filing_triage/
                    and hyperparameter sensitivity grid
   report.py        self-contained HTML
   synth.py         the offline corpus
-tests/             735 tests; test_guards, test_pipeline, test_uncertainty,
+tests/             749 tests; test_guards, test_pipeline, test_uncertainty,
                    test_prediction_log and test_ingest_integration are the
                    ones that matter
 predictions/       one file per refresh: the ranking, committed before the

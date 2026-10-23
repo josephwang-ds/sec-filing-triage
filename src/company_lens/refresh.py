@@ -11,6 +11,7 @@ from typing import Any
 
 import pandas as pd
 
+from company_lens.financial_results import build_financial_results, save_financial_results
 from company_lens.fundamentals import (
     build_fundamentals_section,
     fundamentals_path,
@@ -269,6 +270,8 @@ def refresh_fundamentals(
             )
             path = fundamentals_path(root, company.ticker)
             save_fundamentals(section, path)
+            results = build_financial_results(facts, submissions, company.cik)
+            save_financial_results(results, root, company.ticker)
             refreshed.append(company.ticker)
             artifacts.append(str(path))
         except Exception as exc:  # noqa: BLE001 - isolate per-issuer failures
