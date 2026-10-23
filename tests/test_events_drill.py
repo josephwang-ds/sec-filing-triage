@@ -74,7 +74,8 @@ def _bind(monkeypatch, module, seen, blob: MemoryBlob | None = None):
     monkeypatch.setenv("EDGAR_USER_AGENT", "Events Drill drill@example.com")
     monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
     if blob is not None:
-        def open_durable(_flags):
+        def open_durable(_flags, *, drill=False):
+            del drill
             return BlobDurable(blob), blob
 
         monkeypatch.setattr(module, "open_durable", open_durable)
@@ -167,7 +168,8 @@ def test_prepared_list_calls_news_and_sec_for_the_same_companies(tmp_path, monke
     assert skipped.count("reason=not_due") == 6
     other = MemoryBlob()
 
-    def open_other(_flags):
+    def open_other(_flags, *, drill=False):
+        del drill
         return BlobDurable(other), other
 
     monkeypatch.setattr(refresh, "open_durable", open_other)
@@ -238,6 +240,48 @@ def test_drill_health_does_not_treat_the_other_seventeen_as_missing():
     assert result.returncode == 0, result.stderr
 
 
+def test_drill_does_not_use_a_production_blob_token(tmp_path, monkeypatch, capsys):
+    module = _load("refresh_events_drill_token", ROOT / "scripts" / "refresh_events.py")
+    seen = {"calls": [], "constructed": [], "ciks": None, "transport": []}
+    _bind(monkeypatch, module, seen)
+
+    class StorageClient:
+        def __init__(self, token: str) -> None:
+            seen["transport"].append(token)
+
+    monkeypatch.setattr(module, "HttpBlobTransport", StorageClient)
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "production-token")
+    monkeypatch.delenv("EVENTS_DRILL_BLOB_READ_WRITE_TOKEN", raising=False)
+    universe = tmp_path / "universe.csv"
+    universe.write_text(
+        "ticker,name,cik\nAAPL,Apple Inc.,320193\nJPM,JPMorgan Chase & Co.,19617\nNVDA,NVIDIA Corp,1045810\n",
+        encoding="utf-8",
+    )
+    code = module.main(
+        [
+            "--drill",
+            "--dataset",
+            "all",
+            "--universe",
+            str(universe),
+            "--tickers",
+            "AAPL",
+            "JPM",
+            "NVDA",
+            "--root",
+            str(tmp_path / "store"),
+            "--require-blob",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "config_error=drill_blob_missing" in captured.out
+    assert "production-token" not in captured.out
+    assert seen["transport"] == []
+    assert seen["constructed"] == []
+    assert seen["calls"] == []
+
+
 def test_drill_workflow_prepares_three_names_on_a_separate_blob_prefix(monkeypatch):
     monkeypatch.setenv("EVENTS_BLOB_PREFIX", "lens-events-drill")
     assert commit_path() == "lens-events-drill/commit.json"
@@ -252,5 +296,13 @@ def test_drill_workflow_prepares_three_names_on_a_separate_blob_prefix(monkeypat
     assert "AAPL JPM NVDA" in refresh
     assert "lens-events-drill" in refresh
     assert "EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" in refresh
+    assert "inputs.drill && secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" not in refresh
+    assert "|| secrets.BLOB_READ_WRITE_TOKEN" not in refresh
+    drill_step, live_step = refresh.split("Refresh the live blob", 1)
+    assert "secrets.BLOB_READ_WRITE_TOKEN" not in drill_step
+    assert "secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" in drill_step
+    assert "if: inputs.drill" in drill_step
+    assert "secrets.BLOB_READ_WRITE_TOKEN" in live_step
+    assert "secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" not in live_step
     assert "EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" in monitor
     assert "--supported AAPL JPM NVDA" in monitor

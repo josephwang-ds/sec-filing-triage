@@ -53,18 +53,40 @@ jobs:
             --tickers "${symbols[@]}" \
             --out "${{ runner.temp }}/events-universe.csv"
 
-      - name: Refresh event data without deploying
+      - name: Refresh the drill blob
+        if: inputs.drill
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
           EVENT_TICKERS: ${{ inputs.tickers }}
-          EVENTS_BLOB_PREFIX: ${{ inputs.drill && 'lens-events-drill' || 'lens-events' }}
-          BLOB_READ_WRITE_TOKEN: ${{ inputs.drill && secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN || secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENTS_BLOB_PREFIX: lens-events-drill
+          EVENTS_DRILL_BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
         run: |
           set -euo pipefail
           read -r -a symbols <<< "${EVENT_TICKERS}"
-          # runner.temp is a working copy. The script restores and pushes the
-          # durable checkpoint when the blob token is configured.
+          # This step does not receive BLOB_READ_WRITE_TOKEN. An empty drill
+          # secret fails in the script before any provider or blob client.
+          python scripts/refresh_events.py --check-config --drill --require-blob
+          python scripts/refresh_events.py \
+            --drill \
+            --dataset all \
+            --tier "${{ inputs.tier }}" \
+            --universe "${{ runner.temp }}/events-universe.csv" \
+            --tickers "${symbols[@]}" \
+            --root "${{ runner.temp }}/events-store" \
+            --require-blob
+
+      - name: Refresh the live blob
+        if: ${{ !inputs.drill }}
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          EVENT_TICKERS: ${{ inputs.tickers }}
+          EVENTS_BLOB_PREFIX: lens-events
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          set -euo pipefail
+          read -r -a symbols <<< "${EVENT_TICKERS}"
           python scripts/refresh_events.py --check-config --require-blob
           python scripts/refresh_events.py \
             --dataset all \

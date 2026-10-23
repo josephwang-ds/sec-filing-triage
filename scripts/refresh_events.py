@@ -37,16 +37,29 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Fail when the blob token is missing. Drill runs use this.",
     )
+    parser.add_argument(
+        "--drill",
+        action="store_true",
+        help="Use EVENTS_DRILL_BLOB_READ_WRITE_TOKEN. Never the production blob token.",
+    )
     parser.add_argument("--now", default=None, help="ISO timestamp for a drill; default is current UTC")
     args = parser.parse_args(argv)
 
     flags = presence()
+    if args.drill and not _drill_token():
+        print("config_error=drill_blob_missing")
+        return 2
+    if args.drill:
+        os.environ.setdefault("EVENTS_BLOB_PREFIX", "lens-events-drill")
     if args.check_config:
         print(format_presence(flags))
-        print("durable_store=" + ("blob" if flags["BLOB_READ_WRITE_TOKEN"] else "not_configured"))
+        if args.drill:
+            print("durable_store=drill_blob")
+        else:
+            print("durable_store=" + ("blob" if flags["BLOB_READ_WRITE_TOKEN"] else "not_configured"))
         wake = "named" if flags["EVENTS_RERUN_TOKEN"] and flags["EVENTS_RERUN_URL"] else "not_configured"
         print(f"independent_wake={wake}")
-        if args.require_blob and not flags["BLOB_READ_WRITE_TOKEN"]:
+        if args.require_blob and not args.drill and not flags["BLOB_READ_WRITE_TOKEN"]:
             print("config_error=blob_missing")
             return 2
         return 0
@@ -77,13 +90,13 @@ def main(argv: list[str] | None = None) -> int:
         print("watchlist ignored for paid fetch: " + ",".join(ignored))
     targets = [company.ticker for company in chosen]
     print("fetch_targets=" + ",".join(targets))
-    if args.require_blob and not flags["BLOB_READ_WRITE_TOKEN"]:
+    if args.require_blob and not args.drill and not flags["BLOB_READ_WRITE_TOKEN"]:
         print("config_error=blob_missing")
         return 2
     supported = set(targets)
     ciks = {company.ticker: int(company.cik) for company in chosen if company.cik is not None}
     sources = _sources(flags, datasets, ciks)
-    durable, publish_transport = open_durable(flags)
+    durable, publish_transport = open_durable(flags, drill=args.drill)
     result = run_refresh_entry(
         local_root=args.root,
         durable=durable,
@@ -116,8 +129,19 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def open_durable(flags: dict[str, bool]):
-    """Return the checkpoint store and the publish transport. Tests replace this."""
+def _drill_token() -> str:
+    return os.environ.get("EVENTS_DRILL_BLOB_READ_WRITE_TOKEN", "").strip()
+
+
+def open_durable(flags: dict[str, bool], *, drill: bool = False):
+    """Return the checkpoint store and the publish transport. Tests replace this.
+
+    A drill reads only ``EVENTS_DRILL_BLOB_READ_WRITE_TOKEN``. A production
+    ``BLOB_READ_WRITE_TOKEN`` in the same process is not a substitute.
+    """
+    if drill:
+        transport = HttpBlobTransport(_drill_token())
+        return BlobDurable(transport), transport
     if flags["BLOB_READ_WRITE_TOKEN"]:
         transport = HttpBlobTransport(os.environ["BLOB_READ_WRITE_TOKEN"])
         return BlobDurable(transport), transport

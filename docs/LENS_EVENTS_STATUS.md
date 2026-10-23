@@ -109,7 +109,7 @@ Codex 复验 `dad74fc` 后，入口仍有五处代码缺陷。这一轮修版本
 
 检查点和公开页面不再各做一次 CAS。事件正文、证据和检查点快照是不可变对象。`lens-events/commit.json` 用一次 CAS 指向这一代的检查点和页面。页面、Ask 的版本授权和恢复都读这张提交记录。监控的执行资格在 `lens-events/monitor.json`，刷新不会改它。CAS 失败或提交前中断时，候选文件可以留下，但读路径不会把它们当成已发布内容。仍是 mock，没有 staging、生产或 schedule。
 
-真实演练（仍未执行）：手动 `workflow_dispatch` `events-refresh.yml`，默认 `drill=true` 且 tickers 为 `AAPL JPM NVDA`。工作流先运行 `scripts/prepare_events_universe.py`，从 `data/events/service_companies.csv` 写出 ticker、name、CIK，不读周六 `data/build/universe.csv`，也不下载全量 SEC ticker 表。刷新写入独立前缀 `lens-events-drill/`，token 名称是 `EVENTS_DRILL_BLOB_READ_WRITE_TOKEN`。确认该前缀下的 `commit.json` 指向 `checkpoints/{hash}.json`，页面和证据 URL 在同一张提交记录上，`expected_tickers` 只有这三家。再用另一个空工作目录跑第二次，核对水位不是冷启动。监控用同一个 drill blob 和同样的三家。没有这枚 token 或名单时，入口返回配置错误，不发抓取请求。不要启用 schedule。生产前缀 `lens-events/` 仍用 `BLOB_READ_WRITE_TOKEN`，本轮不写它。
+真实演练（仍未执行）：手动 `workflow_dispatch` `events-refresh.yml`，默认 `drill=true` 且 tickers 为 `AAPL JPM NVDA`。工作流先运行 `scripts/prepare_events_universe.py`，从 `data/events/service_companies.csv` 写出 ticker、name、CIK，不读周六 `data/build/universe.csv`，也不下载全量 SEC ticker 表。演练步骤只注入 `EVENTS_DRILL_BLOB_READ_WRITE_TOKEN`，并写入 `lens-events-drill/`。演练密钥为空时入口直接失败，不使用生产 `BLOB_READ_WRITE_TOKEN`。确认该前缀下的 `commit.json` 指向 `checkpoints/{hash}.json`，页面和证据 URL 在同一张提交记录上，`expected_tickers` 只有这三家。再用另一个空工作目录跑第二次，核对水位不是冷启动。监控用同一个 drill blob 和同样的三家。没有这枚 token 或名单时，入口返回配置错误，不发抓取请求。不要启用 schedule。生产前缀 `lens-events/` 仍用 `BLOB_READ_WRITE_TOKEN`，本轮不写它。
 
 ## 验收证据
 
