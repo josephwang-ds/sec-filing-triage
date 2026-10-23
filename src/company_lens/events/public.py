@@ -110,6 +110,8 @@ def public_feed(
             public_event(event, manifest_version=version, ai_enabled=ai_enabled) for event in events
         ],
         "initialization": bool((document or state or {}).get("initialization")),
+        "pending": bool((state or {}).get("pending")),
+        "quota_degraded": bool((state or {}).get("quota_degraded")),
         "manifest_version": version,
         "schema_version": "company-lens.events-public.v1",
         "status": status,
@@ -127,3 +129,4 @@ def unavailable_feed(ticker: str, *, tier: str = "ordinary") -> dict:
     feed["status_label"] = STATUS_COPY["unavailable"]
     feed["ai_enabled"] = False
     return feed
+

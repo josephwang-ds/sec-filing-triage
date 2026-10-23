@@ -50,7 +50,19 @@ def main(argv: list[str] | None = None) -> int:
         print("config_error=drill_blob_missing")
         return 2
     if args.drill:
-        os.environ.setdefault("EVENTS_BLOB_PREFIX", "lens-events-drill")
+        if os.environ.get("EVENTS_BLOB_PREFIX", "lens-events-drill") != "lens-events-drill":
+            print("config_error=drill_prefix_invalid")
+            return 2
+        os.environ["EVENTS_BLOB_PREFIX"] = "lens-events-drill"
+        required = []
+        if args.dataset in {"news", "all"}:
+            required.append("FINNHUB_API_KEY")
+        if args.dataset in {"sec_index", "all"}:
+            required.append("EDGAR_USER_AGENT")
+        missing = [key for key in required if not flags[key]]
+        if missing:
+            print("config_error=drill_sources_missing names=" + ",".join(missing))
+            return 2
     if args.check_config:
         print(format_presence(flags))
         if args.drill:
@@ -198,3 +210,4 @@ def _select_companies(
 
 if __name__ == "__main__":
     sys.exit(main())
+

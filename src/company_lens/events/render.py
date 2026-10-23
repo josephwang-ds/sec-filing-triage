@@ -72,7 +72,7 @@ def render_events_section(feed: dict | None, *, ticker: str) -> str:
         f'<section class="events-section" id="events" data-ticker="{html.escape(ticker.upper())}" '
         f'data-events-endpoint="/api/events" data-manifest-version="{html.escape(str(payload.get("manifest_version") or ""))}" '
         f'data-storage="{html.escape(str(payload.get("storage") or "unavailable"))}" aria-labelledby="events-title">'
-        f"{_heading(payload)}{_notes(payload)}{_columns(payload)}"
+        f'<div class="events-content">{_heading(payload)}{_notes(payload)}{_columns(payload)}</div>'
         f'<script type="application/json" id="events-feed">{_json(payload)}</script>'
         "<script>" + _CLIENT + "</script></section>"
     )
@@ -177,7 +177,7 @@ def _notes(feed: dict) -> str:
             )
     for gap in feed.get("coverage_gaps") or []:
         parts.append(
-            f'<p class="events-gap"{_pair("gap")}>{_COPY["gap"][0]} '
+            f'<p class="events-gap"><span{_text("gap")}</span> '
             f'{html.escape(str(gap.get("start") or ""))} → {html.escape(str(gap.get("end") or ""))} '
             f'({html.escape(str(gap.get("reason") or ""))})</p>'
         )
@@ -253,7 +253,7 @@ def _card(event: dict) -> str:
         f'data-i18n-zh="{html.escape(str(reason.get("zh") or ""), quote=True)}">'
         f'{html.escape(str(reason.get("en") or ""))}</p>'
         f'<div class="event-actions">{link}{ask}</div>'
-        '<p class="event-ask-result" role="status"></p></article>'
+        '<div class="event-ask-result" role="status"></div></article>'
     )
 
 
@@ -292,100 +292,160 @@ def events_stylesheet() -> str:
 
 _CLIENT = r"""
 (function () {
-  const section = document.getElementById("events");
+  const section = document.getElementById('events');
   if (!section) return;
-  const endpoint = section.dataset.eventsEndpoint;
   const ticker = section.dataset.ticker;
-  section.querySelectorAll(".event-ask").forEach((button) => {
-    button.addEventListener("click", () => askEvent(button));
-  });
-  if (!endpoint || !ticker) return;
-  const url = endpoint + "?ticker=" + encodeURIComponent(ticker);
-    fetch(url, {headers: {Accept: "application/json"}})
-    .then((response) => response.ok ? response.json() : Promise.reject(new Error("feed")))
-    .then((feed) => {
-      if (!feed || feed.ticker !== ticker) return;
-      const current = section.dataset.manifestVersion || "";
-      const next = feed.manifest_version || "";
-      if (next && next !== current) {
-        const node = document.getElementById("events-feed");
-        if (node) node.textContent = JSON.stringify(feed);
-        section.dataset.manifestVersion = next;
-        const version = section.querySelector(".events-version code");
-        if (version) version.textContent = next;
-        const list = section.querySelector(".event-list");
-        if (list) {
-          const events = (feed.events || []).slice(0, 3);
-          list.innerHTML = events.map(cardHtml).join("");
-          list.querySelectorAll(".event-ask").forEach((button) => {
-            button.addEventListener("click", () => askEvent(button));
-          });
-        }
-        if (typeof applyLanguage === "function") applyLanguage(typeof uiLanguage === "string" ? uiLanguage : "en", false);
+  const copy = __EVENT_COPY__;
+  const chinese = () => document.documentElement.lang.startsWith('zh');
+  function node(tag, cls, text) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text != null) el.textContent = String(text);
+    return el;
+  }
+  function pair(tag, cls, en, zh) {
+    const el = node(tag, cls, chinese() ? zh : en);
+    el.dataset.i18nEn = en || ''; el.dataset.i18nZh = zh || en || '';
+    return el;
+  }
+  function label(tag, cls, key) { return pair(tag, cls, ...copy[key]); }
+  function translated(tag, cls, value) {
+    return pair(tag, cls, (value || {}).en || '', (value || {}).zh || '');
+  }
+  function safeLink(url, text) {
+    if (!/^https?:\/\//i.test(String(url || ''))) return null;
+    const a = node('a', '', text); a.href = url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer'; return a;
+  }
+  function card(event, version) {
+    const article = node('article', 'event-card');
+    const meta = node('p', 'event-meta');
+    meta.append(node('span', '', event.publisher || ''),
+      node('span', '', (event.when || {}).new_york || (event.when || {}).en || ''));
+    if (event.title_only) meta.append(label('span', 'event-badge', 'title_only'));
+    article.append(meta, label('p', 'event-original', 'original'), node('h3', '', event.title || ''));
+    if (event.excerpt) article.append(node('p', '', event.excerpt));
+    if (event.precision_note) article.append(translated('p', 'event-precision', event.precision_note));
+    article.append(translated('p', 'event-reason', event.significance));
+    const actions = node('div', 'event-actions');
+    const link = safeLink(event.source_url, '');
+    if (link) { const text = label('span', '', 'source'); link.append(text); actions.append(link); }
+    const enabled = Boolean(event.ask_enabled && version && event.manifest_version === version);
+    const button = label('button', 'event-ask', enabled ? 'ask' : 'ask_off');
+    button.type = 'button'; button.disabled = !enabled;
+    if (enabled) { button.dataset.eventVersion = version; button.dataset.eventId = event.id; }
+    actions.append(button);
+    const result = node('div', 'event-ask-result'); result.setAttribute('role', 'status');
+    article.append(actions, result); return article;
+  }
+  function render(feed) {
+    const content = node('div', 'events-content');
+    const heading = node('div', 'section-heading'), titles = node('div');
+    const title = label('h2', '', 'title'); title.id = 'events-title';
+    titles.append(label('p', 'eyebrow', 'eyebrow'), title);
+    const statuses = node('div', 'events-status');
+    const status = translated('span', 'context-status', feed.status_label || {en: feed.status, zh: feed.status});
+    status.dataset.status = feed.status || 'unavailable';
+    if (/^[a-z_]+$/.test(status.dataset.status)) status.classList.add(status.dataset.status);
+    statuses.append(status, translated('span', 'coverage-tier', feed.tier_label));
+    heading.append(titles, statuses); content.append(heading);
+    const version = node('p', 'events-version');
+    version.append(label('span', '', 'version'), node('code', '', feed.manifest_version || 'none'));
+    content.append(version, label('p', 'section-intro', 'intro'));
+    if (feed.checked_at) {
+      const time = node('p', 'events-freshness');
+      time.append(label('span', '', 'checked'), node('span', '', feed.checked_at));
+      const display = feed.checked_at_display || {};
+      for (const [key, value] of [['ny', display.new_york], ['sh', display.shanghai]]) {
+        if (value) time.append(label('span', '', key), node('span', '', value));
       }
-    })
-    .catch(() => {
-      const note = document.createElement("p");
-      note.className = "events-note";
-      note.dataset.i18nEn = "Showing the last published feed from this page. A newer feed could not be loaded.";
-      note.dataset.i18nZh = "正在显示本页上次发布的事件。更新的事件源没有载入。";
-      note.textContent = note.dataset.i18nEn;
-      section.appendChild(note);
-    });
-
-  function escapeHtml(value) {
-    return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[ch]));
+      content.append(time);
+    }
+    if (feed.initialization) content.append(label('p', 'events-note', 'init'));
+    if (feed.storage === 'build_snapshot') content.append(label('p', 'events-note', 'build'));
+    if (feed.status === 'unavailable') content.append(label('p', 'events-note', 'unavailable'));
+    if (feed.status === 'no_new_events') content.append(pair('p', 'events-note',
+      'The last check succeeded and returned no new items. Older items keep their original source time.',
+      '上次检查成功，没有新条目。旧条目仍使用原来的来源时间。'));
+    for (const gap of feed.coverage_gaps || []) {
+      const line = node('p', 'events-gap');
+      line.append(label('span', '', 'gap'), node('span', '', ` ${gap.start || ''} → ${gap.end || ''} (${gap.reason || ''})`));
+      content.append(line);
+    }
+    const layout = node('div', 'event-layout'), recent = node('div'), upcoming = node('div');
+    recent.append(label('h3', '', 'recent'));
+    const list = node('div', 'event-list'), events = feed.events || [];
+    events.slice(0, 3).forEach(event => list.append(card(event, feed.manifest_version)));
+    recent.append(list);
+    if (events.length > 3) {
+      const more = node('details', 'events-more'); more.append(label('summary', '', 'more'));
+      events.slice(3).forEach(event => more.append(card(event, feed.manifest_version)));
+      recent.append(more);
+    } else if (!events.length && feed.status !== 'unavailable') {
+      recent.append(pair('p', 'empty', 'No items in the covered window.', '已覆盖的窗口里没有条目。'));
+    }
+    upcoming.append(label('h3', '', 'upcoming'), label('p', 'empty', 'upcoming_empty'));
+    layout.append(recent, upcoming); content.append(layout);
+    section.querySelector('.events-content').replaceWith(content);
+    section.dataset.manifestVersion = feed.manifest_version || '';
+    section.dataset.storage = feed.storage || 'unavailable';
+    document.getElementById('events-feed').textContent = JSON.stringify(feed);
   }
-
-  function cardHtml(event) {
-    const title = escapeHtml(event.title);
-    const publisher = escapeHtml(event.publisher);
-    const when = escapeHtml((event.when && (event.when.new_york || event.when.en)) || "");
-    const version = escapeHtml(event.manifest_version);
-    const id = escapeHtml(event.id);
-    const ask = event.ask_enabled && version
-      ? '<button type="button" class="event-ask" data-event-id="' + id + '" data-event-version="' + version + '">Ask AI about this event</button>'
-      : '<button type="button" class="event-ask" disabled>AI stays off until this card and the server share one event version.</button>';
-    const href = String(event.source_url || "");
-    const link = href.indexOf("https://") === 0 || href.indexOf("http://") === 0
-      ? '<a href="' + escapeHtml(href) + '" rel="noopener noreferrer" target="_blank">Read source</a>'
-      : "";
-    return '<article class="event-card"><p class="event-meta"><span>' + publisher + "</span><span>" + when +
-      '</span></p><h3>' + title + '</h3><div class="event-actions">' + link + ask +
-      '</div><p class="event-ask-result" role="status"></p></article>';
+  function unavailable() {
+    const status = section.querySelector('[data-status]');
+    if (status) {
+      status.replaceWith(pair('span', 'context-status unavailable', 'Live feed unavailable', '实时事件源不可用'));
+      section.querySelector('.context-status').dataset.status = 'unavailable';
+    }
+    section.querySelectorAll('.event-ask').forEach(button => { button.disabled = true; });
+    section.dataset.storage = 'unavailable';
+    section.querySelector('.events-content').append(label('p', 'events-note', 'last_good'));
   }
-
-  function askEvent(button) {
+  section.addEventListener('click', event => {
+    const button = event.target.closest('.event-ask');
+    if (button && section.contains(button)) askEvent(button);
+  });
+  if (section.dataset.eventsEndpoint && ticker) {
+    fetch(section.dataset.eventsEndpoint + '?ticker=' + encodeURIComponent(ticker), {headers: {Accept: 'application/json'}})
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('feed')))
+      .then(feed => {
+        if (!feed || feed.ticker !== ticker || !Array.isArray(feed.events) || ['unavailable', 'read_error'].includes(feed.status) || ['unavailable', 'read_error'].includes(feed.storage)) throw new Error('feed');
+        render(feed);
+      }).catch(unavailable);
+  }
+  async function askEvent(button) {
     if (button.disabled || !button.dataset.eventVersion) return;
-    const result = button.closest("article").querySelector(".event-ask-result");
-    const language = document.documentElement.lang === "zh-CN" ? "Chinese" : "English";
-    const question = language === "Chinese"
-      ? "这条事件的证据写了什么？哪些内容证据没有给出？"
-      : "What does this event's evidence say, and what does it not establish?";
-    const model = document.getElementById("ask-model");
-    result.textContent = language === "Chinese" ? "正在按当前版本询问…" : "Asking about this version…";
-    fetch("/api/ask", {
-      method: "POST",
-      headers: {"Content-Type": "application/json", Accept: "application/json"},
-      body: JSON.stringify({
-        ticker: ticker,
-        provider: model && model.value ? model.value : "openai",
-        language: language,
-        depth: "beginner",
-        question: question,
-        event_version: button.dataset.eventVersion,
-        event_id: button.dataset.eventId
-      })
-    }).then(async (response) => {
+    button.disabled = true;
+    const result = button.closest('article').querySelector('.event-ask-result');
+    const language = chinese() ? 'Chinese' : 'English';
+    const model = document.getElementById('ask-model');
+    result.textContent = chinese() ? '正在按当前版本询问…' : 'Asking about this version…';
+    try {
+      const response = await fetch('/api/ask', {
+        method: 'POST', headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+        body: JSON.stringify({ticker, provider: model && model.value ? model.value : 'openai', language,
+          depth: 'beginner', question: chinese() ? '这条事件的证据写了什么？哪些内容证据没有给出？' : "What does this event's evidence say, and what does it not establish?",
+          event_version: button.dataset.eventVersion, event_id: button.dataset.eventId})
+      });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || payload.error || "ask failed");
-      const lines = (payload.answer || []).map((claim) => claim.text).filter(Boolean);
-      result.textContent = lines.join(" ") || (language === "Chinese" ? "没有可显示的回答。" : "No answer text.");
-    }).catch((error) => {
-      result.textContent = error.message || "The event explanation is unavailable. The card stays.";
-    });
+      if (!response.ok) throw new Error(payload.message || payload.error || 'Ask failed');
+      result.replaceChildren();
+      function showClaim(claim, cls) {
+        const line = node('p', cls || '', claim.text || '');
+        for (const citation of claim.citations || []) {
+          const link = safeLink(citation.url, citation.label || citation.id || 'Source');
+          if (link) { line.append(document.createTextNode(' '), link); }
+        }
+        result.append(line);
+      }
+      for (const claim of payload.answer || []) showClaim(claim);
+      if (!result.childNodes.length) result.append(pair('p', '', 'No answer text.', '没有可显示的回答。'));
+      if ((payload.boundaries || []).length) {
+        result.append(pair('strong', '', 'Evidence limits', '证据边界'));
+        for (const boundary of payload.boundaries) showClaim(boundary, 'event-boundary');
+      }
+    } catch (error) { result.textContent = error.message || 'Event explanation unavailable.'; }
+    finally { if (section.dataset.storage !== 'unavailable') button.disabled = false; }
   }
 })();
-"""
+""".replace("__EVENT_COPY__", _json(_COPY))

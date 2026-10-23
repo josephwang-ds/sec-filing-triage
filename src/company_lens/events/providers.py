@@ -84,7 +84,9 @@ class FinnhubEventSource:
             return FetchResult(ok=False, error_class="upstream", retryable=True)
         if not isinstance(payload, list):
             return FetchResult(ok=False, error_class="upstream", retryable=False)
-        items = [row for row in payload if isinstance(row, dict)]
+        if any(not isinstance(row, dict) for row in payload):
+            return FetchResult(ok=False, error_class="invalid_payload", retryable=False)
+        items = payload
         for item in items:
             item["source_kind"] = "news_provider"
             item["type"] = "news"
@@ -137,6 +139,15 @@ class EdgarRecentIndex:
             payload = response.json()
         except ValueError:
             return FetchResult(ok=False, error_class="upstream", retryable=True)
+        recent = ((payload.get("filings") or {}).get("recent") or {}) if isinstance(payload, dict) else {}
+        fields = [recent.get(key) for key in ("form", "filingDate", "accessionNumber")]
+        if any(not isinstance(value, list) for value in fields) or len({len(value) for value in fields}) != 1:
+            return FetchResult(ok=False, error_class="invalid_payload", retryable=False)
+        try:
+            for value in fields[1]:
+                datetime.fromisoformat(str(value))
+        except ValueError:
+            return FetchResult(ok=False, error_class="invalid_payload", retryable=False)
         return FetchResult(ok=True, items=_recent_filings(payload, ticker, cik, start, end))
 
 
@@ -183,3 +194,4 @@ def _recent_filings(
             }
         )
     return items
+

@@ -74,6 +74,8 @@ class HttpBlobTransport:
                 "x-vercel-blob-access": "private",
             }
         )
+        if pathname.endswith(("/commit.json", "/monitor.json")):
+            headers["x-cache-control-max-age"] = "60"
         if overwrite:
             headers["x-allow-overwrite"] = "1"
         if if_match:
@@ -111,7 +113,9 @@ class HttpBlobTransport:
         return [item for item in blobs or [] if isinstance(item, dict)]
 
     def read_url(self, url: str) -> tuple[bytes, str]:
-        response = self._session.get(url, headers=self._headers(), timeout=30)
+        response = self._session.get(
+            url, headers=self._headers({"Cache-Control": "no-cache"}), timeout=30
+        )
         if response.status_code >= 400:
             raise BlobRequestError(response.status_code, "blob-url")
         etag = response.headers.get("etag") or response.headers.get("ETag") or ""
@@ -227,7 +231,11 @@ def _read_exact(transport: BlobTransport, pathname: str) -> tuple[dict, str | No
     payload = json.loads(body.decode())
     if not isinstance(payload, dict):
         raise BlobRequestError(502, pathname)
-    return payload, str(chosen.get("etag") or etag or "") or None
+    # The listing and the GET can observe different generations. Only the
+    # ETag returned WITH this body can authorize a write based on this body.
+    if not etag:
+        raise BlobRequestError(502, pathname)
+    return payload, str(etag)
 
 
 def read_commit(transport: BlobTransport) -> tuple[dict, str | None]:
@@ -427,3 +435,4 @@ def publish_releases(
         expected_etag=observed_etag,
         releases=releases,
     )
+

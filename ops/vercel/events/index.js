@@ -68,6 +68,7 @@ async function readPointerFeed(ticker) {
     const feed = await body.json();
     if (!feed || feed.manifest_version !== entry.version_id) return { configured: true, missing: true };
     feed.storage = "blob";
+    ageFeed(feed, Date.now());
     return { configured: true, feed };
   } catch (error) {
     return { configured: true, error: true };
@@ -300,6 +301,31 @@ function sourceLevel(dataset, ticker, state, nowMs, tier) {
   };
 }
 
+// Content versions can stay unchanged while the refresh service is stopped.
+// Reuse the monitor's calendar policy rather than freezing a "Checked" badge.
+function ageFeed(feed, nowMs) {
+  const state = {
+    last_successful_check_at: feed.checked_at,
+    status: feed.status,
+    coverage_gaps: feed.coverage_gaps,
+    pending: feed.pending,
+    quota_degraded: feed.quota_degraded,
+  };
+  const level = sourceLevel("news", feed.ticker, state, nowMs, feed.coverage_tier || "ordinary").level;
+  const labels = {
+    stale: {en: "Last good copy", zh: "保留上次成功结果"},
+    partial: {en: "Partial coverage", zh: "覆盖不完整"},
+    degraded: {en: "Checks are late", zh: "检查已延迟"},
+    critical: {en: "Checks are overdue", zh: "检查已严重逾期"},
+    unavailable: {en: "Feed unavailable", zh: "事件源不可用"},
+  };
+  if (labels[level]) {
+    feed.status = level;
+    feed.status_label = labels[level];
+  }
+  return feed;
+}
+
 function healthFromCheckpoint(checkpoint, nowMs, expected) {
   const wanted = expectedTickers(expected, checkpoint);
   const datasets = (checkpoint && checkpoint.datasets) || {};
@@ -391,5 +417,7 @@ function send(response, status, payload) {
 }
 
 handler.healthFromCheckpoint = healthFromCheckpoint;
+handler.ageFeed = ageFeed;
 handler.readPointerFeed = readPointerFeed;
 module.exports = handler;
+

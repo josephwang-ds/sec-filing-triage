@@ -206,7 +206,9 @@ def run_refresh_entry(
         )
     try:
         store.write_expected_tickers(
-            sorted({ticker.strip().upper() for ticker in tickers if str(ticker).strip()})
+            sorted(set(store.read_expected_tickers()) | {
+                ticker.strip().upper() for ticker in tickers if str(ticker).strip()
+            })
         )
         payload = store.export_workspace(datasets)
         if publish_transport is not None:
@@ -280,3 +282,4 @@ def _news_releases(store: FileEventStore, supported: set[str]) -> dict:
 
 def production_sleep(seconds: float) -> None:
     time.sleep(seconds)
+

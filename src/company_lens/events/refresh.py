@@ -381,6 +381,10 @@ def _refresh_one(
         floor=source.lookback_floor(now),
         max_window_days=source.max_window_days,
     )
+    # A later successful window does not repair an older provider lookback gap.
+    for gap in (previous_state or {}).get("coverage_gaps") or []:
+        if gap.get("reason") == "provider_lookback" and gap not in gaps:
+            gaps.append(gap)
     raw_items, failure, attempts, requests = _fetch_windows(
         source,
         ticker,
@@ -398,6 +402,14 @@ def _refresh_one(
     state["attempt"] = int(state.get("attempt") or 0) + attempts
     state["last_attempt_at"] = seen_at
     state["quota_degraded"] = quota_degraded
+    normalized = []
+    if failure is None:
+        try:
+            normalized = [normalize_item(item, ticker=ticker, seen_at=seen_at) for item in raw_items]
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            normalized = [None]
+        if any(event is None for event in normalized):
+            failure = TickerOutcome(ticker, "failed", error_class="invalid_payload")
     if failure is not None:
         state["last_error_class"] = failure.error_class
         state["status"] = "pending" if failure.pending else "stale"
@@ -424,11 +436,6 @@ def _refresh_one(
         failure.coverage_gaps = gaps
         return failure
 
-    normalized = [
-        event
-        for payload in raw_items
-        if (event := normalize_item(payload, ticker=ticker, seen_at=seen_at)) is not None
-    ]
     merged = merge_events(previous_events, normalized, seen_at=seen_at)
     pending = False
     if max_items is not None and len(merged) > max_items:
@@ -529,3 +536,4 @@ def _refresh_one(
 def _public_state(state: dict) -> dict:
     hidden = {"revision"}
     return {key: value for key, value in state.items() if key not in hidden}
+

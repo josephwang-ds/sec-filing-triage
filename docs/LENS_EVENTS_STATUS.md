@@ -188,3 +188,45 @@ PYTHONPATH=src python -m pytest -q
 - 待审查。
 - 建议先看：`src/company_lens/events/`、`ops/vercel/ask/index.js` 的 `event_version` 分支、`ops/vercel/events/index.js`、两个新 workflow、`docs/lens-events-preview/`。
 - 生产发布记录：无。
+
+
+## Codex consolidated review — 2026-10-23
+
+Reviewed base: `8188d68eccdc5d32bb2e8e3b4d78b2931c4db5d2`.
+This follow-up keeps PR #35 draft. It does not merge, deploy, or enable schedules.
+
+Changes:
+- A commit or monitor read uses only the ETag returned with its body. A listing
+  ETag cannot grant a cached older checkpoint permission to overwrite newer data.
+  An existing object without a body ETag fails closed. Mutable objects use a
+  60-second cache lifetime; actual Blob propagation still needs the live drill.
+- Drill preflight rejects missing requested source credentials and any namespace
+  other than `lens-events-drill` before constructing clients. Production tokens
+  remain excluded from the drill workflow.
+- Partial ticker refreshes preserve the previously recorded monitoring universe.
+  Invalid provider items fail without advancing success timestamps/watermarks;
+  prior provider-lookback gaps remain disclosed after later successful windows.
+- Dynamic cards replace the complete event section, including status, timestamps,
+  gaps, all cards, bilingual controls, title-only/date precision and excerpts.
+  Same-version metadata changes are applied. Network and HTTP-200 read errors
+  show an unavailable state and disable Ask while retaining the page's last copy.
+- Event Ask displays claim citations and evidence boundaries, and suppresses
+  duplicate submissions while pending. Content and links are created safely.
+- The public feed ages its badge using the same calendar policy as monitoring,
+  even when no refresh task writes a new content version.
+
+Verification:
+- 67 focused event tests passed locally, including 16 new Python regressions.
+- DOM execution of the real rendered client passed: five cards, Chinese/English,
+  same-version status, read failures, unsafe content, version-bound Ask, citations,
+  boundaries, and duplicate-click protection. This is jsdom, not a visual browser
+  or a live provider test. A dedicated CI job runs this check.
+- Ruff passed. Pytest collects 843 tests; the full-suite result is recorded in
+  the PR delivery/CI rather than inferred from collection.
+- All provider, storage and model responses in these checks are simulated.
+
+Remaining release gate (unchanged): real isolated Blob/Finnhub/SEC exercise,
+second-runner restoration, deployed API/Ask version check, independent wake
+invocation, and at least 48 hours of observed operation. Vercel team access and
+required secret configuration must be available before those can be verified.
+A1 is not certified for production by the mock/DOM results above.
