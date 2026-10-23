@@ -71,7 +71,18 @@ class RunResult:
 
 
 def is_due(dataset: str, tier: str, state: dict | None, now: datetime) -> bool:
-    """Never-run and unfinished tickers are due. A fresh success waits for its own cadence."""
+    """A persisted retry_not_before blocks the ticker, including one still pending.
+
+    Otherwise a never-run or unfinished ticker is due, and a fresh success waits
+    for its own cadence.
+    """
+    if state and state.get("retry_not_before"):
+        try:
+            not_before = datetime.fromisoformat(str(state["retry_not_before"]))
+        except ValueError:
+            not_before = None
+        if not_before is not None and as_utc(now) < as_utc(not_before):
+            return False
     if state is None or state.get("pending") or not state.get("last_successful_check_at"):
         return True
     last = datetime.fromisoformat(str(state["last_successful_check_at"]))
@@ -105,6 +116,11 @@ def run_refresh_entry(
     store = FileEventStore(local_root)
     if pulled.status == "ok" and pulled.payload is not None:
         store.restore_workspace(pulled.payload)
+    # Captured with the checkpoint generation. Re-reading the pointer after a
+    # newer run publishes would let this older result replace that page.
+    observed_pointer_etag: str | None = None
+    if publish_transport is not None and pulled.status in {"ok", "missing"}:
+        _pointer, observed_pointer_etag = read_pointer(publish_transport)
     reports: list[RefreshReport] = []
     skipped: list[dict[str, str]] = []
     clock = clock or (lambda: datetime.now(UTC))
@@ -153,10 +169,15 @@ def run_refresh_entry(
         )
     try:
         if publish_transport is not None:
-            _publish_pointer(publish_transport, store, supported)
+            _publish_pointer(
+                publish_transport,
+                store,
+                supported,
+                observed_etag=observed_pointer_etag,
+            )
         durable.push(store.export_workspace(datasets), pulled.etag)
     except BlobRequestError as exc:
-        if exc.status == 412:
+        if exc.status in {409, 412}:
             return RunResult(status="stale_writer", durable="conflict", reports=reports, skipped=skipped)
         raise
     return RunResult(status="stored", durable="checkpoint", reports=reports, skipped=skipped)
@@ -192,8 +213,18 @@ def _mark_disabled(store: FileEventStore, dataset: str, tickers: list[str], now:
         )
 
 
-def _publish_pointer(transport: Any, store: FileEventStore, supported: set[str]) -> None:
-    """Publish the news feed. SEC state stays in the checkpoint, not this pointer."""
+def _publish_pointer(
+    transport: Any,
+    store: FileEventStore,
+    supported: set[str],
+    *,
+    observed_etag: str | None,
+) -> None:
+    """Publish the news feed. SEC state stays in the checkpoint, not this pointer.
+
+    ``observed_etag`` is the pointer generation from the start of this run.
+    It is not refreshed here.
+    """
     releases = {}
     dataset = "news"
     manifest = store.read_manifest(dataset)
@@ -218,9 +249,7 @@ def _publish_pointer(transport: Any, store: FileEventStore, supported: set[str])
         }
     if not releases:
         return
-    current, etag = read_pointer(transport)
-    del current
-    publish_releases(transport, releases, observed_etag=etag)
+    publish_releases(transport, releases, observed_etag=observed_etag)
 
 
 def production_sleep(seconds: float) -> None:

@@ -8,9 +8,14 @@ import os
 import sys
 from datetime import UTC, datetime
 
-from company_lens.events.blob_store import BlobRequestError, HttpBlobTransport
+from company_lens.events.blob_store import HttpBlobTransport
 from company_lens.events.config_status import presence
-from company_lens.events.health import build_health, execute_rerun, monitor_action, public_health
+from company_lens.events.health import (
+    judge_checkpoint,
+    monitor_action,
+    public_health,
+    request_monitor_rerun,
+)
 from company_lens.events.policy import HIGH_FREQUENCY_TICKERS
 from company_lens.events.run import BlobDurable
 
@@ -56,39 +61,35 @@ def main(argv: list[str] | None = None) -> int:
             "note": "no durable checkpoint has been stored",
         }, sort_keys=True))
         return 2
-    states = _states(pulled.payload)
     disabled = set()
     if not flags["FINNHUB_API_KEY"]:
         disabled.add("news")
     if not flags["EDGAR_USER_AGENT"]:
         disabled.add("sec_index")
-    report = build_health(
-        states,
+    report = judge_checkpoint(
+        pulled.payload,
         now=now,
-        supported=supported,
+        expected=supported,
         disabled=disabled,
         http_status=args.http_status,
     )
     configured = bool(flags["EVENTS_RERUN_TOKEN"] and flags["EVENTS_RERUN_URL"])
     decision = monitor_action(report, rerun_configured=configured)
-    cooldown = args.cooldown_until or (pulled.payload.get("monitor") or {}).get("cooldown_until")
     if configured and decision.get("action") == "rerun_eligible":
-        def executor() -> object:
-            return _post_rerun(os.environ["EVENTS_RERUN_URL"], os.environ["EVENTS_RERUN_TOKEN"])
+        override = args.cooldown_until
+        if override and now < _aware(override):
+            decision = {**decision, "reason": "cooldown", "rerun_requested": False}
+        else:
+            def executor() -> object:
+                return _post_rerun(os.environ["EVENTS_RERUN_URL"], os.environ["EVENTS_RERUN_TOKEN"])
 
-        decision = execute_rerun(
-            decision,
-            executor=executor,
-            now=now,
-            cooldown_until=cooldown,
-        )
-        if decision.get("rerun_requested") and decision.get("cooldown_until"):
-            payload = dict(pulled.payload)
-            payload["monitor"] = {"cooldown_until": decision["cooldown_until"]}
-            try:
-                durable.push(payload, pulled.etag)
-            except BlobRequestError:
-                decision["cooldown_persisted"] = False
+            decision = request_monitor_rerun(
+                durable,
+                pulled,
+                decision,
+                executor=executor,
+                now=now,
+            )
     elif not configured:
         decision = {**decision, "rerun_requested": False, "independent_wake": "not_configured"}
     public = {
@@ -101,13 +102,11 @@ def main(argv: list[str] | None = None) -> int:
     return 0 if report.get("ok") else 2
 
 
-def _states(payload: dict) -> dict[str, dict[str, dict | None]]:
-    datasets = payload.get("datasets") or {}
-    return {
-        dataset: dict((body or {}).get("states") or {})
-        for dataset, body in datasets.items()
-        if isinstance(body, dict)
-    }
+def _aware(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
 
 
 def _post_rerun(url: str, token: str) -> object:

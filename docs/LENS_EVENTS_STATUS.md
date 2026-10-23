@@ -91,6 +91,18 @@ Codex 复核 `2abce6c` 时，单测通过但入口没有形成闭环。这一轮
 
 缺的配置名：`BLOB_READ_WRITE_TOKEN`、`FINNHUB_API_KEY`、`EVENTS_RERUN_URL`、`EVENTS_RERUN_TOKEN`。缺配置只说明真实演练还没做，不说明代码没接上。
 
+## 2026-10-23 第二轮复验修复
+
+Codex 复验 `dad74fc` 后，入口仍有五处代码缺陷。这一轮修版本约束、检查点合并、Retry-After、公开健康判定和监控执行资格。下面是 mock 集成，不是真实 staging，也没有打开 schedule。
+
+| 项 | 实现 | mock 集成 | 真实 staging | 生产 | 48 小时 |
+|---|---|---|---|---|---|
+| 旧刷新不能覆盖新发布 | yes | yes：两个交错的完整 `run_refresh_entry`。旧任务返回 `stale_writer`。公开指针、页面和检查点仍是新任务 | no | no | no |
+| 未参与的数据集保留 | yes | yes：news-only 之后，`sec_index` 的水位、版本和失败记录还在 | no | no | no |
+| Retry-After 不缩短 | yes | yes：300 秒在 600 秒预算内会等满。预算不够则写入 `retry_not_before`，下一次在该时间前不抓 | no | no | no |
+| 公开健康与监控一致 | yes | yes：周末、休市、活跃窗口、stale、partial、缺口、pending、错误类、缺失任务。判断不读固定的 `cadence_seconds` | no | no | no |
+| 监控元数据与执行资格 | yes | yes：没有到期抓取的刷新仍保留 cooldown。两次监控只有一次 POST，且 POST 前已经写入 claim | no | no | no |
+
 真实演练（仍未执行）：配置上述名称后，手动 `workflow_dispatch` `events-refresh.yml`，确认 Blob 里出现 `lens-events/checkpoint.json` 和 `lens-events/public/manifest.json`，再用另一个空工作目录跑第二次，核对水位不是冷启动。然后打开公司页和 Ask，确认新 `event_version` 不需要重新部署。最后单独 dispatch `events-monitor.yml`，在刷新停摆后看健康状态变差。不要启用 schedule。
 
 ## 验收证据

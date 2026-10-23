@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import copy
+import secrets
 from datetime import datetime, timedelta
 from typing import Any
 
+from company_lens.events.blob_store import BlobRequestError
 from company_lens.events.calendar import as_utc, price_status
 from company_lens.events.policy import coverage_tier, freshness_level, missed_windows
+
+MONITORED_DATASETS = ("news", "sec_index")
 
 PUBLIC_HEALTH_FIELDS = (
     "dataset",
@@ -33,11 +38,23 @@ def assess_source(
     last_success = None
     if state and state.get("last_successful_check_at"):
         last_success = datetime.fromisoformat(str(state["last_successful_check_at"]))
-    missed = None if disabled else missed_windows(dataset, tier, last_success, as_utc(now))
+    status_name = (state or {}).get("status")
+    gaps = (state or {}).get("coverage_gaps") or []
+    has_gaps = isinstance(gaps, list) and bool(gaps)
+    failed = failed or bool(state and (state.get("last_error_class") or status_name == "stale"))
+    missed = None
+    if not disabled:
+        missed = missed_windows(
+            dataset,
+            tier,
+            last_success,
+            as_utc(now),
+            quota_degraded=bool(state and state.get("quota_degraded")),
+        )
     level = freshness_level(missed, failed=failed, disabled=disabled)
-    if state and state.get("pending") and level == "current":
+    if state and level == "current" and (state.get("pending") or has_gaps or status_name == "partial"):
         level = "partial"
-    status = "disabled" if disabled else (state or {}).get("status") or level
+    status = "disabled" if disabled else status_name or level
     return {
         "dataset": dataset,
         "key": (state or {}).get("key"),
@@ -105,6 +122,42 @@ def build_health(
         "prices": prices,
         "sources": [{field: source.get(field) for field in (*PUBLIC_HEALTH_FIELDS, "tier")} for source in sources],
     }
+
+
+def checkpoint_states(payload: dict, expected: set[str]) -> dict[str, dict[str, dict | None]]:
+    """Dataset states plus every expected news and SEC ticker, even with no file yet."""
+    raw: dict[str, dict[str, dict | None]] = {}
+    for dataset, body in (payload.get("datasets") or {}).items():
+        if not isinstance(body, dict):
+            continue
+        states = body.get("states") or {}
+        raw[str(dataset)] = {
+            str(ticker): state if isinstance(state, dict) else {"key": str(ticker)}
+            for ticker, state in states.items()
+        }
+    for dataset in MONITORED_DATASETS:
+        bucket = raw.setdefault(dataset, {})
+        for ticker in sorted(expected):
+            bucket.setdefault(ticker, {"key": ticker})
+    return raw
+
+
+def judge_checkpoint(
+    payload: dict,
+    *,
+    now: datetime,
+    expected: set[str],
+    disabled: set[str] | None = None,
+    http_status: int = 200,
+) -> dict[str, Any]:
+    """The monitor's reading of a checkpoint. Missing expected tasks are not current."""
+    return build_health(
+        checkpoint_states(payload, expected),
+        now=now,
+        supported=set(expected),
+        disabled=disabled,
+        http_status=http_status,
+    )
 
 
 def public_health(report: dict[str, Any]) -> dict[str, Any]:
@@ -180,3 +233,74 @@ def execute_rerun(
         "executor_status": status_code,
         "rerun_requested": accepted,
     }
+
+
+def acquire_monitor_turn(
+    durable: Any,
+    pulled: Any,
+    now: datetime,
+    *,
+    claim_seconds: int = 120,
+) -> dict[str, Any]:
+    """Persist the right to call the executor. A lost compare-and-swap must not POST."""
+    payload = copy.deepcopy(pulled.payload)
+    monitor = dict(payload.get("monitor") or {})
+    now = as_utc(now)
+    cooldown = monitor.get("cooldown_until")
+    if cooldown and now < as_utc(datetime.fromisoformat(str(cooldown))):
+        return {"acquired": False, "reason": "cooldown"}
+    claim_until = monitor.get("claim_until")
+    if claim_until and now < as_utc(datetime.fromisoformat(str(claim_until))):
+        return {"acquired": False, "reason": "claimed"}
+    token = secrets.token_hex(8)
+    monitor["claim_token"] = token
+    monitor["claim_until"] = (now + timedelta(seconds=claim_seconds)).isoformat()
+    payload["monitor"] = monitor
+    try:
+        pushed = durable.push(payload, pulled.etag)
+    except BlobRequestError as exc:
+        if exc.status in {409, 412}:
+            return {"acquired": False, "reason": "conflict"}
+        raise
+    return {
+        "acquired": True,
+        "etag": pushed.get("etag"),
+        "payload": payload,
+        "token": token,
+    }
+
+
+def request_monitor_rerun(
+    durable: Any,
+    pulled: Any,
+    decision: dict[str, Any],
+    *,
+    executor: Any | None,
+    now: datetime,
+    claim_seconds: int = 120,
+    cooldown_seconds: int = 1800,
+) -> dict[str, Any]:
+    """Claim a durable turn, then POST. Cooldown is written only after an accepted POST."""
+    if decision.get("action") != "rerun_eligible" or executor is None:
+        return {**decision, "rerun_requested": False}
+    claim = acquire_monitor_turn(durable, pulled, now, claim_seconds=claim_seconds)
+    if not claim["acquired"]:
+        return {**decision, "reason": claim["reason"], "rerun_requested": False}
+    outcome = execute_rerun(
+        decision,
+        executor=executor,
+        now=now,
+        cooldown_until=None,
+        cooldown_seconds=cooldown_seconds,
+    )
+    if outcome.get("rerun_requested") and outcome.get("cooldown_until"):
+        payload = claim["payload"]
+        monitor = dict(payload.get("monitor") or {})
+        monitor["cooldown_until"] = outcome["cooldown_until"]
+        payload["monitor"] = monitor
+        try:
+            durable.push(payload, claim["etag"])
+            outcome = {**outcome, "cooldown_persisted": True}
+        except BlobRequestError:
+            outcome = {**outcome, "cooldown_persisted": False}
+    return outcome

@@ -219,6 +219,27 @@ class FileEventStore:
     def _budget_path(self) -> Path:
         return self.root / "budget.json"
 
+    def _monitor_path(self) -> Path:
+        return self.root / "monitor.json"
+
+    def read_monitor(self) -> dict | None:
+        return _read_json(self._monitor_path())
+
+    def write_monitor(self, payload: dict) -> None:
+        _atomic_json(self._monitor_path(), payload)
+
+    def _known_datasets(self) -> list[str]:
+        names: set[str] = set()
+        for folder in ("state", "failures", "versions"):
+            root = self.root / folder
+            if not root.is_dir():
+                continue
+            names.update(path.name for path in root.iterdir() if path.is_dir())
+        manifests = self.root / "manifests"
+        if manifests.is_dir():
+            names.update(path.stem for path in manifests.glob("*.json"))
+        return sorted(names)
+
     def read_budget(self) -> dict:
         found = _read_json(self._budget_path())
         if found is None:
@@ -249,10 +270,21 @@ class FileEventStore:
         self.write_budget(budget)
         return used[dataset]
 
-    def export_workspace(self, datasets: tuple[str, ...]) -> dict:
-        """Snapshot the working copy. The local directory is not the durable store."""
+    def export_workspace(self, datasets: tuple[str, ...] = ()) -> dict:
+        """Snapshot the working copy, including datasets this round did not refresh.
+
+        Monitor metadata is part of the checkpoint. A news-only pass must not
+        drop SEC watermarks, versions, failures, or a cooldown already stored.
+        """
+        names: list[str] = []
+        seen: set[str] = set()
+        for name in (*datasets, *self._known_datasets()):
+            if name in seen:
+                continue
+            seen.add(name)
+            names.append(name)
         exported: dict[str, dict] = {}
-        for dataset in datasets:
+        for dataset in names:
             manifest = self.read_manifest(dataset)
             state_dir = self.root / "state" / dataset
             states = {}
@@ -260,15 +292,12 @@ class FileEventStore:
                 for path in sorted(state_dir.glob("*.json")):
                     states[path.stem] = _read_json(path)
             versions = {}
-            for pointer in (manifest.get("tickers") or {}).values():
-                if not isinstance(pointer, dict):
-                    continue
-                version_id = pointer.get("version_id")
-                if not isinstance(version_id, str):
-                    continue
-                document = self.read_version(dataset, version_id)
-                if document is not None:
-                    versions[version_id] = document
+            version_dir = self.root / "versions" / dataset
+            if version_dir.exists():
+                for path in sorted(version_dir.glob("*.json")):
+                    document = _read_json(path)
+                    if document is not None:
+                        versions[path.stem] = document
             failure_dir = self.root / "failures" / dataset
             failures = {}
             if failure_dir.exists():
@@ -280,11 +309,15 @@ class FileEventStore:
                 "states": states,
                 "versions": versions,
             }
-        return {
+        payload = {
             "budget": self.read_budget(),
             "datasets": exported,
             "schema_version": 1,
         }
+        monitor = self.read_monitor()
+        if monitor:
+            payload["monitor"] = monitor
+        return payload
 
     def restore_workspace(self, payload: dict) -> None:
         """Replace this working copy from a durable checkpoint. Does not publish by itself."""
@@ -311,3 +344,7 @@ class FileEventStore:
                     _atomic_json(self._failure_path(dataset, str(ticker)), failure)
         if isinstance(payload.get("budget"), dict):
             self.write_budget(payload["budget"])
+        if isinstance(payload.get("monitor"), dict):
+            self.write_monitor(payload["monitor"])
+        elif self._monitor_path().exists():
+            self._monitor_path().unlink()

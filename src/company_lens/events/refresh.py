@@ -69,6 +69,7 @@ class TickerOutcome:
     pending: bool = False
     coverage_gaps: list[dict[str, str]] = field(default_factory=list)
     event_count: int = 0
+    retry_not_before: str | None = None
 
 
 @dataclass
@@ -142,7 +143,11 @@ def _backoff(attempt: int, retry_after: float | None, rng: Any) -> float:
 
 
 def _pending(
-    ticker: str, error_class: str, attempts: int, requests: int
+    ticker: str,
+    error_class: str,
+    attempts: int,
+    requests: int,
+    retry_not_before: str | None = None,
 ) -> TickerOutcome:
     return TickerOutcome(
         ticker,
@@ -151,6 +156,7 @@ def _pending(
         attempts=attempts,
         requests=requests,
         pending=True,
+        retry_not_before=retry_not_before,
     )
 
 
@@ -201,12 +207,22 @@ def _fetch_windows(
                 )
                 return items, outcome, attempts, requests
             delay = _backoff(attempt, result.retry_after, rng)
-            if delay > 120:
-                delay = 120
             remaining = (deadline - clock()).total_seconds()
             if delay > remaining:
-                # Wait the full Retry-After on a later run. A shorter sleep would retry early.
-                return items, _pending(ticker, "retry_wait", attempts, requests), attempts, requests
+                # The full Retry-After is persisted. This run does not sleep a shorter stand-in.
+                not_before = (as_utc(clock()) + timedelta(seconds=delay)).isoformat()
+                return (
+                    items,
+                    _pending(
+                        ticker,
+                        "retry_wait",
+                        attempts,
+                        requests,
+                        retry_not_before=not_before,
+                    ),
+                    attempts,
+                    requests,
+                )
             sleep(delay)
             if clock() >= deadline:
                 return items, _pending(ticker, "time_budget", attempts, requests), attempts, requests
@@ -386,6 +402,10 @@ def _refresh_one(
         state["last_error_class"] = failure.error_class
         state["status"] = "pending" if failure.pending else "stale"
         state["pending"] = failure.pending
+        if failure.retry_not_before:
+            state["retry_not_before"] = failure.retry_not_before
+        else:
+            state.pop("retry_not_before", None)
         # A failure must not move the success watermark.
         store.write_state(dataset, ticker, _public_state(state), expected_revision)
         store.write_failure(
@@ -440,6 +460,7 @@ def _refresh_one(
     state["last_error_class"] = None
     state["pending"] = pending
     state["status"] = status
+    state.pop("retry_not_before", None)
     if pending:
         # Keep the previous watermark so the unfinished tail is fetched again.
         state["coverage_through"] = None if previous_state is None else previous_state.get(
