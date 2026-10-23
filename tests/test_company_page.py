@@ -212,12 +212,12 @@ def test_company_page_is_self_contained_and_source_linked(tmp_path) -> None:
     assert 'id="ask-model"' in page
     assert 'id="ask-question"' in page
     assert 'id="ask-retry"' in page
-    assert page.count('role="tab" data-ask-task=') == 9
+    assert page.count('role="tab" data-ask-task=') == 10
     assert 'data-ask-task="filing"' in page
     assert 'data-ask-task="risk"' in page
     assert "Choose what to investigate" in page
     assert "Nothing is sent automatically" in page
-    assert "What the latest 8-K says, with cited passages" in page
+    assert "Latest 8-K disclosures and filed financial results, with cited sources" in page
     assert "Always withheld" in page
     assert "Buy, sell, or hold recommendations" in page
     assert "Draft question → bounded evidence → model → validator → cited answer" in page

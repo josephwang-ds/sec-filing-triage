@@ -607,7 +607,7 @@ def _ask_section() -> str:
           <label><span data-i18n="ask.evidence_scope">Evidence scope</span><select id="ask-scope" name="scope" disabled>
           <option data-i18n="ask.loading_scopes">Loading scopes…</option></select></label>
         </div>
-        <p class="ask-scope-note" id="ask-scope-note" data-i18n="ask.scope_note_core">SEC filings and long-term fundamentals only.</p>
+        <p class="ask-scope-note" id="ask-scope-note" data-i18n="ask.scope_note_core">SEC filings, filed financial results, covered-sample comparisons and long-term fundamentals.</p>
         </details>
         <div class="ask-step-heading"><span>1</span><div>
         <strong data-i18n="ask.choose_task">Choose what to investigate</strong>
@@ -636,6 +636,8 @@ def _ask_section() -> str:
           data-i18n="ask.task_thesis">Thesis risks</button>
           <button type="button" role="tab" data-ask-task="missing"
           data-i18n="ask.task_missing">Missing evidence</button>
+          <button type="button" role="tab" data-ask-task="results"
+          data-i18n="ask.task_results">Financial results</button>
         </div>
         </details>
         <div class="ask-task-preview" id="ask-task-preview">
@@ -662,7 +664,7 @@ def _ask_section() -> str:
         <p class="ask-result-kicker" data-i18n="ask.scope_title">WHAT THIS DEMO CAN ANSWER</p>
         <div class="ask-scope-groups">
           <section class="ask-scope-group in-scope"><strong data-i18n="ask.in_scope">In scope</strong>
-          <ul><li data-i18n="ask.in_scope_1">What the latest 8-K says, with cited passages</li>
+          <ul><li data-i18n="ask.in_scope_1">Latest 8-K disclosures and filed financial results, with cited sources</li>
           <li data-i18n="ask.in_scope_2">Historical return and risk versus the snapshot's fixed benchmark</li>
           <li data-i18n="ask.in_scope_3">Observed filing reaction and prior wording changes</li>
           <li data-i18n="ask.in_scope_4">Which evidence is present or missing</li></ul></section>
@@ -1285,6 +1287,10 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "item.9.01": "Financial statements and exhibits",
                 "item.other": "Other disclosure",
                 "explain.no_filing": "No filing is available for this company in the local dataset.",
+                "ask.task_results": "Financial results",
+                "ask.task_results_title": "Explain the latest financial results",
+                "ask.task_results_copy": "Uses reported quarterly/annual figures, YoY changes, eligible SIC sample references and source links.",
+                "ask.task_results_question": "What changed in the latest financial report? Compare revenue and net-income YoY with the covered SIC sample where available. State the reporting period, sample size and percentage-point gaps, cite sources, and explain missing comparisons.",
                 "ask.task_quality": "Business quality",
                 "ask.task_cash": "Earnings & cash",
                 "ask.task_capital": "Per-share capital",
@@ -1386,7 +1392,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.scope_company": "Company news",
                 "ask.scope_market": "Market context",
                 "ask.scope_all": "All evidence",
-                "ask.scope_note_core": "SEC filings and long-term fundamentals only.",
+                "ask.scope_note_core": "SEC filings, filed financial results, covered-sample comparisons and long-term fundamentals.",
                 "ask.scope_note_company": "Core financials plus recent headlines about this company.",
                 "ask.scope_note_market": "Core financials plus broad market and sector headlines.",
                 "ask.scope_note_all": "Core financials, company news and market context together.",
@@ -1446,7 +1452,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.checking_models": "Checking available models…",
                 "ask.scope_title": "WHAT THIS DEMO CAN ANSWER",
                 "ask.in_scope": "In scope",
-                "ask.in_scope_1": "What the latest 8-K says, with cited passages",
+                "ask.in_scope_1": "Latest 8-K disclosures and filed financial results, with cited sources",
                 "ask.in_scope_2": (
                     "Historical return and risk versus {benchmark}, this snapshot's fixed "
                     "benchmark, even when History shows another comparison"
@@ -1720,6 +1726,10 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "item.9.01": "财务报表与附件",
                 "item.other": "其他披露",
                 "explain.no_filing": "本地数据集中没有该公司的披露。",
+                "ask.task_results": "财报变化",
+                "ask.task_results_title": "解读最新财报与类别参考",
+                "ask.task_results_copy": "使用正式季报／年报、同比变化、符合条件的 SIC 类别样本与原文来源。",
+                "ask.task_results_question": "最新财报有哪些变化？请比较收入、净利润同比及可用的本站 SIC 类别样本，说明报告期间、样本数量和百分点差，引用来源；缺少可比数据时请说明原因。",
                 "ask.task_quality": "经营质量",
                 "ask.task_cash": "盈利与现金",
                 "ask.task_capital": "每股资本",
@@ -1800,7 +1810,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.scope_company": "公司动态",
                 "ask.scope_market": "市场背景",
                 "ask.scope_all": "全部证据",
-                "ask.scope_note_core": "仅 SEC 备案与长期基本面。",
+                "ask.scope_note_core": "SEC 披露、财报数据、本站类别样本比较与长期基本面。",
                 "ask.scope_note_company": "核心财务,加上该公司的近期新闻。",
                 "ask.scope_note_market": "核心财务,加上行业与宏观新闻。",
                 "ask.scope_note_all": "核心财务、公司动态与市场背景的组合。",
@@ -1840,7 +1850,7 @@ def _script(default_period: str, ticker: str, benchmark: str) -> str:
                 "ask.checking_models": "正在检查可用模型…",
                 "ask.scope_title": "这个演示可以回答什么",
                 "ask.in_scope": "可以回答",
-                "ask.in_scope_1": "最新 8-K 说了什么，并提供引用段落",
+                "ask.in_scope_1": "最新 8-K、财报变化与可用的类别样本参考，并提供来源",
                 "ask.in_scope_2": "相对 {benchmark}（本快照固定基准）的历史回报和风险；历史区切换到其他基准时也不变",
                 "ask.in_scope_3": "披露后的观测反应和历史措辞变化",
                 "ask.in_scope_4": "当前有哪些证据、缺少哪些证据",
@@ -2249,6 +2259,11 @@ const askTaskTitle = document.getElementById('ask-task-title');
 const askTaskDescription = document.getElementById('ask-task-description');
 const askTaskTabs = Array.from(document.querySelectorAll('[data-ask-task]'));
 const askTaskDefinitions = {{
+  results: {{
+    title: 'ask.task_results_title',
+    copy: 'ask.task_results_copy',
+    question: 'ask.task_results_question',
+  }},
   filing: {{
     title: 'ask.task_filing_title',
     copy: 'ask.task_filing_copy',
@@ -2433,6 +2448,16 @@ async function loadAskModels() {{
 
 askRetry.addEventListener('click', loadAskModels);
 
+document.querySelectorAll('[data-ask-task-link]').forEach(link => {{
+  link.addEventListener('click', () => {{
+    const task = link.dataset.askTaskLink;
+    const tab = askTaskTabs.find(item => item.dataset.askTask === task);
+    const fold = tab && tab.closest('details');
+    if (fold) fold.open = true;
+    selectAskTask(task);
+  }});
+}});
+
 askTaskTabs.forEach((tab, index) => {{
   tab.addEventListener('click', () => selectAskTask(tab.dataset.askTask));
   tab.addEventListener('keydown', event => {{
@@ -2573,7 +2598,8 @@ function renderAskClaim(claim) {{
       const link = document.createElement('a');
       link.href = safeAskHref(citation.url);
       link.dataset.citationLabel = citation.label;
-      link.textContent = localizedCitationLabel(citation.label);
+      link.dataset.citationLabelZh = citation.label_zh || '';
+      link.textContent = localizedCitationLabel(citation.label, citation.label_zh);
       if (link.href.startsWith('http')) {{
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -2586,7 +2612,8 @@ function renderAskClaim(claim) {{
 }}
 
 
-function localizedCitationLabel(label) {{
+function localizedCitationLabel(label, chinese='') {{
+  if (uiLanguage === 'zh' && chinese) return chinese;
   if (uiLanguage !== 'zh') return label;
   const labels = {{
     'Latest SEC filing': '最新 SEC 披露',
@@ -2627,7 +2654,7 @@ function localizedCitationLabel(label) {{
 
 function refreshLocalizedDetails() {{
   document.querySelectorAll('[data-citation-label]').forEach(element => {{
-    element.textContent = localizedCitationLabel(element.dataset.citationLabel);
+    element.textContent = localizedCitationLabel(element.dataset.citationLabel, element.dataset.citationLabelZh);
   }});
   document.querySelectorAll('[data-local-date]').forEach(element => {{
     if (!element.dataset.dateEn) element.dataset.dateEn = element.textContent;
@@ -2971,7 +2998,7 @@ def _css() -> str:
 @media(max-width:620px){.profile-meta{flex-direction:column;align-items:flex-start;gap:3px}.timeline-heading,.reaction-heading,.comparison-heading{flex-direction:column;gap:6px}.reaction-grid,.change-list{grid-template-columns:1fr}.timeline-track{grid-auto-columns:minmax(145px,72vw)}.topbar .section-nav,.company-search-link{display:none}.topbar .company-nav .site-link{margin-left:auto;color:var(--muted);font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}.company-nav .site-link+.site-link{margin-left:16px}.company-nav .site-link:hover{color:var(--blue)}.company-nav{margin-left:auto}.company-hero{padding:24px 0 18px;gap:13px}.hero-copy{font-size:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.profile-meta>span{display:none}.profile-meta{margin-top:8px}.evidence-flow{display:none}.market-observation{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);align-items:flex-start}.market-observation strong{font-size:29px}.brief-card{padding:19px}.brief-card h3{font-size:22px}.brief-card p,.brief-lead>p{font-size:16px}.brief-card-heading{flex-direction:column;gap:5px}.brief-metrics{grid-template-columns:1fr 1fr}.authority-row{gap:8px}.authority-row>em{display:none}.diagnostic-heading{align-items:start;flex-direction:column;gap:2px}.metric-grid{grid-template-columns:1fr 1fr}.metric-card{padding:13px}.trust-grid{gap:8px}}
 body{font-family:"Avenir Next","Segoe UI",sans-serif}.company-hero{border:0;border-radius:0;background:transparent;box-shadow:none;margin-bottom:0}.brief-section{border-radius:8px}.brief-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:0;border-top:1px solid #476656;border-bottom:1px solid #476656}.brief-card{border:0;border-radius:0;background:transparent}.brief-lead{border-right:1px solid #476656}.brief-metrics>div{padding:10px 0;border:0;border-radius:0;background:transparent}.brief-metrics>div+div{padding-left:18px;border-left:1px solid #28514e}.brief-boundary{grid-column:1/-1;margin:0;padding:17px 24px;color:#aebfca;font-size:12px}.brief-boundary strong{color:#e9b66d}.performance-section,.filings-section,.context-section{padding:58px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}.diagnostics-disclosure{margin-top:20px;border-top:1px solid var(--line)}.diagnostics-disclosure>summary,.source-details>summary{padding:14px 0;color:var(--blue);font-size:12px;font-weight:750;cursor:pointer}.metric-card{border-radius:3px;background:rgba(255,255,255,.55)}.filing-card{border-radius:4px;background:#fff}.filing-card summary{min-height:76px}.reaction-panel,.comparison-panel{border-width:0 0 0 3px;border-radius:0}.reaction-grid>div{border:0;border-left:1px solid #dbe8e1;border-radius:0;background:transparent}.reaction-grid>div:first-child{border-left:0}.comparison-clear{display:flex;flex-direction:column;margin-top:14px;color:var(--muted);font-size:12px}.comparison-clear strong{margin-bottom:3px;color:var(--ink)}.source-details{margin-top:8px;border-top:1px solid var(--line)}.filing-columns aside{border-radius:3px}.context-freshness{margin:-14px 0 20px;color:var(--muted);font-size:10px}.headline-list{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0;border-top:1px solid var(--line)}.headline-card{padding:20px 22px;border:0;border-right:1px solid var(--line);border-radius:0;background:transparent}.headline-card:last-child{border-right:0}.headline-card h3{margin:10px 0 14px}.headline-meta{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px 12px}.headline-meta span:first-child{color:var(--ink);font-weight:750}.headline-card>a{padding-top:2px}footer a{margin-top:5px;color:var(--blue);text-decoration:none}#brief,#ask,#performance,#filings,#context{scroll-margin-top:150px}
 .signal-section{padding:58px 0;border-top:1px solid var(--line)}.signal-badge{padding:8px 14px;border-radius:999px;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.signal-badge.urgent{background:#fbeceb;color:#a4322a;border:1px solid #e8b6b0}.signal-badge.watch{background:#fdf4e3;color:#8a6412;border:1px solid #e6d3a4}.signal-badge.calm{background:#eef5f0;color:#2f6b4a;border:1px solid #bcd8c7}.signal-badge.muted{background:#f2f3f4;color:var(--muted);border:1px solid var(--line)}.signal-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:26px 0 0;background:var(--line);border:1px solid var(--line)}.signal-stats>div{background:#fff;padding:18px 20px}.signal-stats b{display:block;font:500 30px/1 Georgia,serif}.signal-stats span{display:block;margin-top:7px;color:var(--muted);font-size:11px;line-height:1.5}.signal-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;margin-top:26px;align-items:start}.signal-why h3{margin:0 0 10px;font:500 17px/1.3 Georgia,serif}.signal-why ul{margin:0;padding-left:18px}.signal-why li{margin-bottom:7px;font-size:14px;line-height:1.6}.signal-boundary{margin-top:16px;padding:12px 15px;background:#f6f7f8;border-left:3px solid var(--blue);color:var(--muted);font-size:12.5px;line-height:1.6}.signal-chart{margin:0;padding:14px;border:1px solid var(--line);background:#fff}.signal-chart svg{width:100%;height:auto;display:block}.signal-chart .ax{stroke:#d8ddd3;stroke-width:1}.signal-chart .bar{stroke:#c8b48a;stroke-width:1;stroke-dasharray:3 3}.signal-chart .barlab{fill:#a08a5e;font-size:8px;text-anchor:end}.signal-chart .pt{fill:#9fb2c4}.signal-chart .pt.now{fill:var(--blue);stroke:#fff;stroke-width:1.5}.signal-chart figcaption{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:10px}.signal-footer{margin-top:22px;color:var(--muted);font-size:11px}@media(max-width:820px){.signal-grid{grid-template-columns:1fr}}.vol-section{padding:58px 0;border-top:1px solid var(--line)}.vol-bar{margin:26px 0 0}.vol-track{position:relative;height:44px;border:1px solid var(--line);background:#fff}.vol-band{position:absolute;top:0;bottom:0;background:var(--blue-soft);border-left:1px solid #aec2e9;border-right:1px solid #aec2e9}.vol-median{position:absolute;top:0;bottom:0;width:2px;background:var(--blue)}.vol-usual{position:absolute;top:-5px;bottom:-5px;width:1px;background:#a08a5e;border-left:1px dashed #a08a5e}.vol-scale{display:flex;justify-content:space-between;margin-top:6px;color:var(--muted);font-size:10px}@media(max-width:620px){.vol-section{padding:40px 0}}.ask-section{padding:58px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}.ask-validation{padding:7px 10px;border:1px solid #b9d8ca;border-radius:999px;color:var(--green);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}.ask-layout{display:grid;grid-template-columns:minmax(0,5fr) minmax(320px,4fr);border:1px solid var(--line);background:var(--panel)}.ask-form{padding:28px;border-right:1px solid var(--line)}.ask-controls{display:grid;grid-template-columns:minmax(0,1fr) 128px minmax(0,150px);gap:12px}.ask-form label{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.ask-form select,.ask-form textarea{width:100%;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);font:500 14px/1.5 "Avenir Next","Segoe UI",sans-serif}.ask-form select{height:43px;padding:0 11px}.ask-form textarea{resize:vertical;min-height:90px;padding:12px}.ask-form select:focus,.ask-form textarea:focus{outline:3px solid rgba(66,107,80,.14);border-color:var(--blue)}.ask-question{margin-top:17px}.ask-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ask-suggestions button{padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--blue);font-size:10px;cursor:pointer}.ask-suggestions button:hover{background:var(--blue-soft)}.ask-submit-row{display:flex;align-items:center;gap:13px;margin-top:20px}.ask-submit-row>button{min-width:120px;padding:11px 16px;border:0;border-radius:4px;background:var(--navy);color:#fff;font-weight:800;cursor:pointer}.ask-submit-row>button:disabled{opacity:.45;cursor:not-allowed}.ask-submit-row>span{color:var(--muted);font-size:10px}.ask-submit-row>span.ready{color:var(--green)}.ask-submit-row>span.error{color:#98473e}.ask-result{min-height:330px;padding:28px;background:#f8faf8;color:var(--muted);font-size:13px}.ask-result-kicker,.ask-answer-heading>span{margin:0;color:var(--green);font-size:10px;font-weight:850;letter-spacing:.1em}.ask-result>ol{margin:18px 0 0;padding:0;list-style:none}.ask-result>ol li{display:grid;grid-template-columns:25px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.ask-result>ol li span{color:var(--green);font-weight:850}.ask-result.loading{display:grid;place-items:center}.ask-result.error{display:grid;place-items:center;color:#98473e}.ask-answer-heading{display:flex;justify-content:space-between;gap:15px;padding-bottom:12px;border-bottom:1px solid var(--line)}.ask-answer-heading small{color:var(--muted)}.ask-result article{padding:15px 0;border-bottom:1px solid var(--line)}.ask-result article p{margin:0;color:var(--ink);font:500 17px/1.45 Georgia,serif}.ask-citations{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.ask-citations a{color:var(--blue);font-size:10px;text-decoration:none;border-bottom:1px solid #aec2e9}.ask-limitations{margin-top:15px}.ask-limitations>summary{color:var(--amber);font-size:11px;font-weight:800;cursor:pointer}.ask-limitations article p{font:inherit;color:var(--muted)}.ask-boundary{margin:14px 0 0;color:var(--muted);font-size:10px}.ask-boundary strong{color:var(--ink)}
-.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin:24px 0}.result-card{padding:20px;border:1px solid var(--line);border-radius:12px}.result-card h3{font-size:14px}.metric-method{margin-top:12px;font-size:12px}.metric-method>summary{cursor:pointer;color:var(--green)}.metric-method code{overflow-wrap:anywhere}.metric-method ul{padding-left:18px}.result-card>strong{display:block;font-size:22px}.result-card p,.result-card small{color:var(--muted);font-size:12px}.ask-advanced,.ask-more-tasks{margin:0 0 18px}.ask-advanced>summary,.ask-more-tasks>summary{cursor:pointer;color:var(--green);font-size:12px;font-weight:750;padding:10px 0}.ask-advanced[open]>.ask-controls{margin-top:12px}.ask-controls{margin-bottom:8px}.ask-scope-note{margin:0 0 22px;color:var(--muted);font-size:10px;line-height:1.5}.ask-scope-note[hidden]{display:none}.ask-step-heading{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}.ask-step-heading>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #b8c8df;border-radius:50%;color:var(--blue);font-size:10px;font-weight:850}.ask-step-heading>div{display:flex;flex-direction:column}.ask-step-heading strong{font-size:12px}.ask-step-heading small{color:var(--muted);font-size:10px}.ask-task-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:13px;border:1px solid var(--line)}.ask-task-tabs button{min-height:48px;padding:8px;border:0;border-left:1px solid var(--line);border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:10px;font-weight:750;cursor:pointer}.ask-task-tabs button:nth-child(-n+3){border-top:0}.ask-task-tabs button:nth-child(3n+1){border-left:0}.ask-task-tabs button:hover{background:var(--blue-soft);color:var(--blue)}.ask-task-tabs button.active{background:var(--navy);color:#fff}.ask-task-tabs button:focus-visible{position:relative;z-index:1;outline:3px solid rgba(66,107,80,.25);outline-offset:1px}.ask-task-preview{padding:15px 17px;border-width:0 1px 1px;border-style:solid;border-color:var(--line);background:#f8fafc;display:grid;grid-template-columns:1fr;gap:3px}.ask-task-preview>span{color:var(--blue);font-size:8px;font-weight:850;letter-spacing:.1em}.ask-task-preview>strong{font:500 18px/1.3 Georgia,serif}.ask-task-preview>p{margin:2px 0 0;color:var(--muted);font-size:11px}.ask-review-step{margin-top:23px}.ask-question{margin-top:10px}.ask-scope-groups{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.ask-scope-group{padding-top:12px;border-top:2px solid var(--green)}.ask-scope-group.out-scope{border-color:#b76a4f}.ask-scope-group>strong{color:var(--ink);font-size:11px}.ask-scope-group ul{margin:10px 0 0;padding-left:17px}.ask-scope-group li{margin:0 0 9px;font-size:11px;line-height:1.45}.ask-scope-group.in-scope li::marker{color:var(--green)}.ask-scope-group.out-scope li::marker{color:#b76a4f}.ask-control-flow{margin-top:18px;padding:12px;border:1px solid #cfe0d8;background:#fff;color:var(--green);font-size:9px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin:24px 0}.result-card{padding:20px;border:1px solid var(--line);border-radius:12px}.result-card h3{font-size:14px}.financial-ask-link{display:inline-block;margin-left:18px;font-weight:700}.metric-method{margin-top:12px;font-size:12px}.metric-method>summary{cursor:pointer;color:var(--green)}.metric-method code{overflow-wrap:anywhere}.metric-method ul{padding-left:18px}.result-card>strong{display:block;font-size:22px}.result-card p,.result-card small{color:var(--muted);font-size:12px}.ask-advanced,.ask-more-tasks{margin:0 0 18px}.ask-advanced>summary,.ask-more-tasks>summary{cursor:pointer;color:var(--green);font-size:12px;font-weight:750;padding:10px 0}.ask-advanced[open]>.ask-controls{margin-top:12px}.ask-controls{margin-bottom:8px}.ask-scope-note{margin:0 0 22px;color:var(--muted);font-size:10px;line-height:1.5}.ask-scope-note[hidden]{display:none}.ask-step-heading{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}.ask-step-heading>span{display:grid;place-items:center;width:24px;height:24px;border:1px solid #b8c8df;border-radius:50%;color:var(--blue);font-size:10px;font-weight:850}.ask-step-heading>div{display:flex;flex-direction:column}.ask-step-heading strong{font-size:12px}.ask-step-heading small{color:var(--muted);font-size:10px}.ask-task-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:13px;border:1px solid var(--line)}.ask-task-tabs button{min-height:48px;padding:8px;border:0;border-left:1px solid var(--line);border-top:1px solid var(--line);background:#fff;color:var(--muted);font-size:10px;font-weight:750;cursor:pointer}.ask-task-tabs button:nth-child(-n+3){border-top:0}.ask-task-tabs button:nth-child(3n+1){border-left:0}.ask-task-tabs button:hover{background:var(--blue-soft);color:var(--blue)}.ask-task-tabs button.active{background:var(--navy);color:#fff}.ask-task-tabs button:focus-visible{position:relative;z-index:1;outline:3px solid rgba(66,107,80,.25);outline-offset:1px}.ask-task-preview{padding:15px 17px;border-width:0 1px 1px;border-style:solid;border-color:var(--line);background:#f8fafc;display:grid;grid-template-columns:1fr;gap:3px}.ask-task-preview>span{color:var(--blue);font-size:8px;font-weight:850;letter-spacing:.1em}.ask-task-preview>strong{font:500 18px/1.3 Georgia,serif}.ask-task-preview>p{margin:2px 0 0;color:var(--muted);font-size:11px}.ask-review-step{margin-top:23px}.ask-question{margin-top:10px}.ask-scope-groups{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.ask-scope-group{padding-top:12px;border-top:2px solid var(--green)}.ask-scope-group.out-scope{border-color:#b76a4f}.ask-scope-group>strong{color:var(--ink);font-size:11px}.ask-scope-group ul{margin:10px 0 0;padding-left:17px}.ask-scope-group li{margin:0 0 9px;font-size:11px;line-height:1.45}.ask-scope-group.in-scope li::marker{color:var(--green)}.ask-scope-group.out-scope li::marker{color:#b76a4f}.ask-control-flow{margin-top:18px;padding:12px;border:1px solid #cfe0d8;background:#fff;color:var(--green);font-size:9px;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:.05em}
 @media(max-width:900px){.brief-lead{border-right:0;border-bottom:1px solid #476656}.headline-card{border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:900px){.ask-layout{grid-template-columns:1fr}.ask-form{border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:620px){.ask-section,.performance-section,.filings-section,.context-section{padding:40px 0}.ask-controls{grid-template-columns:1fr}.ask-form,.ask-result{padding:20px}.ask-submit-row{align-items:flex-start;flex-direction:column}.ask-task-tabs{grid-template-columns:1fr 1fr}.ask-task-tabs button:nth-child(3){border-left:0}.ask-task-tabs button:nth-child(n+3){border-top:1px solid var(--line)}.ask-scope-groups{grid-template-columns:1fr}.brief-section{border-radius:4px}.reaction-grid>div{padding-left:0;border-left:0;border-top:1px solid #dbe8e1}.reaction-grid>div:first-child{border-top:0}.filing-summary-meta span:first-child{display:block}.filing-summary-meta span:nth-child(2){display:none}}

@@ -24,8 +24,9 @@ import json
 from typing import Any
 
 from company_lens.llm.grounded import NUMBER_LITERAL, localized_month_number_literals
+from company_lens.web.financial_evidence import FINANCIAL_RESULTS_LIMIT, financial_results_packet
 
-ASK_EVIDENCE_VERSION = "company-lens.ask-evidence.v3"
+ASK_EVIDENCE_VERSION = "company-lens.ask-evidence.v4"
 
 DEFAULT_SCOPE = "core"
 
@@ -53,8 +54,9 @@ SCOPE_LABELS: dict[str, dict[str, str]] = {
 
 SCOPE_DESCRIPTIONS: dict[str, dict[str, str]] = {
     "core": {
-        "en": "SEC filings and long-term fundamentals only.",
-        "zh": "仅 SEC 备案与长期基本面。",
+        "en": ("SEC filings, filed financial results, covered-sample comparisons "
+               "and long-term fundamentals."),
+        "zh": "SEC 披露、财报数据、本站类别样本比较与长期基本面。",
     },
     "company": {
         "en": "Core financials plus recent headlines about this company.",
@@ -146,6 +148,11 @@ def build_ask_evidence(snapshot: dict[str, Any]) -> dict[str, Any]:
         snapshot.get("fundamentals"), ticker, fundamentals_citations
     )
 
+    financial_citations: dict[str, dict[str, str]] = {}
+    financial_section = financial_results_packet(
+        snapshot.get("financial_results"), ticker, financial_citations
+    )
+
     company_news_citations: dict[str, dict[str, str]] = {}
     company_news = _headline_packet(
         snapshot.get("headlines") or [], company_news_citations,
@@ -168,7 +175,7 @@ def build_ask_evidence(snapshot: dict[str, Any]) -> dict[str, Any]:
     scopes: dict[str, Any] = {}
     for name, section_names in SCOPE_SECTIONS.items():
         citations: dict[str, dict[str, str]] = {
-            **profile_citations, **performance_citations, **filing_citations,
+            **profile_citations, **performance_citations, **filing_citations, **financial_citations,
         }
         evidence: dict[str, Any] = {
             "schema_version": ASK_EVIDENCE_VERSION,
@@ -179,8 +186,9 @@ def build_ask_evidence(snapshot: dict[str, Any]) -> dict[str, Any]:
             "company": company_section,
             "historical_performance": performance_section,
             "latest_filing": filing_section,
+            "financial_results": financial_section,
         }
-        limits = list(BASE_LIMITS)
+        limits = [*BASE_LIMITS, FINANCIAL_RESULTS_LIMIT]
         if fundamentals_section is not None:
             evidence["fundamentals"] = fundamentals_section
             citations.update(fundamentals_citations)
@@ -249,14 +257,18 @@ def _performance_packet(
         ),
         "relative_total_return": (
             "metric:relative_total_return",
-            f"{performance['relative_total_return']:+.1%}",
+            f"{performance['relative_total_return'] * 100:+.1f} percentage points",
         ),
         "observations": ("metric:observations", str(performance["observations"])),
     }
     packet: dict[str, Any] = {
         "asset": ticker,
         "benchmark": benchmark,
-        "definition": "Adjusted buy-and-hold history over the page's selected period.",
+        "definition": (
+            "Adjusted buy-and-hold history over the frozen snapshot period. Company and "
+            "benchmark use common trading dates. Relative total return is company return "
+            "minus benchmark return, in percentage points; it is not financial growth."
+        ),
     }
     for name, (citation, value) in metrics.items():
         citations[citation] = {

@@ -173,5 +173,8 @@ def financial_results_section(report: dict | None) -> str:
         )
         + f'<a href="{source}" target="_blank" rel="noopener noreferrer">'
         + _text("Read the financial report ↗", "查看财报原文 ↗")
+        + "</a>"
+        + ' <a class="financial-ask-link" href="#ask" data-ask-task-link="results">'
+        + _text("Ask AI about these results →", "让 AI 解读这份财报 →")
         + "</a></section>"
     )

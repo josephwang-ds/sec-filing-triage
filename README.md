@@ -48,7 +48,7 @@ the public page rather than quietly not shipping.
 A point-in-time event dataset built from SEC timestamps; a reusable audit library
 that fails the build rather than logging a warning; a ranker; and a
 source-backed company page with a controlled AI question-answering box that
-refuses to answer beyond its evidence. 766 tests. No price predictions, no
+refuses to answer beyond its evidence. 776 tests. No price predictions, no
 trading strategy, no buy or sell recommendations anywhere — the model predicts
 *how big* a reaction will be, never which direction, because direction is a bet
 against desks with faster data and more capital.
@@ -106,8 +106,10 @@ zero/loss-base growth and missing comparisons are excluded. CIK deduplicates sha
 classes. This uses latest cached reports, not reconstructed historical cohorts or a
 complete industry census. The reference is withheld when coverage is insufficient.
 Stock return comparisons separately show company/ETF cumulative returns and their
-gap in percentage points, over common trading dates. Financial cards and sample
-references are not added to the grounded Q&A evidence in this release.
+gap in percentage points, over common trading dates. Filed financial results and covered-sample references are included in every
+Q&A evidence scope, with report citations, reporting periods, sample sizes and
+percentage-point gaps. The financial section opens a bilingual guided question;
+missing comparisons remain explicitly unavailable.
 
 Its grounded Q&A lets a reader choose the **evidence scope** — core financials
 (SEC filings and long-term fundamentals), plus company news, plus market
@@ -534,7 +536,7 @@ embargo sweep, and writes a self-contained HTML report.
 
 ```bash
 make quick           # smaller, no leakage study, ~30s
-make test            # 766 tests (~12 min; the nested model selection dominates)
+make test            # 776 tests (~12 min; the nested model selection dominates)
 make audit           # the leakage checks as an exit code
 make llm-eval        # frozen English/Chinese grounded-output scorecard
 make llm-eval-openai-dry-run  # inspect 20-case paid benchmark scope; sends nothing
@@ -786,7 +788,7 @@ src/filing_triage/
                    and hyperparameter sensitivity grid
   report.py        self-contained HTML
   synth.py         the offline corpus
-tests/             766 tests; test_guards, test_pipeline, test_uncertainty,
+tests/             776 tests; test_guards, test_pipeline, test_uncertainty,
                    test_prediction_log and test_ingest_integration are the
                    ones that matter
 predictions/       one file per refresh: the ranking, committed before the

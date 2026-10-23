@@ -66,6 +66,13 @@ async function check(path, available) {
     element('[data-ask-task="filing"]').click();
     assert.equal(document.activeElement.id, 'ask-question', 'clicking still focuses the draft');
     assert.equal(element('#ask-submit').disabled, false, 'question controls initialize');
+    const resultsLink = element('[data-ask-task-link="results"]');
+    if (resultsLink) {
+      resultsLink.click();
+      assert.equal(element('.ask-more-tasks').open, true);
+      assert.match(element('#ask-question').value, /最新财报/);
+      assert.equal(element('[data-ask-task="results"]').getAttribute('aria-selected'), 'true');
+    }
     assert.equal(requests.filter(request => request.method === 'POST').length, 0);
     assert.deepEqual(errors, []);
   } finally {

@@ -105,7 +105,15 @@ the requested JSON only, in the requested language. Preserve every supplied numb
 exactly, including its sign, currency symbol, decimal, and percent symbol; for example,
 never rewrite 68% as 68 or as an ordinal percentile. Keep each section to 1 or 2 brief
 claims and keep each claim under 80 words. When an observation supplies display_value,
-prefer that exact human-readable literal over its raw value.`;
+prefer that exact human-readable literal over its raw value. For Chinese answers use
+supplied display_value_zh and gap_zh; never convert currencies or magnitude units yourself.
+For latest financial results, distinguish the reported quarter/year from latest-restated
+annual fundamentals and from 8-K announcements. Cite the financial metric or report for
+company figures and the reference citation for sample medians and gaps. State the reporting
+period and sample size. Gaps are percentage points, not percent. If a reference is
+unavailable, explain its reason; do not calculate a replacement or treat it as zero.
+Covered SIC samples are not the whole industry. These figures do not establish causes,
+consensus beats or future performance.`;
 
 const UNSUPPORTED_QUESTION = [
   /\b(?:buy|sell|short|price target|should i invest|will (?:it|the stock) (?:rise|fall))\b/i,
