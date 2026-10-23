@@ -1,0 +1,177 @@
+{
+  "schema_version": "1",
+  "date": "2026-10-23",
+  "written_at": "2026-10-23T02:38:59.459557+00:00",
+  "predicts_session": "2026-10-23",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12051,
+    "last_session_in_panel": "2026-10-22",
+    "inputs": {
+      "events": {
+        "rows": 12082,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "5fad2d96b2d4965f9d440bde5704d4f7aac5d8401fb47d83de539001e567e92a"
+      },
+      "prices": {
+        "rows": 2014438,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "3faf8693548fa247f20bc68b616f87ccf1c43929dbae2540713303791997463c",
+        "first_session": "1962-01-02",
+        "last_session": "2026-10-22"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.15",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.1.0",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.0",
+        "yfinance": "1.7.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0001164727-26-000041",
+      "cik": 1164727,
+      "ticker": "NEM",
+      "issuer": "NEWMONT Corp /DE/",
+      "acceptance_time": "2026-10-22T20:05:51-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 1,
+      "score": 0.282306
+    },
+    {
+      "accession": "0001751788-26-000155",
+      "cik": 1751788,
+      "ticker": "DOW",
+      "issuer": "DOW INC.",
+      "acceptance_time": "2026-10-22T10:57:56-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 2,
+      "score": 0.13209
+    },
+    {
+      "accession": "0000092122-26-000065",
+      "cik": 92122,
+      "ticker": "SO",
+      "issuer": "SOUTHERN CO",
+      "acceptance_time": "2026-10-22T20:13:16-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 3,
+      "score": 0.128764
+    },
+    {
+      "accession": "0000080424-26-000252",
+      "cik": 80424,
+      "ticker": "PG",
+      "issuer": "PROCTER & GAMBLE Co",
+      "acceptance_time": "2026-10-22T14:29:34-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 4,
+      "score": 0.126931
+    },
+    {
+      "accession": "0001628280-26-066783",
+      "cik": 1166691,
+      "ticker": "CMCSA",
+      "issuer": "COMCAST CORP",
+      "acceptance_time": "2026-10-22T11:05:59-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 5,
+      "score": 0.124642
+    },
+    {
+      "accession": "0001193125-26-428384",
+      "cik": 702165,
+      "ticker": "NSC",
+      "issuer": "NORFOLK SOUTHERN CORP",
+      "acceptance_time": "2026-10-22T12:20:13-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 6,
+      "score": 0.122665
+    },
+    {
+      "accession": "0000100885-26-000319",
+      "cik": 100885,
+      "ticker": "UNP",
+      "issuer": "UNION PACIFIC CORP",
+      "acceptance_time": "2026-10-22T11:46:52-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 7,
+      "score": 0.109225
+    },
+    {
+      "accession": "0000773840-26-000141",
+      "cik": 773840,
+      "ticker": "HON",
+      "issuer": "HONEYWELL INTERNATIONAL INC",
+      "acceptance_time": "2026-10-22T10:02:13-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 8,
+      "score": 0.107957
+    },
+    {
+      "accession": "0001628280-26-066795",
+      "cik": 1035002,
+      "ticker": "VLO",
+      "issuer": "VALERO ENERGY CORP/TX",
+      "acceptance_time": "2026-10-22T12:20:14-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 9,
+      "score": 0.107122
+    },
+    {
+      "accession": "0001628280-26-066780",
+      "cik": 936468,
+      "ticker": "LMT",
+      "issuer": "LOCKHEED MARTIN CORP",
+      "acceptance_time": "2026-10-22T10:26:08-04:00",
+      "entry_session": "2026-10-23",
+      "rank": 10,
+      "score": 0.100292
+    }
+  ]
+}
