@@ -1,0 +1,147 @@
+{
+  "schema_version": "1",
+  "date": "2026-10-24",
+  "written_at": "2026-10-24T13:01:41.761108+00:00",
+  "predicts_session": "2026-10-26",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12068,
+    "last_session_in_panel": "2026-10-23",
+    "inputs": {
+      "events": {
+        "rows": 12089,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "e8ef5d32f91eada44bd3bfed439cf1f3e07866d74f5705c2efaceb6972728451"
+      },
+      "prices": {
+        "rows": 2014634,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "44a83962eff6823f771d8b842b35ee6e9ea4fa14d2c8b684fd79c8ee97f56f5e",
+        "first_session": "1962-01-02",
+        "last_session": "2026-10-23"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "3d27695e518dab7784646cd7075b8438281f80363500c28375e0166267be6158"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.15",
+      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.1.0",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.0",
+        "yfinance": "1.7.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0000064040-26-000049",
+      "cik": 64040,
+      "ticker": "SPGI",
+      "issuer": "S&P Global Inc.",
+      "acceptance_time": "2026-10-23T10:05:24-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 1,
+      "score": 0.121956
+    },
+    {
+      "accession": "0000004962-26-000405",
+      "cik": 4962,
+      "ticker": "AXP",
+      "issuer": "AMERICAN EXPRESS CO",
+      "acceptance_time": "2026-10-23T11:00:36-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 2,
+      "score": 0.116812
+    },
+    {
+      "accession": "0001193125-26-429435",
+      "cik": 87347,
+      "ticker": "SLB",
+      "issuer": "SLB LIMITED/NV",
+      "acceptance_time": "2026-10-23T11:04:15-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 3,
+      "score": 0.080394
+    },
+    {
+      "accession": "0001193125-26-429539",
+      "cik": 104169,
+      "ticker": "WMT",
+      "issuer": "Walmart Inc.",
+      "acceptance_time": "2026-10-23T13:04:03-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 4,
+      "score": 0.070084
+    },
+    {
+      "accession": "0001193125-26-430424",
+      "cik": 1835632,
+      "ticker": "MRVL",
+      "issuer": "Marvell Technology, Inc.",
+      "acceptance_time": "2026-10-23T20:05:52-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 5,
+      "score": 0.065932
+    },
+    {
+      "accession": "0001193125-26-430566",
+      "cik": 70858,
+      "ticker": "BAC",
+      "issuer": "BANK OF AMERICA CORP /DE/",
+      "acceptance_time": "2026-10-24T00:41:47-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 6,
+      "score": 0.050953
+    },
+    {
+      "accession": "0001628280-26-067044",
+      "cik": 713676,
+      "ticker": "PNC",
+      "issuer": "PNC FINANCIAL SERVICES GROUP, INC.",
+      "acceptance_time": "2026-10-23T20:09:02-04:00",
+      "entry_session": "2026-10-26",
+      "rank": 7,
+      "score": 0.033866
+    }
+  ]
+}

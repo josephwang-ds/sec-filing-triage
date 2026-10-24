@@ -81,7 +81,16 @@
       "acceptance_time": "2026-10-22T00:13:03-04:00",
       "entry_session": "2026-10-22",
       "rank": 1,
-      "score": 0.542126
+      "score": 0.542126,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": -0.052522,
+        "reaction": 1.04003,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0000097476-26-000165",
@@ -91,7 +100,16 @@
       "acceptance_time": "2026-10-22T00:04:14-04:00",
       "entry_session": "2026-10-22",
       "rank": 2,
-      "score": 0.531887
+      "score": 0.531887,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.030643,
+        "reaction": 0.765479,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001628280-26-066700",
@@ -101,7 +119,16 @@
       "acceptance_time": "2026-10-22T00:03:35-04:00",
       "entry_session": "2026-10-22",
       "rank": 3,
-      "score": 0.431343
+      "score": 0.431343,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": -0.060197,
+        "reaction": 1.576259,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0000051143-26-000093",
@@ -111,7 +138,16 @@
       "acceptance_time": "2026-10-22T00:19:17-04:00",
       "entry_session": "2026-10-22",
       "rank": 4,
-      "score": 0.416875
+      "score": 0.416875,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.017351,
+        "reaction": 0.329705,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0000277948-26-000039",
@@ -121,7 +157,16 @@
       "acceptance_time": "2026-10-22T00:01:14-04:00",
       "entry_session": "2026-10-22",
       "rank": 5,
-      "score": 0.40407
+      "score": 0.40407,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.050073,
+        "reaction": 2.419861,
+        "material": true,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0000092380-26-000104",
@@ -131,7 +176,16 @@
       "acceptance_time": "2026-10-22T00:16:24-04:00",
       "entry_session": "2026-10-22",
       "rank": 6,
-      "score": 0.361216
+      "score": 0.361216,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.079624,
+        "reaction": 2.661982,
+        "material": true,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001051470-26-000085",
@@ -141,7 +195,16 @@
       "acceptance_time": "2026-10-22T00:17:48-04:00",
       "entry_session": "2026-10-22",
       "rank": 7,
-      "score": 0.346935
+      "score": 0.346935,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.092033,
+        "reaction": 3.302397,
+        "material": true,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001628280-26-066738",
@@ -151,7 +214,16 @@
       "acceptance_time": "2026-10-22T00:41:42-04:00",
       "entry_session": "2026-10-22",
       "rank": 8,
-      "score": 0.328626
+      "score": 0.328626,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.008772,
+        "reaction": 0.249243,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001104659-26-117587",
@@ -161,7 +233,16 @@
       "acceptance_time": "2026-10-21T13:19:51-04:00",
       "entry_session": "2026-10-22",
       "rank": 9,
-      "score": 0.189864
+      "score": 0.189864,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": 0.026815,
+        "reaction": 0.984764,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0000097745-26-000173",
@@ -171,7 +252,24 @@
       "acceptance_time": "2026-10-21T10:03:16-04:00",
       "entry_session": "2026-10-22",
       "rank": 10,
-      "score": 0.133013
+      "score": 0.133013,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-10-24T13:01:17.410482+00:00",
+        "label_end_session": "2026-10-23",
+        "car": -0.029635,
+        "reaction": 0.994483,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     }
-  ]
+  ],
+  "scoring": {
+    "scored_at": "2026-10-24T13:01:17.410482+00:00",
+    "records": 10,
+    "scored": 10,
+    "unmeasurable": 0,
+    "pending": 0,
+    "price_panel_last_session": "2026-10-23"
+  }
 }
