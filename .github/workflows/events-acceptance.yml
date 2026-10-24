@@ -1,0 +1,59 @@
+name: Events isolated acceptance
+
+on:
+  push:
+    branches: [feat/lens-events-a1]
+    paths: [.github/workflows/events-acceptance.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: events-drill-acceptance
+  cancel-in-progress: false
+
+jobs:
+  first-runner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+      EVENTS_DRILL_BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
+      EVENTS_BLOB_PREFIX: lens-events-drill
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Prepare and refresh the isolated three-company universe
+        run: |
+          set -euo pipefail
+          python scripts/prepare_events_universe.py --tickers AAPL JPM NVDA --out "${{ runner.temp }}/universe.csv"
+          python scripts/refresh_events.py --check-config --drill --dataset all --require-blob
+          python scripts/refresh_events.py --drill --dataset all --universe "${{ runner.temp }}/universe.csv" --tickers AAPL JPM NVDA --root "${{ runner.temp }}/events-first" --require-blob
+
+  second-runner:
+    needs: first-runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+      EVENTS_DRILL_BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
+      EVENTS_BLOB_PREFIX: lens-events-drill
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Restore from durable storage on a fresh runner
+        run: |
+          set -euo pipefail
+          python scripts/prepare_events_universe.py --tickers AAPL JPM NVDA --out "${{ runner.temp }}/universe.csv"
+          python scripts/refresh_events.py --drill --dataset all --universe "${{ runner.temp }}/universe.csv" --tickers AAPL JPM NVDA --root "${{ runner.temp }}/events-second" --require-blob
