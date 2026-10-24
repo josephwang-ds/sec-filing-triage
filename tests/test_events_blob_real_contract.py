@@ -16,6 +16,7 @@ def test_private_read_uses_origin_body_and_its_etag():
 
     class Session:
         def get(self, url, **kwargs):
+            assert kwargs["headers"]["Accept-Encoding"] == "identity"
             assert url == "https://example.private.blob.vercel-storage.com/commit.json?cache=0"
             return Response()
 

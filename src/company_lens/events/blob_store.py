@@ -121,7 +121,9 @@ class HttpBlobTransport:
             query["cache"] = "0"
             url = urlunsplit(parts._replace(query=urlencode(query)))
         response = self._session.get(
-            url, headers=self._headers({"Cache-Control": "no-cache"}), timeout=30
+            url,
+            headers=self._headers({"Cache-Control": "no-cache", "Accept-Encoding": "identity"}),
+            timeout=30,
         )
         if response.status_code >= 400:
             raise BlobRequestError(response.status_code, "blob-url")
