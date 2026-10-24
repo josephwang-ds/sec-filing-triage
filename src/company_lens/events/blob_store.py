@@ -324,7 +324,9 @@ def _put_immutable(transport: BlobTransport, pathname: str, body: bytes) -> dict
     try:
         return transport.put(pathname, body, if_match=None, overwrite=False)
     except BlobRequestError as exc:
-        if exc.status != 409:
+        # Blob may report an existing pathname as HTTP 400. Only accept it
+        # after reading the exact object and verifying identical bytes.
+        if exc.status not in {400, 409}:
             raise
         found = _exact_blob(transport.get_prefix(pathname), pathname)
         if found is None or not found.get("url"):

@@ -1,4 +1,5 @@
 name: Events isolated acceptance
+# Verify immutable-object reuse against the real HTTP 400 response.
 
 on:
   push:
