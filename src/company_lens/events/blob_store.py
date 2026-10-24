@@ -12,7 +12,7 @@ import json
 import os
 import re
 from typing import Any, Protocol
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import requests
 
@@ -113,6 +113,13 @@ class HttpBlobTransport:
         return [item for item in blobs or [] if isinstance(item, dict)]
 
     def read_url(self, url: str) -> tuple[bytes, str]:
+        # Match the official SDK's useCache=False for private Blob reads.
+        # Cache-Control alone does not select the origin representation/ETag.
+        parts = urlsplit(url)
+        if (parts.hostname or "").endswith(".private.blob.vercel-storage.com"):
+            query = dict(parse_qsl(parts.query))
+            query["cache"] = "0"
+            url = urlunsplit(parts._replace(query=urlencode(query)))
         response = self._session.get(
             url, headers=self._headers({"Cache-Control": "no-cache"}), timeout=30
         )

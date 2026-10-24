@@ -5,6 +5,26 @@ import pytest
 from company_lens.events.blob_store import BlobRequestError, MemoryBlob, _put_immutable
 
 
+def test_private_read_uses_origin_body_and_its_etag():
+    from company_lens.events.blob_store import HttpBlobTransport
+
+    class Response:
+        status_code = 200
+        content = b'{"generation":1}'
+        def __init__(self):
+            self.headers = {"etag": '"origin-etag"'}
+
+    class Session:
+        def get(self, url, **kwargs):
+            assert url == "https://example.private.blob.vercel-storage.com/commit.json?cache=0"
+            return Response()
+
+    transport = HttpBlobTransport("test-only", session=Session())
+    assert transport.read_url(
+        "https://example.private.blob.vercel-storage.com/commit.json"
+    ) == (Response.content, '"origin-etag"')
+
+
 class ExistingPath400(MemoryBlob):
     def put(self, pathname, body, *, if_match, overwrite):
         if self.get_prefix(pathname) and not overwrite:
