@@ -1,5 +1,4 @@
 name: Events isolated acceptance
-# Use private origin reads for the conditional-write ETag.
 
 on:
   push:
@@ -30,6 +29,26 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e .
+      - name: Diagnose real Blob conditional-write contract
+        run: |
+          python - <<'PY'
+          import os, uuid
+          from company_lens.events.blob_store import HttpBlobTransport, BlobRequestError
+          t = HttpBlobTransport(os.environ["EVENTS_DRILL_BLOB_READ_WRITE_TOKEN"])
+          path = "lens-events-drill/diagnostics/" + uuid.uuid4().hex + ".json"
+          created = t.put(path, b'{"probe":1}', if_match=None, overwrite=False)
+          body, etag = t.read_url(created["url"])
+          print("probe_put_etag=", repr(created.get("etag")), "probe_get_etag=", repr(etag), "body_equal=", body == b'{"probe":1}')
+          for label, tag in [("get", etag), ("put", created.get("etag"))]:
+              if not tag:
+                  continue
+              try:
+                  t.put(path, b'{"probe":2}', if_match=tag, overwrite=True)
+                  print("probe_cas", label, "success")
+                  break
+              except BlobRequestError as error:
+                  print("probe_cas", label, "status=", error.status)
+          PY
       - name: Prepare and refresh the isolated three-company universe
         run: |
           set -euo pipefail
