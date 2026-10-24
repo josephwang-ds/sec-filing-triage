@@ -35,6 +35,13 @@ jobs:
           import os, uuid
           from company_lens.events.blob_store import HttpBlobTransport, BlobRequestError
           t = HttpBlobTransport(os.environ["EVENTS_DRILL_BLOB_READ_WRITE_TOKEN"])
+          import hashlib
+          for item in t.get_prefix("lens-events-drill/commit.json"):
+              if item["pathname"] == "lens-events-drill/commit.json":
+                  body, tag = t.read_url(item["url"])
+                  print("commit_get_etag=", repr(tag), "body_md5=", hashlib.md5(body).hexdigest())
+                  response = t._session.get(item["url"], params={"cache":"0"}, headers=t._headers({"Accept-Encoding":"identity"}), timeout=30)
+                  print("identity_etag=", repr(response.headers.get("etag")), "identity_md5=", hashlib.md5(response.content).hexdigest(), "encoding=", response.headers.get("content-encoding"))
           path = "lens-events-drill/diagnostics/" + uuid.uuid4().hex + ".json"
           created = t.put(path, b'{"probe":1}', if_match=None, overwrite=False)
           body, etag = t.read_url(created["url"])
