@@ -85,3 +85,43 @@ export function isoMinute(value: string | null | undefined): string | null {
   if (!match) return isoDate(value);
   return `${match[1]} ${match[2]}`;
 }
+
+/**
+ * A filed figure, in the unit the filing used, written the way each language
+ * writes large money: billions in English, 亿 in Chinese.
+ *
+ * The scale changes, the figure does not: both are the same filed number, and
+ * neither is rounded further than the Python page rounds it.
+ */
+export function filedMoney(
+  value: number | null | undefined,
+  unit: string,
+  locale: string,
+): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  const chinese = locale === "zh";
+  if (unit === "USD/shares") {
+    const amount = fixedHalfEven(value, 2);
+    return chinese ? `${amount} 美元/股` : `$${amount} / share`;
+  }
+  if (chinese) {
+    const yi = fixedHalfEven(value / 1e8, 2);
+    return `${groupDigits(yi)} 亿美元`;
+  }
+  return `$${groupDigits(fixedHalfEven(value / 1e9, 2))}B`;
+}
+
+function groupDigits(fixed: string): string {
+  const [whole, fraction] = fixed.split(".");
+  const negative = (whole ?? "").startsWith("-");
+  const digits = negative ? (whole ?? "").slice(1) : (whole ?? "");
+  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${negative ? "-" : ""}${grouped}${fraction ? `.${fraction}` : ""}`;
+}
+
+/** Percentage points, signed: the gap between two growth rates. */
+export function points(value: number | null | undefined, digits = 1): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  const body = fixedHalfEven(Math.abs(value), digits);
+  return `${value >= 0 ? "+" : "-"}${body}`;
+}

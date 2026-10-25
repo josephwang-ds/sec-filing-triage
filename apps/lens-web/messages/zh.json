@@ -67,5 +67,385 @@
       }
     },
     "evidenceLink": "查看审计方法"
+  },
+  "notFound": {
+    "eyebrow": "缓存证据边界",
+    "title": "本次构建不包含这家公司。",
+    "body": "本次构建持有 {count} 家公司的研究快照。本站不会按需抓取数据，因此不会凭空生成一份公司档案，而是在这里停下。",
+    "back": "← 返回已覆盖的公司"
+  },
+  "company": {
+    "missing": "本快照中没有该项",
+    "metaDescription": "{name} 的申报披露、历史回报与风险，以及有证据支撑的问答。",
+    "hero": {
+      "eyebrow": "公司概览 · 有来源可查",
+      "close": "最新复权收盘价",
+      "closeOn": "观测于 {date}",
+      "relative": "相对 {benchmark} 的回报",
+      "between": "{start} 至 {end}",
+      "filings": "快照内的披露数量",
+      "priceHistory": "价格区间 {start} 至 {end}",
+      "priceField": "价格字段：{field}",
+      "secRecord": "SEC 公司记录"
+    },
+    "nav": {
+      "label": "本页内容",
+      "brief": "摘要",
+      "financials": "财报结果",
+      "performance": "历史与风险",
+      "filings": "SEC 披露",
+      "events": "事件",
+      "ask": "AI 问答"
+    }
+  },
+  "brief": {
+    "eyebrow": "摘要",
+    "title": "先读这里，再到下方逐项核对。",
+    "intro": "三句话，并标明各自属于哪一类陈述。其中每个数字都能在本页下方找到来源。",
+    "slot": {
+      "what_changed": "观测到的",
+      "why_it_matters": "计算得出的",
+      "uncertainties": "解读性的"
+    },
+    "mode": "生成方式：{mode}",
+    "boundary": "这些是历史观测，不是预测。"
+  },
+  "news": {
+    "eyebrow": "背景信息",
+    "title": "近期新闻",
+    "intro": "分成两栏，因为全市场新闻并不是关于这家公司的证据。",
+    "scope": {
+      "available": "证据可用",
+      "empty": "没有匹配条目",
+      "stale": "保留上次成功结果",
+      "not_configured": "来源未配置"
+    },
+    "companyNews": "关于这家公司",
+    "marketNews": "市场与行业",
+    "noCompanyNews": "本快照中没有该公司新闻。",
+    "noMarketNews": "本快照中没有市场新闻。",
+    "empty": {
+      "title": "本快照中没有新闻",
+      "body": "新闻来源已配置，但在该时间窗内没有返回任何内容。上方的披露与价格历史不受影响。"
+    },
+    "generated": "采集于 {time}。",
+    "boundary": "新闻标题为发布方原文，保留其发布时使用的语言。"
+  },
+  "financials": {
+    "eyebrow": "申报结果",
+    "title": "最近财报说了什么",
+    "intro": "来自 {form} 的{kind}数据，报告期截至 {periodEnd}，披露于 {filed}。全部取自同一份报告，因此期间与会计口径始终与数值一致。",
+    "annual": "年度",
+    "quarterly": "季度",
+    "sourceFiling": "查看 {form} 原文",
+    "boundary": "报告列示的合并财务数据。不同公司的会计处理与业务构成仍有差异，已申报的结果也不是预测。",
+    "empty": {
+      "title": "本快照中没有已申报的财报",
+      "body": "尚未缓存到含可用数值的 10-Q 或 10-K，因此不展示任何收入、利润或每股收益数据。",
+      "footnote": "下方的历史回报、风险与 SEC 披露不受影响。"
+    },
+    "metadataOnly": {
+      "title": "已找到报告，但无法提取数值",
+      "body": "报告已定位，但没有数值同时满足本页所需的报告期与会计口径，因此不展示近似值。"
+    },
+    "yoyBadge": "同比 {value}",
+    "yoyUnavailable": "无同比",
+    "currentPeriod": "本期：{start} — {end} · {unit}",
+    "priorPeriod": "上年同期：{value}（{start} — {end}）",
+    "noPrior": "该报告中没有可比的上年同期数据。",
+    "metric": {
+      "revenue": {
+        "label": "收入",
+        "definition": "报告列示的收入，未扣除费用；不是股价回报。"
+      },
+      "net_income": {
+        "label": "净利润",
+        "definition": "报告列示的税后净利润；具体 SEC 会计标签见下方。"
+      },
+      "eps": {
+        "label": "稀释每股收益",
+        "definition": "考虑稀释后的每股收益；不是利润总额或增长率。"
+      },
+      "gross_profit": {
+        "label": "毛利润",
+        "definition": "收入减去营业成本的金额；不是毛利率。"
+      }
+    },
+    "reference": {
+      "available": "本站 SIC {group} 类别样本同比中位数：{median}（{n} 家，不含本公司）。差值：{gap} 个百分点。",
+      "unavailable": "暂无类别参考。",
+      "reason": {
+        "no_company_growth": "本公司没有可比的同比增长率。",
+        "missing_classification": "缺少 SEC SIC 分类。",
+        "insufficient_sample": "符合条件的公司仅 {n} 家，至少需要 {minimum} 家。"
+      },
+      "method": "参考口径与来源",
+      "methodBody": "截至 {asOf}。仅使用最新缓存报告，按 CIK 去重同一公司的不同股类；SEC SIC 前三位相同，年度／单季粒度、会计标签与币种相同；期末相差不超过 45 天，期间长度相差不超过 15 天。剔除之后披露、缺少同比以及零基数或亏损的样本。取各公司同比的等权中位数，不是行业汇总增速、全行业统计，也不是严格业务可比公司组。",
+      "members": "样本内的公司"
+    },
+    "conceptLabel": "指标口径",
+    "conceptBody": "同比 = 本期 ÷ 上年同期 − 1，比较的是去年同期而不是上一季度。百分点差 = 公司增速 − 样本中位增速。",
+    "yoyNote": "当上年基数为零或为亏损时不展示增长率，因为此时的百分比没有意义。"
+  },
+  "performance": {
+    "eyebrow": "历史与风险",
+    "title": "过去走成什么样，过程有多颠簸",
+    "periodGroup": "历史区间",
+    "benchmarkGroup": "比较基准",
+    "intro": "所选区间内的复权日线价格，与 {benchmark} 比较。{benchmarkNote}",
+    "benchmarkNote": {
+      "SPY": "SPY 是跟踪标普 500 指数的交易所交易基金。",
+      "QQQ": "QQQ 是跟踪纳斯达克 100 指数的交易所交易基金，该指数不含金融类公司；它不是纯科技指数。"
+    },
+    "comparisonUnavailable": "{symbol} 在 {period} 区间无法比较",
+    "unavailable": {
+      "missing_prices": "本快照中没有 {symbol} 的价格，因此不存在按日期对齐的比较。",
+      "stale_prices": "{symbol} 的价格历史早于本公司结束，两者无法在相同日期上比较。",
+      "insufficient_overlap": "该区间内两者共同的交易日太少，不足以支撑回报、波动率或回撤的计算。",
+      "invalid_values": "对齐后的序列包含非有限数值，因此不展示该比较。"
+    },
+    "backToDefault": "返回 {benchmark}",
+    "endingValue": "期末价值",
+    "endingFrom": "以 {initial} 起始投入，{start} 至 {end}",
+    "relative": "相对 {benchmark}",
+    "bothReturns": "{ticker} {asset} · {benchmark} {market}",
+    "metric": {
+      "totalReturn": "累计回报",
+      "periodContext": "{start} 至 {end}",
+      "cagr": "年化回报",
+      "cagrContext": "所示区间内的复合增长率",
+      "volatility": "年化波动率",
+      "volatilityContext": "日收益率年化",
+      "maxDrawdown": "最大回撤",
+      "troughOn": "低点 {date}",
+      "beta": "相对 {benchmark} 的 Beta",
+      "betaContext": "对基准波动的敏感度",
+      "correlation": "与 {benchmark} 的相关性",
+      "sessions": "{count} 个对齐交易日"
+    },
+    "notAvailable": "该区间不可用",
+    "riskNote": "该区间内从高点到低点的最大跌幅为 {drawdown}，单日最差为 {worst}。两者都已经发生，也都不构成对未来的上限。",
+    "riskNoteLabel": "实际体验如何",
+    "coveragePartial": "请求的历史起点为 {requested}，但对齐后的价格自 {start} 开始、至 {end} 结束，共 {sessions} 个交易日。最早共同日期之前的数据不做任何填充。",
+    "scopeNote": "只有本节跟随基准选择器。摘要、披露反应与 AI 证据仍使用 {benchmark}；本图当前显示的是 {selected}。",
+    "boundary": "历史回报与风险是对一段已经结束的时期的观测，不是预测，本页内容也不构成投资建议。",
+    "chart": {
+      "basis": "复权日收盘价",
+      "alt": "等额投入 {ticker} 与 {benchmark} 自 {start} 至 {end} 的价值变化，期末分别为 {assetEnd} 与 {benchmarkEnd}。",
+      "caption": "{ticker} 与 {benchmark} 的对比，{start} 至 {end}，期初投入 {initial}。"
+    }
+  },
+  "volatility": {
+    "eyebrow": "预期波动区间",
+    "title": "未来 {sessions} 个交易日可能有多大波动",
+    "state": {
+      "typical_for_this_issuer": "处于该公司常态",
+      "elevated": "偏高",
+      "slightly_elevated": "略偏高",
+      "unusually_calm": "异常平静"
+    },
+    "alt": "预期年化波动率区间为 {low} 至 {high}，最可能为 {median}，该公司常态为 {usual}。",
+    "median": "最可能值，年化",
+    "band": "80% 的时间落在此区间",
+    "usual": "该公司的常态水平",
+    "coverage": "样本外有 {value} 的结果落在 80% 区间内。",
+    "boundary": "只给出区间与时间范围，不给方向：它说明可能有多大波动，而不是往哪个方向走。"
+  },
+  "signal": {
+    "eyebrow": "这份披露与它自身历史的比较",
+    "title": "对这家公司来说，这份披露异常吗？",
+    "intro": "本节所有数字都是把这份披露与同一家公司以往的披露相比，不与其他公司作任何比较。",
+    "probability": "出现异常大幅反应的概率",
+    "base": "该公司自身越过这一门槛的频率",
+    "history": "参与比较的历史披露数量",
+    "why": "依据",
+    "boundary": "它估计的是反应可能有多大，而不是方向。这是阅读优先级，不是投资建议。",
+    "model": "{estimator} · 校准方法 {calibration} · 评估截至 {through}",
+    "state": {
+      "read_now": "建议立即阅读",
+      "monitor": "留意观察",
+      "routine": "例行披露",
+      "insufficient_history": "历史数据不足",
+      "withheld": "暂不展示"
+    }
+  },
+  "filings": {
+    "eyebrow": "原始披露",
+    "title": "申报了什么",
+    "intro": "披露文件本身。公司披露的内容与本项目对其所做的测量分开呈现。",
+    "secChecked": "SEC 检查于 {date}",
+    "secCollected": "SEC 缓存采集于 {date}",
+    "empty": {
+      "title": "本快照中没有披露文件",
+      "body": "尚未缓存到该公司的 8-K 文件，因此不列出任何条目，也不对空内容做概括。"
+    },
+    "timeline": "更早的披露",
+    "timelineNote": "每条附带其后首个符合条件交易日相对基准的涨跌幅。这是对幅度的测量，不是因果关系。",
+    "timelineMove": "{session} {move}",
+    "noReaction": "没有可测量的符合条件交易日",
+    "sourceFiling": "原始文件",
+    "sourcePassage": "原文段落",
+    "moveBadge": "披露后 {move}",
+    "passages": "文件原文摘录",
+    "noPassages": "无法从缓存的主文档中确定性地提取段落，因此不作引用。",
+    "keyNumbers": "文件中的数字",
+    "comparison": "与上一份可比披露的对照",
+    "comparisonAgainst": "与 {date} 受理的那份相比：{changed} 处变更，{added} 处新增，{removed} 处删除。",
+    "changeKind": {
+      "changed": "内容变更",
+      "added": "新增",
+      "removed": "删除",
+      "date": "日期变更"
+    },
+    "textMatch": "文本相似度 {value}",
+    "priorFiling": "上一份披露",
+    "measured": "测量所得，非公司披露",
+    "novelty": "相对该公司过往披露的新颖度：{value}",
+    "reactionSession": "首个符合条件的交易日：{session}",
+    "reactionMove": "相对 {benchmark}，开盘至收盘 {move}",
+    "reactionPercentile": "大于该公司过往 {value} 的披露（样本 {sample} 份）",
+    "reactionBoundary": "仅为幅度。这并不说明该披露导致了此次波动。"
+  },
+  "events": {
+    "eyebrow": "事件与接下来关注",
+    "title": "最近发生了什么，接下来看什么",
+    "titleNotCovered": "公司事件",
+    "recent": "最近发生",
+    "upcoming": "已确认的下一步",
+    "checkedAt": "上次成功检查 {time}",
+    "source": "来源",
+    "untitled": "无标题条目",
+    "titleOnly": "仅有标题",
+    "confirmed": "已确认",
+    "expected": "预计",
+    "dateUnknown": "未公布日期",
+    "windowUnknown": "未公布时间范围",
+    "retry": "重新检查",
+    "technical": "技术细节",
+    "tech": {
+      "version": "已发布的事件源版本",
+      "noVersion": "尚无已发布版本",
+      "storage": "数据来源",
+      "status": "状态码",
+      "unknown": "未知"
+    },
+    "view": {
+      "loading": "正在检查",
+      "events": "已检查",
+      "no_new_events": "没有新条目",
+      "not_covered": "未覆盖",
+      "unavailable": "暂不可用",
+      "stale": "保留上次成功结果",
+      "partial": "覆盖不完整",
+      "initializing": "首轮采集中",
+      "error": "暂不可用"
+    },
+    "notCovered": {
+      "title": "这家公司暂无事件覆盖",
+      "body": "{ticker} 不在当前事件刷新所抓取的公司范围内，因此没有为它发布事件源。",
+      "footnote": "这是覆盖范围的边界，并不表示没有发生任何事情。本页的披露、财报结果与价格历史不受影响。"
+    },
+    "unavailable": {
+      "title": "事件数据暂不可用",
+      "body": "本次请求未能读取已发布的事件源。这与“没有发生事件”并不是一回事。",
+      "footnote": "本页其余内容均由快照构建，不受影响。"
+    },
+    "error": {
+      "title": "事件数据加载失败",
+      "body": "获取这家公司事件的请求没有完成。这里不展示任何内容，也不会展示过期或虚构的列表。"
+    },
+    "initializing": {
+      "title": "首轮采集进行中",
+      "body": "该公司的事件源已创建，但尚未完成一个完整周期，因此暂时没有可展示的已发布内容。"
+    },
+    "noNew": {
+      "title": "自上次检查以来没有新条目",
+      "body": "上次检查成功，没有新内容。旧条目仍保留其原始来源时间。",
+      "footnote": "覆盖截至 {through}。"
+    },
+    "stale": {
+      "title": "正在展示上次成功的结果",
+      "body": "近期的检查没有成功，因此展示的是最近一次成功获取的事件源。",
+      "bodyWithTime": "近期的检查没有成功。当前展示的是 {time} 的事件源。"
+    },
+    "noUpcoming": {
+      "title": "暂无已确认的未来日期。",
+      "body": "目前没有任何未来事项获得公司或申报文件确认的日期。预计日期不会在这里被当作已确认日期展示。"
+    },
+    "partialGaps": "该时间窗内记录到 {count} 处覆盖缺口。",
+    "askDisabled": "当卡片与服务器不在同一个已发布事件版本上时，事件相关提问将被停用。",
+    "boundary": "事件条目是已发布的新闻标题与申报索引记录，并附来源链接。它们不是分析，事件源也不是交易信号。"
+  },
+  "ask": {
+    "eyebrow": "有证据支撑的研究",
+    "title": "就这些证据提问",
+    "intro": "回答只依据这家公司的证据包。引用与数字会先对照该证据包校验，未通过校验的答案不会展示。",
+    "validated": "引用与格式检查通过",
+    "advanced": "证据范围、模型与语言",
+    "submit": "提问",
+    "asking": "正在提问…",
+    "stop": "停止",
+    "stopped": "已在返回答案前停止。该请求可能仍在服务端完成，但不会展示任何答案。",
+    "reading": "正在读取受限证据包…",
+    "retry": "重试",
+    "withheld": "未展示任何未经校验的答案。",
+    "validatedAnswer": "引用与格式检查通过",
+    "answerMeta": "{model} · {scope} · 证据截至 {asOf}",
+    "limitations": "这个答案无法证明什么",
+    "originalLanguage": "该答案以其生成语言原样展示。如需当前阅读语言的答案，请重新提问以生成。",
+    "howItWorks": "运作方式",
+    "rate": "本公开演示每小时可提问 {perHour} 次。",
+    "boundary": "不生成投资建议、目标价或方向性预测；提出此类问题会被拒答。",
+    "field": {
+      "question": "你的问题",
+      "questionPlaceholder": "{ticker} 在最新披露中说了什么？",
+      "counter": "{used} / {limit} 字符",
+      "scope": "证据范围",
+      "model": "模型",
+      "answerLanguage": "回答语言",
+      "depth": "读者"
+    },
+    "language": {
+      "chinese": "中文",
+      "english": "英文"
+    },
+    "depth": {
+      "beginner": "通俗表述",
+      "professional": "专业表述"
+    },
+    "suggest": {
+      "latest": "最新披露说了什么？",
+      "history": "历史回报与基准相比如何？",
+      "risk": "最大回撤是多少，发生在什么时候？"
+    },
+    "step": {
+      "evidence": "将一家公司的披露、申报财报与价格历史整理成固定的证据包。",
+      "citations": "每条陈述都必须引用该证据包中的编号，并沿用其中的原始数字。",
+      "refusal": "无法由证据支撑的陈述，以及要求判断买卖或股价的问题，都会被拒答而不是作答。"
+    },
+    "unconfigured": {
+      "title": "本次部署未配置 AI 问答",
+      "body": "此处没有可用的模型提供方密钥，因此无法发送问题，也无法生成答案。",
+      "footnote": "本页的证据内容在没有该功能时依然可读。"
+    },
+    "configError": {
+      "title": "无法连接问答服务",
+      "body": "列出可用模型的接口没有响应，因此不展示表单，以免提供一个无法真正发出的请求。"
+    },
+    "error": {
+      "ask_not_configured": "本次部署没有证据包，因此无法在此生成有证据支撑的答案。",
+      "model_not_available": "所选模型暂不可用。",
+      "ticker_not_available": "证据包中没有这家公司。",
+      "scope_not_available": "该证据范围对这家公司不可用。",
+      "question_length": "请输入 4 到 280 个字符。",
+      "question_scope": "请就所提供的公司证据提问，而不是询问买卖建议或股价预测。",
+      "origin_not_allowed": "该请求来源未被接受。",
+      "rate_limited": "本公开演示每小时只允许少量提问。",
+      "daily_budget_exhausted": "本公开演示今日的提问额度已用完。本页的证据内容仍可正常阅读。",
+      "grounding_validation_failed": "该模型答案未通过证据校验，因此不予展示。",
+      "invalid_json": "无法读取该请求。",
+      "network": "请求没有完成。",
+      "unknown": "该请求没有得到回答。"
+    }
   }
 }

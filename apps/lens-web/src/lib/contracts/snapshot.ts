@@ -266,6 +266,68 @@ export const fundamentals = z.looseObject({
   provenance: z.looseObject({}).nullish(),
 });
 
+/**
+ * One peer-growth reference for a filed metric.
+ *
+ * `status` is load-bearing: the engine withholds the comparison below five
+ * eligible issuers and records why, and a card that showed the median anyway
+ * would be reporting a sample of two as an industry rate.
+ */
+export const metricReference = z.looseObject({
+  status: z.enum(["available", "unavailable"]),
+  reason: z.string().nullish(),
+  sic_group: z.string().nullish(),
+  n: z.number(),
+  minimum: z.number(),
+  as_of: z.string().nullish(),
+  median_yoy: z.number().nullish(),
+  gap_pp: z.number().nullish(),
+  members: z
+    .array(
+      z.looseObject({
+        ticker: z.string(),
+        yoy: z.number(),
+        period_end: z.string(),
+        filed: z.string().nullish(),
+        source_url: z.string(),
+      }),
+    )
+    .default([]),
+});
+
+export const filedMetric = z.looseObject({
+  id: z.string(),
+  concept: z.string(),
+  unit: z.string(),
+  value: z.number(),
+  start: z.string(),
+  end: z.string(),
+  prior_value: z.number().nullish(),
+  prior_start: z.string().nullish(),
+  prior_end: z.string().nullish(),
+  change: z.number().nullish(),
+  /** Absent for a loss or zero base, where a growth rate means nothing. */
+  yoy: z.number().nullish(),
+  reference: metricReference.nullish(),
+});
+
+export const financialResults = z.looseObject({
+  status: z.string(),
+  reason: z.string().nullish(),
+  metrics: z.array(filedMetric).default([]),
+  form: z.string().nullish(),
+  period_end: z.string().nullish(),
+  filed: z.string().nullish(),
+  accession: z.string().nullish(),
+  source_url: z.string().nullish(),
+  period_kind: z.string().nullish(),
+  basis: z.string().nullish(),
+  financial_issuer: z.boolean().nullish(),
+  sic: z.string().nullish(),
+  sic_description: z.string().nullish(),
+  cik: z.string().nullish(),
+});
+
 export const disclosureSignalPoint = z.looseObject({
   novelty: z.number(),
   reaction: z.number(),
@@ -347,6 +409,7 @@ export const companySnapshot = z.looseObject({
   headlines: z.array(headline).default([]),
   market_headlines: z.array(headline).default([]),
   fundamentals: fundamentals.nullish(),
+  financial_results: financialResults.nullish(),
   disclosure_signal: disclosureSignal.nullish(),
   volatility_forecast: volatilityForecast.nullish(),
   benchmark_comparisons: z.record(z.string(), benchmarkComparison).default({}),
@@ -366,6 +429,9 @@ export type Headline = z.infer<typeof headline>;
 export type Claim = z.infer<typeof claim>;
 export type Explanation = z.infer<typeof explanation>;
 export type Fundamentals = z.infer<typeof fundamentals>;
+export type FinancialResults = z.infer<typeof financialResults>;
+export type FiledMetric = z.infer<typeof filedMetric>;
+export type MetricReference = z.infer<typeof metricReference>;
 export type FundamentalSeries = z.infer<typeof fundamentalSeries>;
 export type DerivedSeries = z.infer<typeof derivedSeries>;
 export type DisclosureSignal = z.infer<typeof disclosureSignal>;

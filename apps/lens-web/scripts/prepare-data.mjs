@@ -15,11 +15,9 @@
  * `filing_triage.synth`; they are not market data and must never be presented
  * as any.
  */
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
 const appRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const repoRoot = path.resolve(appRoot, "..", "..");
 const stage = path.join(appRoot, ".lens");
@@ -28,20 +26,29 @@ const snapshotDir = process.env.LENS_SNAPSHOT_DIR
   ? path.resolve(process.env.LENS_SNAPSHOT_DIR)
   : path.join(repoRoot, "data", "build", "company_pages");
 const askFunction = path.join(repoRoot, "ops", "vercel", "ask", "index.js");
-const askEvidence = process.env.LENS_ASK_EVIDENCE
-  ? path.resolve(process.env.LENS_ASK_EVIDENCE)
-  : path.join(
-      repoRoot,
-      "data",
-      "build",
-      "vercel_frontend",
-      ".vercel",
-      "output",
-      "functions",
-      "api",
-      "ask.func",
-      "evidence.json",
-    );
+// Written by `scripts/export_ask_evidence.py`, which calls the same
+// `build_ask_evidence` the production bundler calls. The packaged bundle's copy
+// is the fallback, so a checkout that has run `make vercel-bundle` also works.
+const askEvidenceCandidates = (
+  process.env.LENS_ASK_EVIDENCE
+    ? [path.resolve(process.env.LENS_ASK_EVIDENCE)]
+    : [
+        path.join(repoRoot, "data", "build", "ask-evidence.json"),
+        path.join(
+          repoRoot,
+          "data",
+          "build",
+          "vercel_frontend",
+          ".vercel",
+          "output",
+          "functions",
+          "api",
+          "ask.func",
+          "evidence.json",
+        ),
+      ]
+).filter((candidate) => fs.existsSync(candidate));
+const askEvidence = askEvidenceCandidates[0];
 
 /** A snapshot, as opposed to the other JSON the builder leaves in that folder. */
 function isSnapshot(file) {
@@ -75,7 +82,11 @@ function reset(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-const engineSnapshots = collect(snapshotDir);
+// LENS_USE_FIXTURES is how a developer or a test run asks for the fixtures even
+// when engine output is present: the fixtures are the only data that exercises
+// every optional section and every absence at once.
+const forced = /^(1|true|yes)$/i.test(process.env.LENS_USE_FIXTURES ?? "");
+const engineSnapshots = forced ? [] : collect(snapshotDir);
 const fixtureSnapshots = collect(path.join(appRoot, "fixtures", "snapshots"));
 const useFixtures = engineSnapshots.length === 0;
 const chosen = useFixtures ? fixtureSnapshots : engineSnapshots;
@@ -108,7 +119,7 @@ for (const file of chosen) {
 // are the same code as the ones on the live site. Without an evidence bundle
 // the route reports that Ask is unconfigured; it never answers unevidenced.
 let ask = { available: false, reason: "evidence_missing" };
-if (fs.existsSync(askFunction) && fs.existsSync(askEvidence)) {
+if (fs.existsSync(askFunction) && askEvidence) {
   const askStage = path.join(stage, "ask");
   fs.mkdirSync(askStage, { recursive: true });
   fs.copyFileSync(askFunction, path.join(askStage, "index.cjs"));
@@ -131,4 +142,3 @@ console.log(
   `lens-web data: ${tickers.length} snapshot(s) from ${manifest.source}` +
     ` (${manifest.snapshot_dir}); ask evidence ${ask.available ? "staged" : `unavailable (${ask.reason})`}`,
 );
-void require;

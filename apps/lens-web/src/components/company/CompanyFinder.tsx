@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { CompanyListing } from "@/lib/data/snapshots";
@@ -37,22 +37,23 @@ export function CompanyFinder({ companies, pageSize = 24 }: Props) {
   const trimmed = query.trim();
   const needle = normalise(trimmed);
 
-  const matches = useMemo(() => {
-    if (!needle) return [] as CompanyListing[];
-    return companies
-      .map((company) => {
-        const ticker = normalise(company.ticker);
-        const name = normalise(company.name);
-        if (ticker === needle) return { company, rank: 0 };
-        if (ticker.startsWith(needle)) return { company, rank: 1 };
-        if (name.startsWith(needle)) return { company, rank: 2 };
-        if (name.includes(needle)) return { company, rank: 3 };
-        return null;
-      })
-      .filter((row): row is { company: CompanyListing; rank: number } => row !== null)
-      .sort((a, b) => a.rank - b.rank || a.company.ticker.localeCompare(b.company.ticker))
-      .map((row) => row.company);
-  }, [companies, needle]);
+  // Not wrapped in useMemo: the React Compiler memoizes this, and a manual
+  // memo it cannot preserve costs the optimisation for the whole component.
+  const matches: CompanyListing[] = !needle
+    ? []
+    : companies
+        .map((company) => {
+          const ticker = normalise(company.ticker);
+          const name = normalise(company.name);
+          if (ticker === needle) return { company, rank: 0 };
+          if (ticker.startsWith(needle)) return { company, rank: 1 };
+          if (name.startsWith(needle)) return { company, rank: 2 };
+          if (name.includes(needle)) return { company, rank: 3 };
+          return null;
+        })
+        .filter((row): row is { company: CompanyListing; rank: number } => row !== null)
+        .sort((a, b) => a.rank - b.rank || a.company.ticker.localeCompare(b.company.ticker))
+        .map((row) => row.company);
 
   const filtered = needle ? matches : companies;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));

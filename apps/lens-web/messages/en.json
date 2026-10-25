@@ -67,5 +67,385 @@
       }
     },
     "evidenceLink": "How this is audited"
+  },
+  "notFound": {
+    "eyebrow": "CACHED EVIDENCE BOUNDARY",
+    "title": "This company is not in this build.",
+    "body": "This build holds research snapshots for {count} companies. Nothing is fetched on demand, so rather than generate a profile from nothing, the page stops here.",
+    "back": "← Back to covered companies"
+  },
+  "company": {
+    "missing": "Not in this snapshot",
+    "metaDescription": "Filed disclosures, historical return and risk, and grounded answers for {name}.",
+    "hero": {
+      "eyebrow": "COMPANY OVERVIEW · SOURCE-BACKED",
+      "close": "Latest adjusted close",
+      "closeOn": "Observed {date}",
+      "relative": "Return against {benchmark}",
+      "between": "{start} to {end}",
+      "filings": "Filings in snapshot",
+      "priceHistory": "Prices {start} to {end}",
+      "priceField": "Price field: {field}",
+      "secRecord": "SEC company record"
+    },
+    "nav": {
+      "label": "On this page",
+      "brief": "Brief",
+      "financials": "Financial results",
+      "performance": "History and risk",
+      "filings": "SEC filings",
+      "events": "Events",
+      "ask": "Ask AI"
+    }
+  },
+  "brief": {
+    "eyebrow": "THE BRIEF",
+    "title": "Start here, then verify below.",
+    "intro": "Three statements, each labelled by what kind of statement it is. Every number in them is linked to its source further down the page.",
+    "slot": {
+      "what_changed": "OBSERVED",
+      "why_it_matters": "CALCULATED",
+      "uncertainties": "INTERPRETED"
+    },
+    "mode": "Generated: {mode}",
+    "boundary": "Historical observations, not forecasts."
+  },
+  "news": {
+    "eyebrow": "CONTEXT",
+    "title": "Recent headlines",
+    "intro": "Kept in two lists, because a market-wide headline is not evidence about this company.",
+    "scope": {
+      "available": "Evidence available",
+      "empty": "No matching items",
+      "stale": "Last good copy",
+      "not_configured": "Source not configured"
+    },
+    "companyNews": "About this company",
+    "marketNews": "Market and sector",
+    "noCompanyNews": "No company headlines in this snapshot.",
+    "noMarketNews": "No market headlines in this snapshot.",
+    "empty": {
+      "title": "No headlines in this snapshot",
+      "body": "The headline source is configured but returned nothing for this window. The filings and price history above are unaffected."
+    },
+    "generated": "Collected {time}.",
+    "boundary": "Headlines are published wording, kept in the language they were published in."
+  },
+  "financials": {
+    "eyebrow": "FILED RESULTS",
+    "title": "What the latest financial report says",
+    "intro": "{kind} figures as filed in the {form} for the period ending {periodEnd}, filed {filed}. Read from one filing, so the period and the accounting concept always match the number.",
+    "annual": "Annual",
+    "quarterly": "Quarterly",
+    "sourceFiling": "Read the {form}",
+    "boundary": "Consolidated figures as reported. Accounting treatment and business mix differ between companies, and a filed result is not a forecast.",
+    "empty": {
+      "title": "No filed financial report in this snapshot",
+      "body": "No 10-Q or 10-K with usable figures has been cached for this company, so no revenue, income or EPS figure is shown.",
+      "footnote": "Historical return, risk and SEC disclosures below are unaffected."
+    },
+    "metadataOnly": {
+      "title": "Report found, figures not extractable",
+      "body": "The filing was located but no figure matched the reporting period and accounting concept this page requires, so nothing is displayed rather than an approximate one."
+    },
+    "yoyBadge": "{value} YoY",
+    "yoyUnavailable": "No YoY",
+    "currentPeriod": "Current: {start} — {end} · {unit}",
+    "priorPeriod": "Prior year: {value} ({start} — {end})",
+    "noPrior": "No comparable prior-year period in this filing.",
+    "metric": {
+      "revenue": {
+        "label": "Revenue",
+        "definition": "Reported revenue before expenses; not stock performance."
+      },
+      "net_income": {
+        "label": "Net income",
+        "definition": "Reported net income after expenses and taxes; the exact SEC concept is below."
+      },
+      "eps": {
+        "label": "Diluted EPS",
+        "definition": "Diluted earnings per share; not total profit or a growth rate."
+      },
+      "gross_profit": {
+        "label": "Gross profit",
+        "definition": "Revenue less cost of revenue, in dollars; not gross margin percent."
+      }
+    },
+    "reference": {
+      "available": "Covered SIC {group} sample median YoY: {median} (n={n}, excluding this company). Gap: {gap} percentage points.",
+      "unavailable": "Category reference unavailable.",
+      "reason": {
+        "no_company_growth": "This company has no comparable growth rate.",
+        "missing_classification": "The SEC SIC classification is missing.",
+        "insufficient_sample": "Only {n} eligible companies; at least {minimum} are required."
+      },
+      "method": "Reference method and sources",
+      "methodBody": "As of {asOf}. Latest cached filings only; one issuer per CIK (share classes deduplicated); SEC SIC first 3 digits, same annual or quarterly grain, exact accounting concept and currency. Period ends within 45 days, durations within 15 days. Later filings, missing comparisons and zero or loss bases are excluded. Equal-weight median of company YoY rates — not aggregate industry growth, a full industry census, or a matched business peer set.",
+      "members": "Companies in the sample"
+    },
+    "conceptLabel": "Metric definition",
+    "conceptBody": "YoY = current ÷ prior-year value − 1, against the same period a year earlier rather than the previous quarter. Percentage-point gap = company growth − sample median growth.",
+    "yoyNote": "Growth is withheld where the prior base was zero or a loss, because a percentage there is not meaningful."
+  },
+  "performance": {
+    "eyebrow": "HISTORY AND RISK",
+    "title": "What this has done, and how roughly",
+    "periodGroup": "Historical period",
+    "benchmarkGroup": "Comparison benchmark",
+    "intro": "Adjusted daily prices over the selected period, against {benchmark}. {benchmarkNote}",
+    "benchmarkNote": {
+      "SPY": "SPY is an exchange-traded fund tracking the S&P 500.",
+      "QQQ": "QQQ is an exchange-traded fund tracking the Nasdaq-100, which excludes financial companies; it is not a pure technology index."
+    },
+    "comparisonUnavailable": "{symbol} cannot be compared over {period}",
+    "unavailable": {
+      "missing_prices": "{symbol} prices are not in this snapshot, so no matched comparison exists.",
+      "stale_prices": "The {symbol} price history ends before this company's does, so the two cannot be compared on matched dates.",
+      "insufficient_overlap": "The two histories share too few matched trading sessions over this period to support return, volatility or drawdown.",
+      "invalid_values": "The matched series contained values that are not finite, so the comparison is withheld rather than shown."
+    },
+    "backToDefault": "Back to {benchmark}",
+    "endingValue": "Ending value",
+    "endingFrom": "From {initial} invested, {start} to {end}",
+    "relative": "Against {benchmark}",
+    "bothReturns": "{ticker} {asset} · {benchmark} {market}",
+    "metric": {
+      "totalReturn": "Total return",
+      "periodContext": "{start} to {end}",
+      "cagr": "Annualised return",
+      "cagrContext": "Compound rate over the period shown",
+      "volatility": "Annualised volatility",
+      "volatilityContext": "Daily returns, annualised",
+      "maxDrawdown": "Maximum drawdown",
+      "troughOn": "Trough {date}",
+      "beta": "Beta to {benchmark}",
+      "betaContext": "Sensitivity to the benchmark's moves",
+      "correlation": "Correlation with {benchmark}",
+      "sessions": "{count} matched sessions"
+    },
+    "notAvailable": "Not available for this period",
+    "riskNoteLabel": "What that felt like",
+    "riskNote": "The worst peak-to-trough fall over this period was {drawdown}, and the worst single session was {worst}. Both already happened; neither bounds what comes next.",
+    "coveragePartial": "History requested from {requested} but matched prices start {start} and end {end}: {sessions} sessions. Nothing before the earliest shared date is filled in.",
+    "scopeNote": "Only this section follows the benchmark selector. The brief, filing reactions and Ask evidence stay on {benchmark}; this chart is showing {selected}.",
+    "boundary": "Past return and risk are observations about a period that is over. They are not a forecast, and nothing here is investment advice.",
+    "chart": {
+      "basis": "Adjusted daily closes",
+      "alt": "Growth of an equal investment in {ticker} and {benchmark} from {start} to {end}, ending at {assetEnd} and {benchmarkEnd} respectively.",
+      "caption": "{ticker} against {benchmark}, {start} to {end}, from {initial} invested at the start of the period."
+    }
+  },
+  "volatility": {
+    "eyebrow": "EXPECTED RANGE",
+    "title": "How wide the next {sessions} sessions may be",
+    "state": {
+      "typical_for_this_issuer": "Typical for this issuer",
+      "elevated": "Elevated",
+      "slightly_elevated": "Slightly elevated",
+      "unusually_calm": "Unusually calm"
+    },
+    "alt": "Expected annualised volatility between {low} and {high}, most likely {median}, against this issuer's usual {usual}.",
+    "median": "Most likely, annualised",
+    "band": "80% of the time, in this range",
+    "usual": "This issuer's usual level",
+    "coverage": "The 80% band held {value} of outcomes out of sample.",
+    "boundary": "A range and a horizon, never a direction: this says how much movement to expect, not which way."
+  },
+  "signal": {
+    "eyebrow": "THIS FILING VS ITS OWN HISTORY",
+    "title": "Is this unusual for this company?",
+    "intro": "Every number here compares this filing with earlier filings from the same issuer. Nothing compares it with other companies.",
+    "probability": "chance of an unusually large reaction",
+    "base": "how often this issuer clears its own bar",
+    "history": "earlier filings behind the comparison",
+    "why": "Why",
+    "boundary": "This estimates how large a reaction may be, not which way it goes. It is a reading priority, not investment advice.",
+    "model": "{estimator} · calibration {calibration} · evaluated through {through}",
+    "state": {
+      "read_now": "Read now",
+      "monitor": "Monitor",
+      "routine": "Routine",
+      "insufficient_history": "Not enough history",
+      "withheld": "Withheld"
+    }
+  },
+  "filings": {
+    "eyebrow": "PRIMARY DISCLOSURES",
+    "title": "What was filed",
+    "intro": "The filings themselves, with what the company disclosed kept apart from what this project measured about it.",
+    "secChecked": "SEC checked {date}",
+    "secCollected": "SEC cache collected {date}",
+    "empty": {
+      "title": "No filings in this snapshot",
+      "body": "No 8-K filings have been cached for this company, so nothing is listed rather than a summary of nothing."
+    },
+    "timeline": "Earlier filings",
+    "timelineNote": "Each with the move on the first eligible session afterwards, measured against the benchmark. A measurement of magnitude, not a cause.",
+    "timelineMove": "{move} on {session}",
+    "noReaction": "No eligible session measured",
+    "sourceFiling": "Source filing",
+    "sourcePassage": "Source passage",
+    "moveBadge": "{move} after filing",
+    "passages": "Quoted from the filing",
+    "noPassages": "No passage could be extracted deterministically from the cached primary document, so none is quoted.",
+    "keyNumbers": "Numbers in the filing",
+    "comparison": "Against the prior comparable filing",
+    "comparisonAgainst": "Compared with the filing accepted {date}: {changed} changed, {added} added, {removed} removed.",
+    "changeKind": {
+      "changed": "Changed",
+      "added": "Added",
+      "removed": "Removed",
+      "date": "Date changed"
+    },
+    "textMatch": "{value} text match",
+    "priorFiling": "Prior filing",
+    "measured": "Measured, not disclosed",
+    "novelty": "Novelty against this issuer's past filings: {value}",
+    "reactionSession": "First eligible session: {session}",
+    "reactionMove": "{move} against {benchmark}, open to close",
+    "reactionPercentile": "Larger than {value} of this issuer's earlier filings (n={sample})",
+    "reactionBoundary": "Magnitude only. This does not establish that the filing caused the move."
+  },
+  "events": {
+    "eyebrow": "EVENTS AND WHAT IS NEXT",
+    "title": "What happened, and what to watch",
+    "titleNotCovered": "Company events",
+    "recent": "Recently",
+    "upcoming": "Confirmed next",
+    "checkedAt": "Last successful check {time}",
+    "source": "Source",
+    "untitled": "Untitled item",
+    "titleOnly": "Title only",
+    "confirmed": "Confirmed",
+    "expected": "Expected",
+    "dateUnknown": "Date not published",
+    "windowUnknown": "No window published",
+    "retry": "Check again",
+    "technical": "Technical details",
+    "tech": {
+      "version": "Published feed version",
+      "noVersion": "No published version yet",
+      "storage": "Source",
+      "status": "Status code",
+      "unknown": "unknown"
+    },
+    "view": {
+      "loading": "Checking",
+      "events": "Checked",
+      "no_new_events": "No new items",
+      "not_covered": "Not covered",
+      "unavailable": "Unavailable",
+      "stale": "Last good copy",
+      "partial": "Partial coverage",
+      "initializing": "First run",
+      "error": "Unavailable"
+    },
+    "notCovered": {
+      "title": "No event coverage for this company",
+      "body": "{ticker} is outside the set of companies the event refresh currently fetches, so no event feed is published for it.",
+      "footnote": "This is a coverage boundary, not a statement that nothing happened. Filings, financial results and price history on this page are unaffected."
+    },
+    "unavailable": {
+      "title": "Event feed currently unavailable",
+      "body": "The published feed could not be read on this request. That is not the same as there being no events.",
+      "footnote": "Everything else on this page is built from the snapshot and is unaffected."
+    },
+    "error": {
+      "title": "Event feed could not be loaded",
+      "body": "The request for this company's events did not complete. Nothing is shown rather than a stale or invented list."
+    },
+    "initializing": {
+      "title": "First collection in progress",
+      "body": "The feed for this company has been created but has not completed a full cycle, so there is nothing published to show yet."
+    },
+    "noNew": {
+      "title": "No new items since the last check",
+      "body": "The last check succeeded and returned nothing new. Older items keep their original source time.",
+      "footnote": "Coverage runs through {through}."
+    },
+    "stale": {
+      "title": "Showing the last good copy",
+      "body": "Recent checks did not succeed, so what is shown is the most recent feed that did.",
+      "bodyWithTime": "Recent checks did not succeed. What is shown is the feed from {time}."
+    },
+    "noUpcoming": {
+      "title": "No confirmed future dates.",
+      "body": "Nothing ahead has a date confirmed by the company or a filing. An expected date is not shown here as a confirmed one."
+    },
+    "partialGaps": "{count} coverage gap(s) recorded for this window.",
+    "askDisabled": "Event questions are disabled while the card and the server are not on the same published feed version.",
+    "boundary": "Event items are published headlines and filing index entries, linked to their source. They are not analysis, and the feed is not a trading signal."
+  },
+  "ask": {
+    "eyebrow": "GROUNDED RESEARCH",
+    "title": "Ask about this evidence",
+    "intro": "Questions are answered from this company's evidence packet alone. Citations and number literals are checked against that packet before an answer is shown, and an answer that fails the check is withheld rather than displayed.",
+    "validated": "Citation and format checked",
+    "advanced": "Evidence scope, model and language",
+    "submit": "Ask",
+    "asking": "Asking…",
+    "stop": "Stop",
+    "stopped": "Stopped before an answer was returned. The request may still finish on the server, but no answer is shown.",
+    "reading": "Reading the restricted evidence packet…",
+    "retry": "Try again",
+    "withheld": "No unvalidated answer was shown.",
+    "validatedAnswer": "Citation and format check passed",
+    "answerMeta": "{model} · {scope} · evidence through {asOf}",
+    "limitations": "What this answer cannot show",
+    "originalLanguage": "This answer was generated in its own language and is shown as generated. Ask again to generate one in the language you are reading.",
+    "howItWorks": "How this works",
+    "rate": "{perHour} questions per hour on this public demo.",
+    "boundary": "No investment advice, price target or directional forecast is produced, and a question asking for one is refused.",
+    "field": {
+      "question": "Your question",
+      "questionPlaceholder": "What did {ticker} disclose in its latest filing?",
+      "counter": "{used} / {limit} characters",
+      "scope": "Evidence scope",
+      "model": "Model",
+      "answerLanguage": "Answer language",
+      "depth": "Reader"
+    },
+    "language": {
+      "chinese": "Chinese",
+      "english": "English"
+    },
+    "depth": {
+      "beginner": "Plain language",
+      "professional": "Professional"
+    },
+    "suggest": {
+      "latest": "What did the latest filing disclose?",
+      "history": "How does the historical return compare with the benchmark?",
+      "risk": "What was the largest drawdown, and when?"
+    },
+    "step": {
+      "evidence": "One company's filings, filed results and price history are assembled into a fixed evidence packet.",
+      "citations": "Every claim must cite an ID from that packet and reuse its exact numbers.",
+      "refusal": "A claim that cannot be grounded, or a question asking for a price call, is refused rather than answered."
+    },
+    "unconfigured": {
+      "title": "Ask is not configured on this deployment",
+      "body": "No model provider key is available here, so no question can be sent and no answer can be produced.",
+      "footnote": "The evidence on this page stays readable without it."
+    },
+    "configError": {
+      "title": "Ask could not be reached",
+      "body": "The endpoint that lists available models did not respond, so the form is not shown rather than offering a request that cannot be made."
+    },
+    "error": {
+      "ask_not_configured": "This deployment has no evidence bundle, so no grounded answer can be produced here.",
+      "model_not_available": "The selected model is not available.",
+      "ticker_not_available": "This company is not in the evidence bundle.",
+      "scope_not_available": "That evidence scope is not available for this company.",
+      "question_length": "Use between 4 and 280 characters.",
+      "question_scope": "Ask about the supplied company evidence, not what to buy or a price forecast.",
+      "origin_not_allowed": "This request was not accepted from this origin.",
+      "rate_limited": "This public demo allows a small number of questions each hour.",
+      "daily_budget_exhausted": "This public demo has reached its question budget for today. The evidence on the page stays readable.",
+      "grounding_validation_failed": "The model answer was withheld because it did not pass evidence validation.",
+      "invalid_json": "The request could not be read.",
+      "network": "The request did not complete.",
+      "unknown": "The request was not answered."
+    }
   }
 }
