@@ -135,7 +135,7 @@ jobs:
             --base-url http://127.0.0.1:4320 \
             --expected data/build/parity/expected.json
 
-      - name: Upload parity report only (no raw caches or credentials)
+      - name: Upload real snapshots and parity report (no raw caches or credentials)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -145,4 +145,5 @@ jobs:
           path: |
             data/build/parity/parity.json
             data/build/parity/expected.json
+            data/build/company_pages/*.json
             apps/lens-web/.lens/manifest.json
