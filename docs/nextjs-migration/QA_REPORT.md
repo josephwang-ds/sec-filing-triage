@@ -1,5 +1,14 @@
 # QA report
 
+## Independent real-company verification — 2026-10-25
+
+A separate read-only GitHub Actions job [passed](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40206425919) after restoring the existing production SEC/market panel cache **without any SEC request or provider credential**. The unmodified Python engine generated real AAPL/JPM/NVDA snapshots (each dated 2026-10-23) and the original Ask evidence packet. The new Next.js app built successfully with `LENS_REQUIRE_ENGINE=1` and required tickers AAPL/JPM/NVDA.
+
+**Real-company rendered parity: AAPL 16/16; JPM 16/16; NVDA 16/16 — 48/48 values matched.** ESLint, TypeScript, Next.js build and unit tests passed. An isolated workflow now repeats these checks and uploads a temporary snapshot/parity artifact; see [REAL_DATA_VERIFICATION.md](REAL_DATA_VERIFICATION.md).
+
+This is additional evidence **beyond** the original synthetic 40/40 result below. It does **not** mean the existing protected Preview was redeployed using live snapshots, nor does it certify the live Events integration or a paid AI answer. Production-domain cutover remains blocked.
+
+
 Run 2026-10-25 on `feat/lens-nextjs-v2`, branched from `origin/main` `5b1048a`.
 
 ## Results
@@ -51,9 +60,11 @@ from 31.2% to 19.8%, average precision 39.7%, ROC AUC 0.764).
 
 ## Known limitations of this run
 
-1. **The data is synthetic.** No production snapshots exist locally and building
-   them needs `EDGAR_USER_AGENT`. Issuers are `SYNxxx` and the pages say so.
-   AAPL, JPM and NVDA have not been compared against production.
+1. **The existing Preview remains fixture-only.** Its SYNxxx pages are synthetic.
+   A separate read-only CI job now generates AAPL/JPM/NVDA real-company snapshots
+   from the existing cached research panels and passes 48/48 old/new checks.
+   Those snapshots have **not yet been published to the Preview**, and this is
+   not a live-production-HTML comparison.
 2. **The preview has no live event feed.** No blob credentials, by design; the
    card renders its "not configured" state. Behaviour against a real feed is
    covered by routed E2E tests, not by the preview.
@@ -63,7 +74,8 @@ from 31.2% to 19.8%, average precision 39.7%, ROC AUC 0.764).
    handler validates `^[A-Z.]{1,6}$`, so `SYN112` returns `404
    ticker_not_available` — the handler running correctly on data it was not
    meant for. Real tickers pass.
-5. **`/report.html` has no redirect yet.**
+5. **`/report.html` now redirects to Research**, because the old full report
+   artifact is not shipped. This preserves navigation, not the full old report.
 6. **No accessibility audit tool was run.** Semantics, focus order, roles, alt
    text and `lang` marking were built in and spot-checked; axe or Lighthouse has
    not been run.
