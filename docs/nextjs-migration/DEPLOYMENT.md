@@ -60,19 +60,40 @@ No credential of any kind is read in client code. The Ask handler reads provider
 keys inside the Node runtime; the events route reads no token and has no write
 path.
 
+## Real-company data: no new SEC credential needed for parity
+
+The [real-company verification workflow](REAL_DATA_VERIFICATION.md) now restores the
+existing production research cache **read-only**, builds genuine AAPL/JPM/NVDA
+engine snapshots, stages the existing Ask evidence contract and compares the
+legacy Python renderer with Next.js in Chromium. The first successful run
+([Actions #40206425919](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40206425919))
+passed **48/48** rendered checks and did not make new SEC requests.
+
+New deployments must use `LENS_REQUIRE_ENGINE=1` and an explicit required
+ticker list; without these the development frontend intentionally falls back
+to clearly marked synthetic fixtures. The `lens-web` Preview shown above
+**has not yet been rebuilt with real snapshots**. Download the short-lived
+verified snapshot artifact and stage a separate protected preview, as documented
+in `REAL_DATA_VERIFICATION.md`.
+
+The old stable Vercel alias `company-lens-josephjwang.vercel.app` can be used
+as a **read-only** `LENS_EVENTS_UPSTREAM` for the new protected preview. Do not
+point this variable at the movable `lens.josephjwang.com` hostname or
+a later cutover could proxy the site into itself.
+
 ## Before production
 
 Not satisfied yet, and each is checkable:
 
 1. Build against production snapshots rather than fixtures, so all ~194
    companies exist (`LENS_SNAPSHOT_DIR`, or run the refresh in the deployment).
-2. Compare AAPL, JPM and NVDA with `parity.mjs` against production pages.
+2. AAPL/JPM/NVDA real-company parity against newly generated Python pages passed 48/48; still verify the *deployed preview* and compare it against the existing production release.
 3. Set `LENS_EVENTS_UPSTREAM`, or port the events function, and confirm the
    three covered companies render live feeds — and that one uncovered company
    with a normal snapshot still reads correctly.
 4. Configure one provider key and confirm a grounded answer, a refusal and a
    rate-limit response.
-5. Add a redirect for `/report.html`.
+5. `/report.html` now redirects to Research; decide separately whether to migrate the archived full HTML report.
 6. Confirm every published `<ticker>.html` redirects — the current rule accepts
    1–6 letters, digits or dots.
 7. Decide how the engine's output reaches the build: the refresh job writes
