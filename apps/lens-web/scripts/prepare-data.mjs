@@ -86,6 +86,27 @@ function reset(dir) {
 // when engine output is present: the fixtures are the only data that exercises
 // every optional section and every absence at once.
 const forced = /^(1|true|yes)$/i.test(process.env.LENS_USE_FIXTURES ?? "");
+// A deployment whose build runs outside the repository -- the preview, which
+// uploads only this app -- cannot reach the engine output or the evidence
+// package. For that case the directory is staged here first and uploaded with
+// the app, and LENS_USE_STAGED tells this script to keep what it finds rather
+// than rebuilding it from paths that do not exist there.
+if (/^(1|true|yes)$/i.test(process.env.LENS_USE_STAGED ?? "")) {
+  const existing = path.join(stage, "manifest.json");
+  if (fs.existsSync(existing)) {
+    const staged = JSON.parse(fs.readFileSync(existing, "utf8"));
+    console.log(
+      `lens-web data: using the staged directory as uploaded` +
+        ` (${staged.tickers?.length ?? 0} snapshot(s) from ${staged.source};` +
+        ` ask evidence ${staged.ask?.available ? "staged" : "unavailable"};` +
+        ` research evidence ${staged.evidence?.length ?? 0} file(s))`,
+    );
+    process.exit(0);
+  }
+  console.error(`LENS_USE_STAGED is set but ${existing} does not exist.`);
+  process.exit(1);
+}
+
 const engineSnapshots = forced ? [] : collect(snapshotDir);
 const fixtureSnapshots = collect(path.join(appRoot, "fixtures", "snapshots"));
 const useFixtures = engineSnapshots.length === 0;
