@@ -1,3 +1,17 @@
+## 当前状态 — 2026-10-25（优先于下方历史记录）
+
+- 已建立两套私有 Blob：演练和生产。相应独立 token 已配置到 Vercel 与 GitHub Actions。
+- Finnhub 现有 API Key 已按用户授权保存为仓库 Secret FINNHUB_API_KEY；SEC 身份配置已存在。没有在文档中记录凭据值。
+- AAPL、JPM、NVDA 的 Finnhub 新闻与 SEC recent 索引真实抓取成功；只写 lens-events-drill，未注入生产 token。
+- 真实运行发现并修复两个存储契约差异：已有不可变路径可能返回 HTTP 400，必须逐字节核验后才可复用；压缩读取可能产生弱 ETag，条件写入改用私有源站、identity 编码读取的强 ETag，没有移除版本保护。
+- [真实双 runner 演练](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40114070460) 在 3506dd7a28a604fb4770983e88f4106691df8042 上通过。第二台全新 runner 恢复持久检查点，六项任务均 not_due，新闻及 SEC 请求均为 0，并成功提交。
+- 同提交 CI：846 项通过，唯一失败是 README 计数仍为 843，而实际收集 847。本次将计数修为 847；新提交完整 CI 结果另查，不能把旧结果标为全绿。
+- 尚未验证：部署后的页面/API/Ask 同版本闭环、真实独立唤醒、生产事件排程、48 小时观测。PR 仍 draft，尚未发布本分支。
+- Vercel 预览环境仍需与生产 Blob 隔离。模型密钥目前仅配置于 Production；预览 Ask 验证尚未完成。
+- 浏览器自动审批曾因额度限制拒绝打开 GitHub 演练页；没有改用其他浏览器通道绕过。上面的结果来自 GitHub 只读连接器日志。
+
+---
+
 # Lens Events — 协作状态与验收证据
 
 最后更新：2026-10-23（Asia/Shanghai）。维护者：Cursor 实现、Codex 验收。
