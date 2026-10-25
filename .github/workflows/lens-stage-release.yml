@@ -91,7 +91,17 @@ jobs:
           set -euo pipefail
           test "$VERCEL_PROJECT_ID" = "prj_0lwe9BxOY7VU0WjLlwTiijSFQokr"
           test "$VERCEL_ORG_ID" = "team_WrZWU4cZxQIKdnnfUesI32iL"
-          staged_url="$(vercel deploy --cwd data/build/vercel_frontend --scope josewang-projects --global-config "${{ runner.temp }}/vercel-cli" --prebuilt --archive=tgz --prod --skip-domain --yes)"
+          mkdir -p data/build/vercel_frontend/.vercel
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path("data/build/vercel_frontend/.vercel/project.json").write_text(json.dumps({
+              "orgId": os.environ["VERCEL_ORG_ID"],
+              "projectId": os.environ["VERCEL_PROJECT_ID"],
+              "projectName": "company-lens-josephjwang",
+          }))
+          PY
+          staged_url="$(vercel deploy --cwd data/build/vercel_frontend --global-config "${{ runner.temp }}/vercel-cli" --prebuilt --archive=tgz --prod --skip-domain --yes)"
           STAGED_URL="$staged_url" python - <<'PY'
           import os
           from urllib.parse import urlsplit
