@@ -170,3 +170,80 @@ jobs:
         env:
           CI: "1"
         run: npx playwright test
+
+  full-universe-build:
+    needs: [compare-real-issuers]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/lens-web/package-lock.json
+      - run: pip install -e .
+      - name: Restore the identical read-only production research cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
+          key: company-lens-cache-lens-v2-readonly
+          restore-keys: |
+            company-lens-cache-
+      - name: Require cached research panels (no SEC fetch)
+        run: |
+          set -euo pipefail
+          test -s data/build/universe.csv
+          test -s data/build/events.parquet
+          test -s data/build/prices.parquet
+      - name: Build entire real company universe
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python scripts/build_company_pages.py
+          python scripts/export_ask_evidence.py \
+            --source data/build/company_pages \
+            --out data/build/ask-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = list(Path('data/build/company_pages').glob('*.json'))
+          assert len(files) >= 190, f'Unexpectedly small real-company build: {len(files)}'
+          tickers = {json.loads(path.read_text())['ticker'] for path in files}
+          assert {'AAPL', 'JPM', 'NVDA'} <= tickers
+          assert not any(ticker.startswith('SYN') for ticker in tickers)
+          print('FULL REAL UNIVERSE:', len(files), 'snapshot(s)')
+          PY
+      - name: Build bilingual Next.js pages from every real snapshot
+        working-directory: apps/lens-web
+        env:
+          LENS_REQUIRE_ENGINE: "1"
+          LENS_REQUIRED_TICKERS: "AAPL,JPM,NVDA"
+        run: |
+          npm ci
+          npm run build
+          node -e '
+            const fs = require("node:fs");
+            const m = JSON.parse(fs.readFileSync(".lens/manifest.json", "utf8"));
+            if (m.source !== "engine" || m.tickers.length < 190 || !m.ask.available) process.exit(1);
+            console.log("Verified full bilingual Next.js build:", m.tickers.length, "real company snapshots");
+          '
+      - name: Publish time-limited public company snapshots for an isolated preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-v2-full-real-snapshots-${{ github.run_id }}
+          retention-days: 7
+          path: |
+            data/build/company_pages/*.json
+            apps/lens-web/.lens/manifest.json
