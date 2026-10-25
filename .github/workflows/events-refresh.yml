@@ -1,12 +1,14 @@
 name: Events refresh
 
 # News and the SEC index only. This file does not build company pages and does
-# not deploy the site. A production cron trigger is intentionally omitted until
-# Codex enables it. The manual drill prepares AAPL, JPM, and NVDA from the
+# not deploy the site. Production checks run every thirty minutes; each dataset
+# uses its own persisted due policy before fetching. The manual drill prepares AAPL, JPM, and NVDA from the
 # committed service list. It does not read the Saturday universe cache and does
 # not download the full SEC ticker map.
 
 on:
+  schedule:
+    - cron: "7,37 * * * *"
   workflow_dispatch:
     inputs:
       drill:
@@ -45,7 +47,7 @@ jobs:
 
       - name: Prepare the company list
         env:
-          EVENT_TICKERS: ${{ inputs.tickers }}
+          EVENT_TICKERS: ${{ inputs.tickers || 'AAPL JPM NVDA' }}
         run: |
           set -euo pipefail
           read -r -a symbols <<< "${EVENT_TICKERS}"
@@ -54,11 +56,11 @@ jobs:
             --out "${{ runner.temp }}/events-universe.csv"
 
       - name: Refresh the drill blob
-        if: inputs.drill
+        if: github.event_name == 'workflow_dispatch' && inputs.drill
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
-          EVENT_TICKERS: ${{ inputs.tickers }}
+          EVENT_TICKERS: ${{ inputs.tickers || 'AAPL JPM NVDA' }}
           EVENTS_BLOB_PREFIX: lens-events-drill
           EVENTS_DRILL_BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
         run: |
@@ -70,18 +72,18 @@ jobs:
           python scripts/refresh_events.py \
             --drill \
             --dataset all \
-            --tier "${{ inputs.tier }}" \
+            --tier "${{ inputs.tier || 'high_frequency' }}" \
             --universe "${{ runner.temp }}/events-universe.csv" \
             --tickers "${symbols[@]}" \
             --root "${{ runner.temp }}/events-store" \
             --require-blob
 
       - name: Refresh the live blob
-        if: ${{ !inputs.drill }}
+        if: github.event_name == 'schedule' || !inputs.drill
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
-          EVENT_TICKERS: ${{ inputs.tickers }}
+          EVENT_TICKERS: ${{ inputs.tickers || 'AAPL JPM NVDA' }}
           EVENTS_BLOB_PREFIX: lens-events
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
@@ -90,7 +92,7 @@ jobs:
           python scripts/refresh_events.py --check-config --require-blob
           python scripts/refresh_events.py \
             --dataset all \
-            --tier "${{ inputs.tier }}" \
+            --tier "${{ inputs.tier || 'high_frequency' }}" \
             --universe "${{ runner.temp }}/events-universe.csv" \
             --tickers "${symbols[@]}" \
             --root "${{ runner.temp }}/events-store" \

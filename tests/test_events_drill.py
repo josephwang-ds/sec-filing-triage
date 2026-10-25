@@ -287,8 +287,8 @@ def test_drill_workflow_prepares_three_names_on_a_separate_blob_prefix(monkeypat
     assert commit_path() == "lens-events-drill/commit.json"
     refresh = (ROOT / ".github/workflows/events-refresh.yml").read_text()
     monitor = (ROOT / ".github/workflows/events-monitor.yml").read_text()
-    assert "schedule:" not in refresh
-    assert "schedule:" not in monitor
+    assert 'cron: "7,37 * * * *"' in refresh
+    assert 'cron: "4,19,34,49 * * * *"' in monitor
     assert "deploy_vercel" not in refresh
     assert "prepare_events_universe.py" in refresh
     assert "build_demo_universe.py" not in refresh
@@ -301,8 +301,10 @@ def test_drill_workflow_prepares_three_names_on_a_separate_blob_prefix(monkeypat
     drill_step, live_step = refresh.split("Refresh the live blob", 1)
     assert "secrets.BLOB_READ_WRITE_TOKEN" not in drill_step
     assert "secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" in drill_step
-    assert "if: inputs.drill" in drill_step
+    assert "if: github.event_name == 'workflow_dispatch' && inputs.drill" in drill_step
     assert "secrets.BLOB_READ_WRITE_TOKEN" in live_step
     assert "secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" not in live_step
-    assert "EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" in monitor
+    assert "BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}" in monitor
+    assert "EVENTS_DRILL_BLOB_READ_WRITE_TOKEN" not in monitor
+    assert "if: github.event_name == 'schedule' || !inputs.drill" in live_step
     assert "--supported AAPL JPM NVDA" in monitor

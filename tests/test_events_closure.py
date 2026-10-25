@@ -437,6 +437,6 @@ def test_monitor_does_not_treat_empty_as_healthy_and_calls_the_executor_once():
     workflow = (ROOT / ".github/workflows/events-monitor.yml").read_text()
     refresh = (ROOT / ".github/workflows/events-refresh.yml").read_text()
     assert "allow-empty" not in workflow
-    assert "schedule:" not in workflow
-    assert "schedule:" not in refresh
+    assert 'cron: "4,19,34,49 * * * *"' in workflow
+    assert 'cron: "7,37 * * * *"' in refresh
     assert "independent wake" in workflow

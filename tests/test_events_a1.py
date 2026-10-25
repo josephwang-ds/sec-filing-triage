@@ -559,7 +559,7 @@ def test_health_does_not_treat_http_200_as_fresh_and_monitor_does_not_pretend_to
     assert armed["auto_repair"] is False
 
 
-def test_config_presence_reports_names_only_and_workflows_do_not_schedule_or_deploy():
+def test_config_presence_reports_names_only_and_scheduled_refresh_does_not_deploy():
     flags = presence({"FINNHUB_API_KEY": "super-secret-key", "EDGAR_USER_AGENT": ""})
     assert flags["FINNHUB_API_KEY"] is True
     assert flags["BLOB_READ_WRITE_TOKEN"] is False
@@ -569,8 +569,8 @@ def test_config_presence_reports_names_only_and_workflows_do_not_schedule_or_dep
     root = Path(__file__).resolve().parents[1]
     refresh = (root / ".github/workflows/events-refresh.yml").read_text()
     monitor = (root / ".github/workflows/events-monitor.yml").read_text()
-    assert "schedule:" not in refresh
-    assert "schedule:" not in monitor
+    assert 'cron: "7,37 * * * *"' in refresh
+    assert 'cron: "4,19,34,49 * * * *"' in monitor
     assert "deploy_vercel" not in refresh
     assert "build_vercel_output" not in refresh
     weekly = (root / ".github/workflows/refresh.yml").read_text()
