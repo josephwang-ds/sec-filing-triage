@@ -9,6 +9,8 @@ const REDIRECTS: [string, RegExp][] = [
   ["/index.html", /\/(zh|en)$/],
   ["/overview.html", /\/(zh|en)\/overview$/],
   ["/research.html", /\/(zh|en)\/research$/],
+  ["/earnings.html", /\/(zh|en)\/earnings$/],
+  ["/report.html", /\/(zh|en)\/research$/],
   ["/syn112.html", /\/(zh|en)\/company\/syn112$/],
   ["/syn071.html", /\/(zh|en)\/company\/syn071$/],
 ];
