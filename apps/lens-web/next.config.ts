@@ -14,6 +14,12 @@ const legacyRedirects = [
   { source: "/index.html", destination: "/", permanent: true },
   { source: "/overview.html", destination: "/overview", permanent: true },
   { source: "/research.html", destination: "/research", permanent: true },
+  // The inferred earnings calendar was retired upstream; preserve its
+  // withdrawal notice instead of reviving unverified reporting dates.
+  { source: "/earnings.html", destination: "/earnings", permanent: true },
+  // The old generated research report is not shipped with this app. Route old
+  // citations to the evidence-backed research page instead of a 404.
+  { source: "/report.html", destination: "/research", permanent: false },
   { source: "/404.html", destination: "/not-found", permanent: false },
   // Any other `<ticker>.html`. Kept last so the named pages above win, and
   // bounded to the shape of a symbol: 1-6 letters, digits or dots. An unknown
