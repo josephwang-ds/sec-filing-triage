@@ -16,10 +16,11 @@ const legacyRedirects = [
   { source: "/research.html", destination: "/research", permanent: true },
   { source: "/404.html", destination: "/not-found", permanent: false },
   // Any other `<ticker>.html`. Kept last so the named pages above win, and
-  // deliberately narrow: 1-6 letters or dots, which is the ticker shape the
-  // Python 404 page already enforced.
+  // bounded to the shape of a symbol: 1-6 letters, digits or dots. An unknown
+  // one lands on the company route, which answers with the boundary page
+  // rather than inventing a company.
   {
-    source: "/:ticker([A-Za-z.]{1,6}).html",
+    source: "/:ticker([A-Za-z0-9.]{1,6}).html",
     destination: "/company/:ticker",
     permanent: true,
   },

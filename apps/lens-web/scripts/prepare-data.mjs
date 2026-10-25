@@ -129,16 +129,47 @@ if (fs.existsSync(askFunction) && askEvidence) {
   ask = { available: false, reason: "handler_missing" };
 }
 
+// The research evidence package. The overview and research pages read their
+// numbers out of these files, the same ones the Python pages read, so neither
+// page can state a figure the evidence does not contain.
+const evidenceSource = path.join(repoRoot, "evidence", "real_run");
+const evidenceWanted = [
+  "metrics.json",
+  "manifest.json",
+  "self_relative_metrics.json",
+  "volatility_metrics.json",
+  "calibration_metrics.json",
+  "insider_metrics.json",
+  "leakage_study.csv",
+  "model_comparison.csv",
+  "nlp_feature_ablation.csv",
+  "self_relative_ablation.csv",
+  "volatility_forecasters.csv",
+  "recommendation_confusion.csv",
+  "fold_metrics.csv",
+];
+const evidenceStage = path.join(stage, "research");
+fs.mkdirSync(evidenceStage, { recursive: true });
+const evidenceStaged = [];
+for (const name of evidenceWanted) {
+  const file = path.join(evidenceSource, name);
+  if (!fs.existsSync(file)) continue;
+  fs.copyFileSync(file, path.join(evidenceStage, name));
+  evidenceStaged.push(name);
+}
+
 const manifest = {
   source: useFixtures ? "fixtures" : "engine",
   snapshot_dir: useFixtures ? "fixtures/snapshots" : snapshotDir,
   generated_at: new Date().toISOString(),
   tickers: tickers.sort(),
   ask,
+  evidence: evidenceStaged,
 };
 fs.writeFileSync(path.join(stage, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
 console.log(
   `lens-web data: ${tickers.length} snapshot(s) from ${manifest.source}` +
-    ` (${manifest.snapshot_dir}); ask evidence ${ask.available ? "staged" : `unavailable (${ask.reason})`}`,
+    ` (${manifest.snapshot_dir}); ask evidence ${ask.available ? "staged" : `unavailable (${ask.reason})`}` +
+    `; research evidence ${evidenceStaged.length} file(s)`,
 );

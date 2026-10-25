@@ -18,7 +18,7 @@ import { eventFeed } from "@/lib/contracts/events";
  */
 export const dynamic = "force-dynamic";
 
-const TICKER = /^[A-Z.]{1,6}$/;
+const TICKER = /^[A-Z0-9.]{1,6}$/;
 const UPSTREAM = (process.env.LENS_EVENTS_UPSTREAM ?? "").replace(/\/+$/, "");
 
 function notConfigured(ticker: string | null) {

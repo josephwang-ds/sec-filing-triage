@@ -38,8 +38,38 @@ interface AskResponse {
   end(body?: string): void;
 }
 
-const require = createRequire(import.meta.url);
-const askRoot = path.join(process.cwd(), ".lens", "ask");
+
+/**
+ * Where the staged handler lives.
+ *
+ * Several candidates, because a bundled route module cannot see its own path:
+ * the bundler rewrites `import.meta.url` to "unknown" and `process.cwd()` to a
+ * placeholder inside this module. `LENS_ASK_DIR` is the explicit answer, and
+ * the rest are the places the staged pair actually sits -- the app root in dev
+ * and under the traced function root in a deployment.
+ */
+function candidates(): string[] {
+  const found: string[] = [];
+  const add = (value: string | undefined) => {
+    if (value && !found.includes(value)) found.push(value);
+  };
+  add(process.env.LENS_ASK_DIR ? path.resolve(process.env.LENS_ASK_DIR) : undefined);
+  const cwd = globalThis.process?.cwd?.();
+  if (cwd && cwd !== "/ROOT") {
+    add(path.join(cwd, ".lens", "ask"));
+    add(path.join(cwd, "apps", "lens-web", ".lens", "ask"));
+  }
+  add(path.join("/var/task", ".lens", "ask"));
+  return found;
+}
+
+function resolveAskRoot(): string | null {
+  for (const candidate of candidates()) {
+    if (fs.existsSync(path.join(candidate, "index.cjs"))) return candidate;
+  }
+  return null;
+}
+
 
 let cached: Handler | null = null;
 let loadError: string | null = null;
@@ -47,13 +77,17 @@ let loadError: string | null = null;
 function handler(): Handler | null {
   if (cached) return cached;
   if (loadError) return null;
-  const entry = path.join(askRoot, "index.cjs");
-  const evidence = path.join(askRoot, "evidence.json");
-  if (!fs.existsSync(entry) || !fs.existsSync(evidence)) {
+  const askRoot = resolveAskRoot();
+  if (!askRoot || !fs.existsSync(path.join(askRoot, "evidence.json"))) {
     loadError = "evidence_missing";
     return null;
   }
+  const entry = path.join(askRoot, "index.cjs");
   try {
+    // Based on the staged file itself rather than on this module: a bundled
+    // route's `import.meta.url` is rewritten, and a require built from it
+    // cannot resolve anything at all.
+    const require = createRequire(entry);
     // Required at runtime from an absolute path, so the bundler leaves it
     // alone and the module reads its evidence.json from beside itself, exactly
     // as it does on the live site. `outputFileTracingIncludes` ships the pair.

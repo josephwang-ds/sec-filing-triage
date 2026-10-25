@@ -9,7 +9,7 @@
     "find": "Find a company",
     "overview": "What this is",
     "research": "How this is audited",
-    "earnings": "Expected earnings",
+    "earnings": "Financial results",
     "onThisPage": "On this page"
   },
   "lang": {
@@ -447,5 +447,267 @@
       "network": "The request did not complete.",
       "unknown": "The request was not answered."
     }
+  },
+  "overview": {
+    "metaTitle": "What this project is",
+    "metaDescription": "A working system that looked twice as good as it was, why, and what was left after the measurement was fixed.",
+    "eyebrow": "THE PROJECT IN ORDINARY WORDS",
+    "title": "A system that looked twice as good as it was.",
+    "lede": "This project ranks newly filed SEC disclosures by how likely each is to matter. The interesting part is not the ranking. It is that an early version scored roughly twice as well as the honest one, the reason was a single assumption about a timestamp, and the difference was measured and published rather than quietly fixed.",
+    "nav": {
+      "label": "On this page",
+      "problem": "The problem",
+      "sources": "Where the data comes from",
+      "does": "What it does and does not do",
+      "results": "What it scored",
+      "leakage": "The timestamp",
+      "failures": "What did not work",
+      "product": "What is running"
+    },
+    "problem": {
+      "title": "Too much is filed to read",
+      "body1": "Public companies file continuously, and most of what they file changes nothing. A person who wants to keep up has to decide, every morning, which of the day's filings are worth opening — and that decision is usually made by headline, by company size, or not at all.",
+      "body2": "So the question this project asks is narrow and checkable: given everything filed today, which five should be read first? A ranking can be scored against what actually happened afterwards, which is why it was chosen over anything that would require predicting a price.",
+      "scale": "The evaluation covers {filings} filings over {sessions} sessions, a median of {median} filings per session."
+    },
+    "sources": {
+      "title": "Three sources, each with a time of observation",
+      "filings": {
+        "title": "SEC filings",
+        "body": "8-K disclosures from EDGAR, with the acceptance timestamp kept — the moment the filing became public, not the date printed on it."
+      },
+      "prices": {
+        "title": "Daily prices",
+        "body": "Adjusted daily open, high, low and close, used to measure what happened after a filing and to build the historical pictures on company pages."
+      },
+      "fundamentals": {
+        "title": "Company Facts",
+        "body": "Filed financial figures with their accounting concept, unit and reporting period, used for the filed-results section rather than for the ranking model."
+      },
+      "note": "Nothing is bought, scraped from a terminal, or hand-entered. Every input is a public filing or a vendor-adjusted price series, and the evaluation records the row count and content hash of each."
+    },
+    "does": {
+      "title": "The boundary, stated",
+      "doesTitle": "What it does",
+      "does": {
+        "rank": "Ranks the day's filings by the estimated chance of an unusually large benchmark-adjusted move afterwards.",
+        "measure": "Measures that ranking against what happened, on sessions the model never trained on.",
+        "publish": "Publishes the measurement, the failures and the evidence files behind both."
+      },
+      "notTitle": "What it does not do",
+      "not": {
+        "advice": "It does not give investment advice, price targets or buy and sell calls.",
+        "direction": "It estimates the size of a reaction, never its direction. A large move can go either way.",
+        "returns": "A historical ranking result is not a trading return. Nothing here accounts for costs, slippage, capacity or the price of being wrong."
+      }
+    },
+    "results": {
+      "title": "What it scored, honestly measured",
+      "model": "Of the five the model ranked first each day, the average share that mattered",
+      "random": "The same measure, picking five at random",
+      "sessions": "Sessions measured",
+      "definitionLabel": "What that number is.",
+      "definition": "It is the average share of each day's top five that turned out to be material. It is not the chance of finding at least one material filing in the top five, and it is not a success rate per day. On a typical session with five picks, it means roughly one of them mattered.",
+      "interval": "The 95% interval on average precision runs {low} to {high}, from a cluster bootstrap over sessions with {draws} draws. A point estimate without that interval would suggest more precision than the sample supports."
+    },
+    "leakage": {
+      "title": "One assumption about a timestamp",
+      "body1": "A filing is accepted at a particular minute, and a reader can only act after it. The first pipeline entered positions on the filing *date* instead — which, for a filing accepted after the close, means entering before it existed. Nothing else about the model changed.",
+      "body2": "Measured on the same sessions, the shortcut scored {naive} where the honest pipeline scores {honest}. Each row below removes one more thing the model should not have known.",
+      "caption": "Each stage removes one source of hindsight. The last row is the pipeline that produces every published number.",
+      "column": {
+        "stage": "Stage",
+        "daily": "Daily top-five share",
+        "ap": "Average precision",
+        "impossible": "Entries that were impossible"
+      }
+    },
+    "failures": {
+      "title": "Three things that were tried and not shipped",
+      "intro": "Written as a list of negatives on purpose. All three were measured with the same machinery as the positive results and reported the same way.",
+      "text": {
+        "title": "Language features from the filing text",
+        "body": "Sentiment and change-detection features over the filing body did not improve the ranking beyond what arrival time and item code already carried."
+      },
+      "selfRelative": {
+        "title": "Issuer-relative scoring as a ranking signal",
+        "body": "Comparing a filing with its own issuer's history is useful on a company page, and it did not improve the cross-sectional daily ranking."
+      },
+      "volatility": {
+        "title": "Volatility forecasting",
+        "body": "A forecaster only appears on a company page when it passes its out-of-sample coverage gate. When none does, the card is absent rather than approximate."
+      }
+    },
+    "product": {
+      "title": "What is running",
+      "intro": "The research engine refreshes filings, prices and filed results on a schedule and regenerates every company page from them. The site you are reading is the output, and each number on it links to the filing or price series behind it.",
+      "openLens": "Open Company Lens",
+      "openResearch": "Read the method",
+      "source": "Source on GitHub"
+    },
+    "noEvidence": {
+      "title": "The evidence package is not in this build",
+      "body": "This page states numbers only from the exported evidence files. They are not present here, so nothing is shown rather than a figure typed in by hand."
+    }
+  },
+  "research": {
+    "metaTitle": "Method and audit",
+    "metaDescription": "The research question, the point-in-time rules, the leakage audit, the ranking metrics with intervals, the baselines, the ablations and the limitations.",
+    "eyebrow": "METHOD AND AUDIT",
+    "title": "How this is measured, and what the measurement cannot say.",
+    "lede": "Every figure on this page is read from the exported evidence package at build time. None of them is written into the page, so none can drift from the run that produced it.",
+    "nav": {
+      "label": "On this page",
+      "question": "Question",
+      "method": "Method",
+      "pit": "Point in time",
+      "leakage": "Leakage audit",
+      "metrics": "Metrics",
+      "baselines": "Baselines",
+      "ablations": "Ablations",
+      "limitations": "Limitations",
+      "provenance": "Provenance",
+      "glossary": "Glossary"
+    },
+    "question": {
+      "title": "The research question",
+      "body1": "Given the set of 8-K filings accepted before a session's entry point, can they be ranked so that the ones followed by an unusually large benchmark-adjusted move appear near the top?",
+      "body2": "This is a ranking question, scored per session, not a return question. It asks which filings deserve attention first, and it is answerable with public data and checkable against what happened."
+    },
+    "method": {
+      "title": "Labels, windows and validation",
+      "label": "Label",
+      "labelValue": "A benchmark-adjusted move of at least {threshold} standard deviations in the event window.",
+      "window": "Event window",
+      "windowValue": "{sessions} sessions from the first eligible entry.",
+      "estimation": "Estimation window",
+      "estimationValue": "{sessions} sessions of market-model estimation, ending {gap} sessions before the event.",
+      "validation": "Validation",
+      "reaction": "Reaction convention: {convention}"
+    },
+    "pit": {
+      "title": "What the model is allowed to know",
+      "entry": "Entry happens at the first session that opens after the filing's acceptance timestamp. A filing accepted after the close is entered the next session, never the same one.",
+      "features": "Trailing features end the session before entry. A trailing volatility window that includes the event day is a window that contains the answer.",
+      "universe": "The universe at each date is the universe as it was known then, not the set of issuers that still exist today.",
+      "history": "Issuer history is restricted to filings whose outcomes had already resolved at the decision point."
+    },
+    "leakage": {
+      "title": "The leakage ladder",
+      "intro": "Each row removes one source of hindsight and re-runs the whole evaluation. The first row is a pipeline that looks strong and is not; the last is the one that produces every published number.",
+      "caption": "Each stage removes one source of hindsight, measured end to end.",
+      "column": {
+        "stage": "Stage",
+        "events": "Events",
+        "ap": "Average precision",
+        "auc": "ROC AUC",
+        "daily": "Daily top-five share",
+        "lift": "Lift vs random",
+        "impossible": "Impossible entries"
+      }
+    },
+    "metrics": {
+      "title": "Ranking metrics",
+      "caption": "Headline metrics from the honest pipeline.",
+      "column": {
+        "metric": "Metric",
+        "value": "Value",
+        "meaning": "What it measures"
+      },
+      "dailyPrecision": "Daily precision@5",
+      "dailyPrecisionMeaning": "The average share of each session's top five that turned out to be material.",
+      "randomPrecision": "Random precision@5",
+      "randomPrecisionMeaning": "The same measure with five filings drawn at random from the same session.",
+      "averagePrecision": "Average precision",
+      "averagePrecisionMeaning": "Area under the precision-recall curve over all filings, not per session.",
+      "rocAuc": "ROC AUC",
+      "rocAucMeaning": "The chance a random material filing is ranked above a random immaterial one.",
+      "baseRate": "Base rate",
+      "baseRateMeaning": "The share of all evaluated filings that were followed by a material move.",
+      "definitionLabel": "Precision@5 is an average share, not a hit rate.",
+      "definition": "It is the average share of each day's top five that turned out to be material — not the probability of finding at least one material filing among them, and not a per-day success rate.",
+      "uncertainty": "Intervals come from a {method} with {draws} draws over {sessions} sessions. Average precision: {apLow} to {apHigh} at 95%."
+    },
+    "baselines": {
+      "title": "Compared with rules that need no model",
+      "intro": "A model is only interesting against the cheap rules it is meant to beat. All of these are scored on the same sessions, the same way.",
+      "caption": "Daily top-five share for each selection rule.",
+      "column": {
+        "rule": "Selection rule",
+        "daily": "Daily top-five share"
+      },
+      "model": "The model's ranking",
+      "random": "Five at random",
+      "arrival": "Earliest arrival first",
+      "item202": "Item 2.02 (results of operations) first",
+      "oracle": "Perfect foresight (upper bound)"
+    },
+    "ablations": {
+      "title": "What each group of features adds",
+      "intro": "Each row removes one group and re-scores. A group that changes nothing is reported as changing nothing.",
+      "caption": "Feature-group ablations, re-scored end to end.",
+      "missingTitle": "Ablation table not in this build",
+      "missingBody": "The ablation export is not present in the evidence package staged for this build, so no table is shown."
+    },
+    "limitations": {
+      "title": "What this cannot tell you",
+      "universe": "The universe is a convenience sample of currently listed large caps. It is not survivorship-controlled, so it cannot speak to issuers that delisted.",
+      "costs": "No transaction cost, spread, slippage or capacity assumption is applied anywhere. A ranking result is not a strategy result.",
+      "magnitude": "The label is the magnitude of a move, not its direction. Nothing here says which way a price went or will go.",
+      "coverage": "Dynamic event coverage is narrower than snapshot coverage: most companies have filings and price history but no live event feed.",
+      "generalisation": "Results are measured on US 8-K disclosures over the evaluated sessions and should not be assumed to carry to other filing types, markets or periods."
+    },
+    "provenance": {
+      "title": "Provenance",
+      "exported": "Evidence exported",
+      "schema": "Schema version",
+      "rows": "rows"
+    },
+    "glossary": {
+      "title": "Method index",
+      "precision": {
+        "term": "Precision@k",
+        "definition": "Of the k items ranked highest, the share that turned out to be material. Averaged over sessions when it is called daily precision@k."
+      },
+      "averagePrecision": {
+        "term": "Average precision",
+        "definition": "The area under the precision-recall curve: one number summarising how well the ranking separates material from immaterial across every threshold."
+      },
+      "rocAuc": {
+        "term": "ROC AUC",
+        "definition": "The probability that a randomly chosen material filing is ranked above a randomly chosen immaterial one. 0.5 is chance."
+      },
+      "baseRate": {
+        "term": "Base rate",
+        "definition": "How often the thing being predicted happens at all. Every precision figure has to be read against it."
+      },
+      "walkForward": {
+        "term": "Walk-forward validation",
+        "definition": "Train on the past, test on the future, repeatedly moving forward in time — rather than shuffling all dates together."
+      },
+      "purged": {
+        "term": "Purging and embargo",
+        "definition": "Dropping training examples whose outcome windows overlap the test period, so an answer cannot reach the model through an overlapping window."
+      },
+      "pointInTime": {
+        "term": "Point in time",
+        "definition": "Using only what was knowable at the decision moment: the universe as it was, the prices as they had printed, and the filings already accepted."
+      }
+    },
+    "noEvidence": {
+      "title": "The evidence package is not in this build",
+      "body": "This page reports numbers only from the exported evidence files, and they are not present here. Run the evidence export and rebuild."
+    }
+  },
+  "earnings": {
+    "metaTitle": "Financial results",
+    "metaDescription": "The estimated earnings calendar was retired. Filed results now live on each company page, with the filing they came from.",
+    "eyebrow": "CALENDAR RETIRED",
+    "title": "Financial results moved to the company pages.",
+    "body": "The estimated reporting calendar has been withdrawn. Each company page now shows the latest filed report instead: the figures as filed, the reporting period they cover, the year-ago comparison and a link to the filing itself.",
+    "why": "It was withdrawn because the dates on it were inferred from each issuer's past reporting cadence rather than confirmed by the company, and an inferred date on a calendar reads as a confirmed one.",
+    "boundary": "No future reporting date is published anywhere on this site unless the company or a filing has confirmed it.",
+    "whereTitle": "Open a company's filed results",
+    "find": "Find another company →"
   }
 }
