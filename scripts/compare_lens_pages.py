@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from company_lens.contracts import CompanySnapshot
-from company_lens.web.page import _default_period, _money, _signed_percent, render_company_page
+from company_lens.web.page import _default_period, _money, render_company_page
 
 TAGS = re.compile(r"<[^>]+>")
 SPACE = re.compile(r"\s+")
