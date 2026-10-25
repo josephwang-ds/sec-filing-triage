@@ -58,6 +58,10 @@ jobs:
           key: lens-stage-${{ github.run_id }}
           restore-keys: |
             company-lens-cache-
+      - name: Refresh filed financial results missing from the top-level cache
+        env:
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+        run: python scripts/refresh_fundamentals.py --all
       - name: Rebuild the complete site from the last refreshed data
         run: |
           set -euo pipefail
