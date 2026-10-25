@@ -6,6 +6,23 @@ on:
   pull_request:
 
 jobs:
+  events-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -e .
+      - run: npm install --prefix "$RUNNER_TEMP/events-dom" --no-package-lock jsdom@26.1.0
+      - run: node tests/browser/events.cjs
+        env:
+          PYTHONPATH: src
+          NODE_PATH: ${{ runner.temp }}/events-dom/node_modules
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -62,3 +79,4 @@ jobs:
           cache: pip
       - run: pip install -e .
       - run: python -m filing_triage.cli audit
+

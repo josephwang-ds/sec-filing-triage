@@ -1,0 +1,43 @@
+name: Events monitor
+
+# Reads task checkpoints. A page that returns HTTP 200 is not a pass.
+# EVENTS_RERUN_TOKEN is not a repository secret today, so this job alerts and
+# prints the recovery entry. It does not wake the refresh workflow by itself.
+# Production health checks run every fifteen minutes for the released scope.
+
+on:
+  schedule:
+    - cron: "4,19,34,49 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -e .
+
+      - name: Report durable checkpoint health
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          EVENTS_BLOB_PREFIX: lens-events
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENTS_RERUN_TOKEN: ${{ secrets.EVENTS_RERUN_TOKEN }}
+          EVENTS_RERUN_URL: ${{ secrets.EVENTS_RERUN_URL }}
+        run: |
+          set -euo pipefail
+          # This workflow is not an independent wake. A rerun happens only when
+          # EVENTS_RERUN_URL is configured, and the script calls that URL itself.
+          # The released health set is the three verified companies, not the other
+          # seventeen high-frequency names.
+          python scripts/events_monitor.py --supported AAPL JPM NVDA

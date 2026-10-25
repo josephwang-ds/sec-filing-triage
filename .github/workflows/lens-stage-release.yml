@@ -1,0 +1,120 @@
+name: Lens staged production release
+
+on:
+  push:
+    branches: [feat/lens-events-a1]
+    paths: [.github/workflows/lens-stage-release.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: lens-stage-release
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 06e01bbe6d2171a81a6a946b5c474658581dd2cb
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Require the reviewed source CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os, time, requests
+          url = "https://api.github.com/repos/josephwang-ds/sec-filing-triage/actions/runs/40162506170"
+          for _ in range(40):
+              response = requests.get(url, headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"]}, timeout=30)
+              response.raise_for_status()
+              run = response.json()
+              assert run["head_sha"] == "06e01bbe6d2171a81a6a946b5c474658581dd2cb"
+              if run["status"] == "completed":
+                  assert run["conclusion"] == "success", "Reviewed CI did not pass"
+                  break
+              time.sleep(30)
+          else:
+              raise SystemExit("Reviewed CI did not finish in time")
+          PY
+      - name: Restore the existing SEC and market snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
+          key: lens-stage-${{ github.run_id }}
+          restore-keys: |
+            company-lens-cache-
+      - name: Refresh filed financial results missing from the top-level cache
+        env:
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+        run: python scripts/refresh_fundamentals.py --all
+      - name: Rebuild the complete site from the last refreshed data
+        run: |
+          set -euo pipefail
+          test -s data/build/universe.csv
+          test -s data/build/events.parquet
+          test -s data/build/prices.parquet
+          python scripts/build_company_pages.py
+          python scripts/build_research_page.py
+          python scripts/build_overview_page.py
+          python scripts/build_earnings_calendar.py
+          python scripts/build_vercel_output.py
+      - name: Initialize the production event store for the verified three-company scope
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENTS_BLOB_PREFIX: lens-events
+        run: |
+          set -euo pipefail
+          python scripts/prepare_events_universe.py --tickers AAPL JPM NVDA --out "${{ runner.temp }}/universe.csv"
+          python scripts/refresh_events.py --dataset all --universe "${{ runner.temp }}/universe.csv" --tickers AAPL JPM NVDA --root "${{ runner.temp }}/events-prod" --require-blob
+      - name: Install pinned Vercel CLI
+        run: npm install --global vercel@65.2.0
+      - name: Stage production without assigning domains
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          test "$VERCEL_PROJECT_ID" = "prj_0lwe9BxOY7VU0WjLlwTiijSFQokr"
+          test "$VERCEL_ORG_ID" = "team_WrZWU4cZxQIKdnnfUesI32iL"
+          mkdir -p data/build/vercel_frontend/.vercel
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path("data/build/vercel_frontend/.vercel/project.json").write_text(json.dumps({
+              "orgId": os.environ["VERCEL_ORG_ID"],
+              "projectId": os.environ["VERCEL_PROJECT_ID"],
+              "projectName": "company-lens-josephjwang",
+          }))
+          PY
+          staged_url="$(vercel deploy --cwd data/build/vercel_frontend --global-config "${{ runner.temp }}/vercel-cli" --prebuilt --archive=tgz --prod --skip-domain --yes)"
+          STAGED_URL="$staged_url" python - <<'PY'
+          import os
+          from urllib.parse import urlsplit
+          value = os.environ["STAGED_URL"].strip()
+          parsed = urlsplit(value)
+          assert parsed.scheme == "https" and parsed.hostname.endswith(".vercel.app")
+          assert parsed.path in {"", "/"} and not parsed.query and not parsed.fragment
+          print("STAGED_DEPLOYMENT_URL=" + value)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write("Staged production source: 06e01bbe6d2171a81a6a946b5c474658581dd2cb\\n\\n")
+              out.write("Deployment: " + value + "\\n\\nNo domain promotion has occurred.\\n")
+          PY

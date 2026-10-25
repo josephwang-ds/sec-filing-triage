@@ -168,7 +168,8 @@ class TestThePageFollowsTheData:
         or links to a section that is not there."""
         bare = _nav_links(_minimal())
         assert "#volatility" not in bare
-        assert bare.count("<a ") == 4
+        assert "#events" in bare
+        assert bare.count("<a ") == 5
 
         full = _nav_links(_minimal(volatility_forecast=CARD,
                                    disclosure_signal={"state": "routine"}))
