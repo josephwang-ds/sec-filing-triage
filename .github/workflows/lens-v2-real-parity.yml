@@ -1,0 +1,148 @@
+name: Lens v2 real-data parity (read-only)
+
+# Run on the feature branch so this can be checked before merging. No secrets,
+# SEC requests, Blob writes, Vercel deployment or paid model calls are permitted.
+on:
+  push:
+    branches: [feat/lens-nextjs-v2]
+    paths:
+      - ".github/workflows/lens-v2-real-parity.yml"
+      - "apps/lens-web/**"
+      - "scripts/compare_lens_pages.py"
+      - "scripts/export_ask_evidence.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lens-v2-real-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare-real-issuers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/lens-web/package-lock.json
+      - run: pip install -e .
+
+      # Read the last completed production refresh's public SEC/price panels.
+      # A cache miss aborts rather than crawling SEC or generating synthetic data.
+      - name: Restore existing production research panels
+        id: panels
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
+          key: company-lens-cache-lens-v2-readonly
+          restore-keys: |
+            company-lens-cache-
+
+      - name: Require warm production cache without fetching
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in data/build/universe.csv data/build/events.parquet data/build/prices.parquet; do
+            if [ ! -s "$file" ]; then
+              echo "::error::Missing cached $file; this job will not call SEC or silently use fixtures."
+              exit 1
+            fi
+          done
+          echo "Restored existing research panels; no network ingest or production mutation."
+
+      - name: Generate real-company snapshots and grounded Ask evidence
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python scripts/build_company_pages.py --tickers AAPL JPM NVDA
+          python scripts/export_ask_evidence.py \
+            --source data/build/company_pages \
+            --out data/build/ask-evidence.json
+          for ticker in aapl jpm nvda; do
+            test -s "data/build/company_pages/$ticker.json"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for ticker in ('AAPL', 'JPM', 'NVDA'):
+              data = json.loads((Path('data/build/company_pages') / (ticker.lower() + '.json')).read_text())
+              assert data['ticker'] == ticker
+              assert data.get('market', {}).get('latest_adjusted_close') is not None
+              assert not data['ticker'].startswith('SYN')
+              print(ticker, 'as_of', data['as_of'], 'filings', len(data.get('latest_filings', [])))
+          PY
+
+      - name: Install the new front end and Chromium
+        run: |
+          npm ci --prefix apps/lens-web
+          cd apps/lens-web
+          npx playwright install --with-deps chromium
+
+      - name: Prepare original Python page and expected displayed values
+        env:
+          PYTHONPATH: src
+        run: |
+          python scripts/compare_lens_pages.py --snapshots data/build/company_pages
+
+      - name: Build Next.js with engine-only, required-ticker checks
+        env:
+          LENS_REQUIRE_ENGINE: "1"
+          LENS_REQUIRED_TICKERS: "AAPL,JPM,NVDA"
+        working-directory: apps/lens-web
+        run: |
+          npm run lint
+          npm run test:unit
+          npm run build
+          node -e '
+            const fs = require("node:fs");
+            const m = JSON.parse(fs.readFileSync(".lens/manifest.json", "utf8"));
+            if (m.source !== "engine" || !["AAPL","JPM","NVDA"].every(t => m.tickers.includes(t)) || !m.ask.available) process.exit(1);
+            console.log("real-data manifest and Ask evidence verified:", m.tickers.length, "issuer(s)");
+          '
+
+      - name: Compare fully rendered legacy and new pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd apps/lens-web && npx next start --port 4320 > /tmp/lens-v2-server.log 2>&1) &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:4320/en/company/aapl; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --output /dev/null http://127.0.0.1:4320/en/company/jpm
+          curl --fail --silent --output /dev/null http://127.0.0.1:4320/zh/company/nvda
+          node apps/lens-web/scripts/parity.mjs \
+            --base-url http://127.0.0.1:4320 \
+            --expected data/build/parity/expected.json
+
+      - name: Upload parity report only (no raw caches or credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-v2-real-parity-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            data/build/parity/parity.json
+            data/build/parity/expected.json
+            apps/lens-web/.lens/manifest.json
