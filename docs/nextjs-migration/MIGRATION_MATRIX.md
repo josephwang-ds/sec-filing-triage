@@ -13,8 +13,8 @@ with the reason.
 | `/404.html` | `/[locale]/not-found` | done — unknown ticker returns 404 with the boundary page |
 | `/overview.html` | `/zh/overview`, `/en/overview` | done — figures read from the evidence package |
 | `/research.html` | `/zh/research`, `/en/research` | done — figures read from the evidence package |
-| `/earnings.html` | `/zh/earnings`, `/en/earnings` | done — migrated as the retirement notice it is |
-| `/report.html` | — | **not migrated**: the full generated report is a `make run` artifact that is not in this build. The old URL is not yet redirected. |
+| `/earnings.html` | `/zh/earnings`, `/en/earnings` | done — explicit legacy redirect to the retirement notice |
+| `/report.html` | `/zh/research`, `/en/research` | 307 compatibility redirect; full generated HTML report is still not shipped |
 | `/api/ask` | `/api/ask` | done — the same handler, adapted |
 | `/api/events` | `/api/events` | done — read-only proxy |
 | — | `/api/events?view=health` | done — passed through |
@@ -55,7 +55,7 @@ with the reason.
 
 | Thing | Why |
 | --- | --- |
-| `/report.html` | A `make run` artifact absent from this build. Needs a redirect before cutover. |
+| Full old `/report.html` artifact | The original full generated HTML report is absent from this build. Old URLs now redirect to Research, but the long report itself has not migrated. |
 | Estimated earnings calendar | Already withdrawn upstream. The page explains the withdrawal; publishing inferred dates again would reintroduce the defect it was withdrawn for. |
 | Live event data on the preview | The preview has no blob credentials by design. The card renders its "not configured" state. |
 | Ask answers on the preview | No provider key, so no paid call is possible. Configuration, validation and error states are covered. |
