@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "title": "Company Lens",
+    "description": "Source-backed company research: filed SEC disclosures, historical market context and grounded answers, each with the evidence it came from."
+  },
+  "nav": {
+    "site": "Site navigation",
+    "skip": "Skip to content",
+    "find": "Find a company",
+    "overview": "What this is",
+    "research": "How this is audited",
+    "earnings": "Expected earnings",
+    "onThisPage": "On this page"
+  },
+  "lang": {
+    "label": "Reading language"
+  },
+  "footer": {
+    "boundary": "Evidence, not prediction. Nothing here is investment advice.",
+    "universe": "Universe: a convenience sample of current large caps, not a point-in-time index.",
+    "snapshot": "Snapshot {date}",
+    "market": "Market through {date}",
+    "sources": "SEC filings and adjusted daily prices",
+    "fixtures": "Development build: synthetic fixture data, not market data."
+  },
+  "home": {
+    "metaTitle": "Company research, with its sources",
+    "metaDescription": "Search a covered company and read its filed disclosures, historical return and risk, recent events and grounded answers.",
+    "eyebrow": "SOURCE-BACKED COMPANY RESEARCH",
+    "title": "Read the evidence before the opinion.",
+    "lede": "Every number on a company page was computed from filed SEC disclosures and adjusted daily prices, and links back to the document it came from.",
+    "coverage": "{companies} companies have a research snapshot in this build. A symbol outside that set gets a stated boundary, never a generated page.",
+    "fixtureBannerTitle": "Development data.",
+    "fixtureBannerBody": "This build is reading synthetic fixtures generated for testing. Issuers named SYNxxx are not real companies and these are not market prices.",
+    "search": {
+      "label": "Search by symbol or company name",
+      "placeholder": "AAPL, Apple, NVDA…",
+      "results": "Matching companies",
+      "hint": "{count} companies covered. Type a symbol and press Enter.",
+      "directory": "Covered companies",
+      "showing": "Showing {from}–{to} of {total}",
+      "pagination": "Directory pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {pages}",
+      "noMatchTitle": "No covered company matches “{query}”.",
+      "noMatchBody": "This build holds evidence only for the companies listed below. Nothing is fetched on demand and no page is generated for a company without a snapshot.",
+      "ambiguous": "{count} companies match. Choose one from the list."
+    },
+    "featured": "Featured examples",
+    "featuredNote": "Three pages to start from. Not a ranking, a recommendation, or a screen result.",
+    "featuredRelative": "{value} against {benchmark}, {start} to {end}",
+    "evidenceTitle": "What the evidence is",
+    "evidenceNote": "Three sources, each with its own time of observation. The research page states how each one is handled.",
+    "evidence": {
+      "filings": {
+        "title": "SEC disclosures",
+        "body": "8-K items and recent periodic reports, read from EDGAR with their acceptance timestamps kept."
+      },
+      "prices": {
+        "title": "Adjusted daily prices",
+        "body": "Vendor-adjusted daily closes, used for historical return, volatility and drawdown against a stated benchmark."
+      },
+      "fundamentals": {
+        "title": "Filed financial results",
+        "body": "Figures as filed in Company Facts, with the accounting concept, unit and reporting period they belong to."
+      }
+    },
+    "evidenceLink": "How this is audited"
+  }
+}
