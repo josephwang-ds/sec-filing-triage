@@ -22,6 +22,26 @@ const appRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), ".
 const repoRoot = path.resolve(appRoot, "..", "..");
 const stage = path.join(appRoot, ".lens");
 
+// Real-data verification and release builds must fail closed. A missing runner
+// cache must never silently turn a production build into a synthetic demo.
+const requireEngine = /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_ENGINE ?? "");
+const requiredTickers = (process.env.LENS_REQUIRED_TICKERS ?? "")
+  .split(/[,\s]+/)
+  .map((ticker) => ticker.trim().toUpperCase())
+  .filter(Boolean);
+
+function assertRequiredTickers(tickers, source) {
+  const present = new Set(tickers.map((ticker) => String(ticker).toUpperCase()));
+  const missing = requiredTickers.filter((ticker) => !present.has(ticker));
+  if (missing.length) {
+    console.error(
+      `lens-web data: missing required real-company snapshots: ${missing.join(", ")} (${source})`,
+    );
+    process.exit(1);
+  }
+}
+
+
 const snapshotDir = process.env.LENS_SNAPSHOT_DIR
   ? path.resolve(process.env.LENS_SNAPSHOT_DIR)
   : path.join(repoRoot, "data", "build", "company_pages");
@@ -95,6 +115,11 @@ if (/^(1|true|yes)$/i.test(process.env.LENS_USE_STAGED ?? "")) {
   const existing = path.join(stage, "manifest.json");
   if (fs.existsSync(existing)) {
     const staged = JSON.parse(fs.readFileSync(existing, "utf8"));
+    if (requireEngine && staged.source !== "engine") {
+      console.error("lens-web data: LENS_REQUIRE_ENGINE=1 refuses staged fixtures.");
+      process.exit(1);
+    }
+    assertRequiredTickers(staged.tickers ?? [], "staged manifest");
     console.log(
       `lens-web data: using the staged directory as uploaded` +
         ` (${staged.tickers?.length ?? 0} snapshot(s) from ${staged.source};` +
@@ -111,6 +136,17 @@ const engineSnapshots = forced ? [] : collect(snapshotDir);
 const fixtureSnapshots = collect(path.join(appRoot, "fixtures", "snapshots"));
 const useFixtures = engineSnapshots.length === 0;
 const chosen = useFixtures ? fixtureSnapshots : engineSnapshots;
+
+if (requireEngine && useFixtures) {
+  console.error(
+    `lens-web data: LENS_REQUIRE_ENGINE=1 but no engine snapshots were found at ${snapshotDir}. Refusing synthetic fixtures.`,
+  );
+  process.exit(1);
+}
+assertRequiredTickers(
+  chosen.map((file) => JSON.parse(fs.readFileSync(file, "utf8")).ticker),
+  useFixtures ? "fixtures" : "engine",
+);
 
 if (chosen.length === 0) {
   console.error(
