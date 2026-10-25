@@ -125,3 +125,57 @@ export function points(value: number | null | undefined, digits = 1): string | n
   const body = fixedHalfEven(Math.abs(value), digits);
   return `${value >= 0 ? "+" : "-"}${body}`;
 }
+
+/**
+ * The history section's own conventions, which are not the same as the rest of
+ * the page's.
+ *
+ * The Python page renders that section in the browser with `Intl.NumberFormat`,
+ * so what a reader sees there is whole dollars, at most one decimal on a
+ * percentage with trailing zeros dropped, and a sign only when the value is not
+ * zero -- `$10,352` and `+49%`, not `$10,351.70` and `+49.0%`. The same
+ * formatters are used here so the two front ends print the same characters for
+ * the same snapshot and a parity check compares pages rather than conventions.
+ */
+const WHOLE_DOLLARS = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+const SIGNED_PERCENT = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  maximumFractionDigits: 1,
+  signDisplay: "exceptZero",
+});
+const PLAIN_PERCENT = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
+
+export function displayMoney(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return WHOLE_DOLLARS.format(value);
+}
+
+export function displayPercent(
+  value: number | null | undefined,
+  options: { signed?: boolean } = {},
+): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  return (options.signed ? SIGNED_PERCENT : PLAIN_PERCENT).format(value);
+}
+
+/**
+ * The gap between two returns, in percentage points.
+ *
+ * Not a percentage: subtracting one cumulative return from another gives a
+ * difference in points, and writing it with a percent sign invites the reader
+ * to treat it as a relative change. The Python page says "percentage points"
+ * for the same reason.
+ */
+export function percentagePoints(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  // One decimal, always, and a sign only when the gap is negative: this is
+  // `(gap * 100).toFixed(1)`, which is what the live page prints.
+  return (value * 100).toFixed(1);
+}

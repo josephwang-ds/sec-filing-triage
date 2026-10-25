@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CompanyFinder } from "@/components/company/CompanyFinder";
 import { featuredCompanies, listCompanies, manifest } from "@/lib/data/snapshots";
-import { signedPercent } from "@/lib/format";
+import { percentagePoints } from "@/lib/format";
 import { getSnapshot } from "@/lib/data/snapshots";
 
 export async function generateMetadata({
@@ -64,7 +64,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {featured.map((company) => {
                 const snapshot = getSnapshot(company.ticker);
                 const relative = snapshot
-                  ? signedPercent(snapshot.performance.relative_total_return)
+                  ? percentagePoints(snapshot.performance.relative_total_return)
                   : null;
                 return (
                   <li key={company.ticker}>

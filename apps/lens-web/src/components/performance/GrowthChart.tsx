@@ -3,7 +3,7 @@
 import { useId, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { GrowthPoint } from "@/lib/contracts/snapshot";
-import { money } from "@/lib/format";
+import { displayMoney } from "@/lib/format";
 
 interface Props {
   points: GrowthPoint[];
@@ -93,8 +93,8 @@ export function GrowthChart({ points, benchmark, ticker }: Props) {
             benchmark,
             start: first.date,
             end: last.date,
-            assetEnd: money(last.asset_value) ?? "",
-            benchmarkEnd: money(last.benchmark_value) ?? "",
+            assetEnd: displayMoney(last.asset_value) ?? "",
+            benchmarkEnd: displayMoney(last.benchmark_value) ?? "",
           })}
           onPointerMove={(event) => locate(event.clientX)}
           onPointerLeave={() => setCursor(null)}
@@ -122,7 +122,7 @@ export function GrowthChart({ points, benchmark, ticker }: Props) {
                 fontSize="10"
                 fill="var(--color-muted)"
               >
-                {money(value)}
+                {displayMoney(value)}
               </text>
             </g>
           ))}
@@ -194,10 +194,10 @@ export function GrowthChart({ points, benchmark, ticker }: Props) {
           >
             <b className="block">{active.date}</b>
             <span className="block">
-              {ticker} {money(active.asset_value)}
+              {ticker} {displayMoney(active.asset_value)}
             </span>
             <span className="block opacity-80">
-              {benchmark} {money(active.benchmark_value)}
+              {benchmark} {displayMoney(active.benchmark_value)}
             </span>
           </div>
         ) : null}
@@ -209,7 +209,7 @@ export function GrowthChart({ points, benchmark, ticker }: Props) {
           benchmark,
           start: first.date,
           end: last.date,
-          initial: money(first.asset_value) ?? "",
+          initial: displayMoney(first.asset_value) ?? "",
         })}
       </figcaption>
     </figure>

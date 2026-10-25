@@ -1,7 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import type { CompanySnapshot } from "@/lib/contracts/snapshot";
 import { SourceLink } from "@/components/ui/SourceLink";
-import { isoDate, money, signedPercent } from "@/lib/format";
+import { isoDate, money, percentagePoints } from "@/lib/format";
 
 /**
  * Module A. Who this company is, what evidence the page holds about it, and as
@@ -24,7 +24,7 @@ export async function CompanyHero({ snapshot }: { snapshot: CompanySnapshot }) {
   const close = money(snapshot.market.latest_adjusted_close);
   const priceDate = isoDate(snapshot.market.price_date);
   const coverage = profile.coverage;
-  const relative = signedPercent(snapshot.performance.relative_total_return);
+  const relative = percentagePoints(snapshot.performance.relative_total_return);
 
   const facts = [
     {

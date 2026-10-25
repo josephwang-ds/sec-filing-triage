@@ -49,7 +49,7 @@
     },
     "featured": "示例公司",
     "featuredNote": "三个可以作为起点的页面。这不是排名、推荐，也不是选股结果。",
-    "featuredRelative": "相对 {benchmark} {value}，{start} 至 {end}",
+    "featuredRelative": "相对 {benchmark} {value} 个百分点，{start} 至 {end}",
     "evidenceTitle": "证据是什么",
     "evidenceNote": "三类来源，各有自己的观察时间。研究方法页说明了每一类是如何处理的。",
     "evidence": {
@@ -81,7 +81,7 @@
       "eyebrow": "公司概览 · 有来源可查",
       "close": "最新复权收盘价",
       "closeOn": "观测于 {date}",
-      "relative": "相对 {benchmark} 的回报",
+      "relative": "相对 {benchmark} 的回报差",
       "between": "{start} 至 {end}",
       "filings": "快照内的披露数量",
       "priceHistory": "价格区间 {start} 至 {end}",
@@ -207,7 +207,7 @@
     "backToDefault": "返回 {benchmark}",
     "endingValue": "期末价值",
     "endingFrom": "以 {initial} 起始投入，{start} 至 {end}",
-    "relative": "相对 {benchmark}",
+    "relative": "相对 {benchmark} 的回报差（百分点）",
     "bothReturns": "{ticker} {asset} · {benchmark} {market}",
     "metric": {
       "totalReturn": "累计回报",

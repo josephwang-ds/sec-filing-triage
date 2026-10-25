@@ -9,7 +9,7 @@ import type {
 } from "@/lib/contracts/snapshot";
 import { GrowthChart } from "./GrowthChart";
 import { StatCard } from "@/components/ui/StatCard";
-import { count, money, multiple, percent, signedPercent } from "@/lib/format";
+import { count, displayMoney, displayPercent, multiple, percentagePoints } from "@/lib/format";
 
 interface Props {
   ticker: string;
@@ -181,11 +181,11 @@ export function PerformanceSection({
                 {t("endingValue")}
               </span>
               <strong className="lens-figure text-3xl break-words text-ink">
-                {money(stats.ending_value)}
+                {displayMoney(stats.ending_value)}
               </strong>
               <small className="text-xs text-muted">
                 {t("endingFrom", {
-                  initial: money(stats.initial_investment) ?? "",
+                  initial: displayMoney(stats.initial_investment) ?? "",
                   start: option.period.start,
                   end: option.period.end,
                 })}
@@ -193,14 +193,14 @@ export function PerformanceSection({
               <div className="mt-auto flex flex-col gap-1 border-t border-line pt-4 text-xs text-muted">
                 <span>{t("relative", { benchmark: symbol })}</span>
                 <b className="lens-figure text-lg text-ink">
-                  {signedPercent(stats.relative_total_return)}
+                  {percentagePoints(stats.relative_total_return)}
                 </b>
                 <span>
                   {t("bothReturns", {
                     ticker,
-                    asset: signedPercent(asset.total_return) ?? "",
+                    asset: displayPercent(asset.total_return, { signed: true }) ?? "",
                     benchmark: symbol,
-                    market: signedPercent(market.total_return) ?? "",
+                    market: displayPercent(market.total_return, { signed: true }) ?? "",
                   })}
                 </span>
               </div>
@@ -210,26 +210,26 @@ export function PerformanceSection({
           <div className="lens-grid mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <StatCard
               label={t("metric.totalReturn")}
-              value={signedPercent(asset.total_return)}
+              value={displayPercent(asset.total_return, { signed: true })}
               context={t("metric.periodContext", { start: option.period.start, end: option.period.end })}
               missingLabel={t("notAvailable")}
               tone={asset.total_return >= 0 ? "positive" : "critical"}
             />
             <StatCard
               label={t("metric.cagr")}
-              value={signedPercent(asset.cagr)}
+              value={displayPercent(asset.cagr, { signed: true })}
               context={t("metric.cagrContext")}
               missingLabel={t("notAvailable")}
             />
             <StatCard
               label={t("metric.volatility")}
-              value={percent(asset.annualized_volatility)}
+              value={displayPercent(asset.annualized_volatility)}
               context={t("metric.volatilityContext")}
               missingLabel={t("notAvailable")}
             />
             <StatCard
               label={t("metric.maxDrawdown")}
-              value={signedPercent(asset.max_drawdown)}
+              value={displayPercent(asset.max_drawdown, { signed: true })}
               context={
                 asset.max_drawdown_date
                   ? t("metric.troughOn", { date: asset.max_drawdown_date })
@@ -256,8 +256,8 @@ export function PerformanceSection({
             <strong className="shrink-0 font-bold">{t("riskNoteLabel")}</strong>
             <span>
               {t("riskNote", {
-                drawdown: signedPercent(asset.max_drawdown) ?? "",
-                worst: signedPercent(asset.worst_day) ?? "",
+                drawdown: displayPercent(asset.max_drawdown, { signed: true }) ?? "",
+                worst: displayPercent(asset.worst_day, { signed: true }) ?? "",
               })}
             </span>
           </div>

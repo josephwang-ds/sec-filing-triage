@@ -15,6 +15,7 @@ import { DisclosureSignalCard } from "@/components/filings/DisclosureSignalCard"
 import { EventsSection } from "@/components/events/EventsSection";
 import { AskSection } from "@/components/ai/AskSection";
 import { getSnapshot, snapshotTickers } from "@/lib/data/snapshots";
+import type { CompanySnapshot } from "@/lib/contracts/snapshot";
 import { isoDate } from "@/lib/format";
 
 /**
@@ -27,6 +28,28 @@ import { isoDate } from "@/lib/format";
  * silently missing section is indistinguishable from a section that was never
  * supposed to exist.
  */
+/**
+ * The period the page opens on.
+ *
+ * Deliberately the same rule as `company_lens.web.page._default_period`: the
+ * snapshot's own span, rounded to whole years, falling back to the first
+ * option. Opening on a different period from the Python page would make every
+ * number in the history section differ between the two for no reason other
+ * than the default, which is the kind of difference a parity check should not
+ * have to explain away.
+ */
+function defaultPeriodFor(snapshot: CompanySnapshot): string {
+  const labels = Object.keys(snapshot.period_options);
+  const start = snapshot.period.start;
+  const end = snapshot.period.end;
+  if (start && end) {
+    const days = (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000;
+    const candidate = `${Math.round(days / 365.25)}Y`;
+    if (labels.includes(candidate)) return candidate;
+  }
+  return labels[0] ?? "5Y";
+}
+
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
     snapshotTickers().map((ticker) => ({ locale, ticker: ticker.toLowerCase() })),
@@ -71,10 +94,7 @@ export default async function CompanyPage({
   if (!snapshot) notFound();
 
   const t = await getTranslations("company");
-  const defaultPeriod =
-    Object.keys(snapshot.period_options).find((label) => label === "5Y") ??
-    Object.keys(snapshot.period_options)[0] ??
-    "5Y";
+  const defaultPeriod = defaultPeriodFor(snapshot);
 
   const sections = [
     { id: "brief", label: t("nav.brief") },

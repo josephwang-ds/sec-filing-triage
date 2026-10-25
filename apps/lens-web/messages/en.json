@@ -49,7 +49,7 @@
     },
     "featured": "Featured examples",
     "featuredNote": "Three pages to start from. Not a ranking, a recommendation, or a screen result.",
-    "featuredRelative": "{value} against {benchmark}, {start} to {end}",
+    "featuredRelative": "{value} percentage points against {benchmark}, {start} to {end}",
     "evidenceTitle": "What the evidence is",
     "evidenceNote": "Three sources, each with its own time of observation. The research page states how each one is handled.",
     "evidence": {
@@ -81,7 +81,7 @@
       "eyebrow": "COMPANY OVERVIEW · SOURCE-BACKED",
       "close": "Latest adjusted close",
       "closeOn": "Observed {date}",
-      "relative": "Return against {benchmark}",
+      "relative": "Return gap vs {benchmark}",
       "between": "{start} to {end}",
       "filings": "Filings in snapshot",
       "priceHistory": "Prices {start} to {end}",
@@ -207,7 +207,7 @@
     "backToDefault": "Back to {benchmark}",
     "endingValue": "Ending value",
     "endingFrom": "From {initial} invested, {start} to {end}",
-    "relative": "Against {benchmark}",
+    "relative": "Return gap vs {benchmark}, in percentage points",
     "bothReturns": "{ticker} {asset} · {benchmark} {market}",
     "metric": {
       "totalReturn": "Total return",
