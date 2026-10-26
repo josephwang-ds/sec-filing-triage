@@ -129,9 +129,26 @@ export interface ResearchEvidence {
   ladder: LadderStage[];
   nlpAblation: Record<string, string>[];
   modelComparison: Record<string, string>[];
+  modelPaired: Record<string, string>[];
+  capacity: Record<string, string>[];
+  tradability: Record<string, string>[];
+  anchoring: Record<string, string>[];
+  calibration: {
+    shipped?: string;
+    metrics?: Record<string, number | string>;
+    methods?: Record<string, number | string>[];
+  } | null;
+  calibrationComparison: Record<string, string>[];
   volatilityForecasters: Record<string, string>[];
+  volatilityRegimes: Record<string, string>[];
+  volatilityPaired: Record<string, string>[];
   selfRelative: Record<string, unknown> | null;
-  volatility: Record<string, unknown> | null;
+  volatility: {
+    shipped?: string;
+    reference?: string;
+    task?: { horizon?: number; filings?: number; scored?: number };
+    gates?: Record<string, { calibrated?: boolean }>;
+  } | null;
 }
 
 let cache: ResearchEvidence | null = null;
@@ -155,9 +172,17 @@ export function researchEvidence(): ResearchEvidence {
     })),
     nlpAblation: readCsv("nlp_feature_ablation.csv"),
     modelComparison: readCsv("model_comparison.csv"),
+    modelPaired: readCsv("model_comparison_paired.csv"),
+    capacity: readCsv("capacity_profile.csv"),
+    tradability: readCsv("reaction_capture.csv"),
+    anchoring: readCsv("anchoring_study.csv"),
+    calibration: readJson("calibration_metrics.json"),
+    calibrationComparison: readCsv("calibration_comparison.csv"),
     volatilityForecasters: readCsv("volatility_forecasters.csv"),
+    volatilityRegimes: readCsv("volatility_by_regime.csv"),
+    volatilityPaired: readCsv("volatility_paired.csv"),
     selfRelative: readJson<Record<string, unknown>>("self_relative_metrics.json"),
-    volatility: readJson<Record<string, unknown>>("volatility_metrics.json"),
+    volatility: readJson("volatility_metrics.json"),
   };
   return cache;
 }

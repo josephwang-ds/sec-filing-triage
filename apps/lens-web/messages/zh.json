@@ -593,6 +593,11 @@
       "leakage": "泄漏审计",
       "metrics": "指标",
       "baselines": "基线",
+      "capacity": "阅读容量",
+      "tradability": "可交易性",
+      "models": "模型比较",
+      "calibration": "校准",
+      "volatility": "波动率",
       "ablations": "消融实验",
       "limitations": "研究局限",
       "provenance": "数据来源",
@@ -721,6 +726,89 @@
       "pointInTime": {
         "term": "时点一致",
         "definition": "只使用决策时刻可知的信息：当时的样本范围、当时已经成交的价格，以及当时已经受理的文件。"
+      }
+    },
+    "unavailable": {
+      "title": "这份证据导出里没有",
+      "notInExport": "导出中没有这一项"
+    },
+    "capacity": {
+      "title": "如果读者一次只看得到更多或更少呢？",
+      "intro": "每种阅读容量下的精确率，来自导出的容量表。当天文件数少于 k 的交易日，不进入该 k 的统计。",
+      "caption": "在 k 处的精确率，对照当天打乱的队列和当天最好的排序。",
+      "note": "上界远低于 100%：一天里只有一份重要文件时，前五名里不可能有五份重要文件；有些交易日一份都没有。",
+      "missing": "本次构建没有 capacity_profile.csv，因此不展示容量数字。",
+      "column": {
+        "k": "阅读 k 份",
+        "sessions": "交易日",
+        "random": "随机",
+        "model": "模型",
+        "ceiling": "上界",
+        "lift": "提升",
+        "span": "可实现差距中所占份额"
+      }
+    },
+    "tradability": {
+      "title": "这能拿去交易吗？",
+      "intro": "每份申报的异常波动里，有多少在下一开盘价里已经实现。这是对还剩下多少可行动空间的测量，不是交易规则。",
+      "measured": "收盘后受理、且事后被标为重要的申报，其反应中有 {share} 已经包含在开盘价里。",
+      "caption": "异常波动在下一开盘价中已经实现的中位数份额。",
+      "openAnchored": "把标签改成从开盘起算、而不是从前收盘起算之后，平均精确率是 {precision}。这是一个更难的问题，不是第二个排序器。",
+      "missing": "本次构建没有 reaction_capture.csv，因此不展示可交易性数字。",
+      "column": {
+        "population": "申报",
+        "count": "数量",
+        "share": "已在开盘价中"
+      }
+    },
+    "models": {
+      "title": "换一个模型重要吗？",
+      "intro": "每个模型家族用同一批申报评分。差值表是相对已出货家族的配对比较，不是另一次实验。",
+      "caption": "各模型家族的样本外得分。",
+      "pairedCaption": "相对参照家族的配对差值。负的差值表示落后于参照。",
+      "note": "区间跨过零，并不能说明一个家族领先。出货的家族由嵌套选择决定，不是由这张表的第一行决定。",
+      "missing": "本次构建没有 model_comparison.csv，因此不展示模型比较。",
+      "pairedMissing": "本次构建没有配对差值导出。上面的得分表不能代替它。",
+      "column": {
+        "family": "家族",
+        "ap": "平均精确率",
+        "auc": "ROC AUC",
+        "apInterval": "平均精确率，95%",
+        "reference": "参照",
+        "difference": "差值",
+        "interval": "差值的 95% 区间"
+      }
+    },
+    "calibration": {
+      "title": "分数说的是它实际的意思吗？",
+      "intro": "三种校准方法在同一批留出的折上评分。出货的方法是导出文件写明的那一种，不是看起来最好的那一行。",
+      "shipped": "导出采用的是 {method}。",
+      "caption": "各校准方法的 Brier 分数、期望校准误差和排序指标。",
+      "note": "Brier 分数和期望校准误差越低越好。排序指标放在旁边，是为了避免一种方法靠把排序抹平来取胜。",
+      "missing": "本次构建的校准导出不完整，因此不展示校准数字。",
+      "column": {
+        "method": "方法",
+        "brier": "Brier",
+        "ece": "期望校准误差",
+        "ap": "平均精确率",
+        "auc": "ROC AUC"
+      }
+    },
+    "volatility": {
+      "title": "接下来一个月有多颠簸？",
+      "intro": "未来 20 个交易日的波动率区间。它不是申报排序的输入，也不说明价格往哪边走。",
+      "caption": "Pinball 损失，以及声称的区间实际覆盖了多少结果。",
+      "regime": "出货的预测器是 {shipped}。它的 80% 区间在平静三分位覆盖 {calm}，在动荡三分位覆盖 {turbulent}。",
+      "note": "只有当两个区间的实际覆盖都接近它们声称的覆盖时，预测器才会出货。更宽的区间可以看起来校准得很好，同时几乎什么都没说。",
+      "missing": "本次构建的波动率导出不完整，因此不展示波动率数字。",
+      "yes": "是",
+      "no": "否",
+      "column": {
+        "forecaster": "预测器",
+        "pinball": "Pinball 损失",
+        "coverage80": "80% 区间覆盖",
+        "width": "区间宽度",
+        "calibrated": "通过校准门槛"
       }
     },
     "noEvidence": {

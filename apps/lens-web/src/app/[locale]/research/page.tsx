@@ -6,6 +6,7 @@ import { Section } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageNav } from "@/components/research/PageNav";
 import { EvidenceTable } from "@/components/research/EvidenceTable";
+import { AuditSections } from "@/components/research/AuditSections";
 import { researchEvidence } from "@/lib/data/research";
 import { count, multiple, percent } from "@/lib/format";
 
@@ -50,6 +51,11 @@ export default async function ResearchPage({
     { id: "leakage", label: t("nav.leakage") },
     { id: "metrics", label: t("nav.metrics") },
     { id: "baselines", label: t("nav.baselines") },
+    { id: "capacity", label: t("nav.capacity") },
+    { id: "tradability", label: t("nav.tradability") },
+    { id: "models", label: t("nav.models") },
+    { id: "calibration", label: t("nav.calibration") },
+    { id: "volatility", label: t("nav.volatility") },
     { id: "ablations", label: t("nav.ablations") },
     { id: "limitations", label: t("nav.limitations") },
     { id: "provenance", label: t("nav.provenance") },
@@ -216,6 +222,8 @@ export default async function ResearchPage({
               />
             ) : null}
           </Section>
+
+          <AuditSections />
 
           <Section id="ablations" eyebrow={t("nav.ablations")} title={t("ablations.title")} intro={t("ablations.intro")}>
             {evidence.nlpAblation.length ? (

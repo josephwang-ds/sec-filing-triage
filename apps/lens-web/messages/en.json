@@ -593,6 +593,11 @@
       "leakage": "Leakage audit",
       "metrics": "Metrics",
       "baselines": "Baselines",
+      "capacity": "Capacity",
+      "tradability": "Tradability",
+      "models": "Model comparison",
+      "calibration": "Calibration",
+      "volatility": "Volatility",
       "ablations": "Ablations",
       "limitations": "Limitations",
       "provenance": "Provenance",
@@ -721,6 +726,89 @@
       "pointInTime": {
         "term": "Point in time",
         "definition": "Using only what was knowable at the decision moment: the universe as it was, the prices as they had printed, and the filings already accepted."
+      }
+    },
+    "unavailable": {
+      "title": "Not in this evidence export",
+      "notInExport": "not in this export"
+    },
+    "capacity": {
+      "title": "What if a reader has time for more, or fewer, than five?",
+      "intro": "Precision at each reading capacity, from the exported capacity profile. Sessions with fewer than k filings are left out at that k.",
+      "caption": "Precision at k against a shuffled queue and the best possible order that day.",
+      "note": "The ceiling is far below 100% because a day with one material filing cannot put five material filings in a top five, and some sessions have none.",
+      "missing": "capacity_profile.csv is not in this build, so no capacity figure is shown.",
+      "column": {
+        "k": "Read k",
+        "sessions": "Sessions",
+        "random": "Random",
+        "model": "Model",
+        "ceiling": "Ceiling",
+        "lift": "Lift",
+        "span": "Span captured"
+      }
+    },
+    "tradability": {
+      "title": "Could this be traded?",
+      "intro": "The share of each filing's abnormal move that is already in the opening print. This is a measurement of what was left to act on, not a trading rule.",
+      "measured": "For material filings accepted after the close, {share} of the reaction is already in the opening print.",
+      "caption": "Median share of the abnormal move realised by the next open.",
+      "openAnchored": "Scored again with the label anchored at the open instead of the prior close, average precision is {precision}. That is a harder question, not a second ranker.",
+      "missing": "reaction_capture.csv is not in this build, so no tradability figure is shown.",
+      "column": {
+        "population": "Filings",
+        "count": "Count",
+        "share": "Already in the open"
+      }
+    },
+    "models": {
+      "title": "Does the choice of model matter?",
+      "intro": "Every family is scored on the same filings. The difference table is the paired comparison against the shipped family, not a second experiment.",
+      "caption": "Out-of-sample scores by model family.",
+      "pairedCaption": "Paired difference versus the reference family. A negative difference is behind the reference.",
+      "note": "An interval that crosses zero does not establish that one family is ahead. Nested selection, not the top row of this table, is what chooses the shipped family.",
+      "missing": "model_comparison.csv is not in this build, so no model comparison is shown.",
+      "pairedMissing": "The paired-difference export is not in this build. The score table above is not a substitute for it.",
+      "column": {
+        "family": "Family",
+        "ap": "Average precision",
+        "auc": "ROC AUC",
+        "apInterval": "Average precision, 95%",
+        "reference": "Reference",
+        "difference": "Difference",
+        "interval": "95% on the difference"
+      }
+    },
+    "calibration": {
+      "title": "Do the scores mean what they say?",
+      "intro": "Three calibrators scored on the same held-back folds. The shipped method is the one named in the export, not the one with the friendliest row.",
+      "shipped": "The export ships {method}.",
+      "caption": "Brier score, expected calibration error and ranking metrics by calibrator.",
+      "note": "A lower Brier score and a lower expected calibration error are better. Ranking metrics are reported beside them so a calibrator cannot win by flattening the ranking.",
+      "missing": "The calibration export is incomplete in this build, so no calibration figure is shown.",
+      "column": {
+        "method": "Method",
+        "brier": "Brier",
+        "ece": "Expected calibration error",
+        "ap": "Average precision",
+        "auc": "ROC AUC"
+      }
+    },
+    "volatility": {
+      "title": "How turbulent is the next month?",
+      "intro": "A 20-session volatility band. It is not an input to the filing ranker, and it does not say which way the price moves.",
+      "caption": "Pinball loss and how often the stated bands contain the outcome.",
+      "regime": "The shipped forecaster is {shipped}. Its 80% band holds {calm} of outcomes in the calm third and {turbulent} in the turbulent third.",
+      "note": "A forecaster ships only when both bands hold close to the coverage they claim. A wider band can look calibrated while saying less.",
+      "missing": "The volatility export is incomplete in this build, so no volatility figure is shown.",
+      "yes": "Yes",
+      "no": "No",
+      "column": {
+        "forecaster": "Forecaster",
+        "pinball": "Pinball loss",
+        "coverage80": "80% band holds",
+        "width": "Band width",
+        "calibrated": "Calibrated"
       }
     },
     "noEvidence": {
