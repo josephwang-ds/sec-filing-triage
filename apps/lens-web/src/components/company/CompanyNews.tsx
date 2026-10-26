@@ -38,11 +38,13 @@ export async function CompanyNews({ snapshot }: { snapshot: CompanySnapshot }) {
             title={t("companyNews")}
             headlines={snapshot.headlines}
             emptyLabel={t("noCompanyNews")}
+            sourceLanguage={t("sourceLanguage")}
           />
           <HeadlineList
             title={t("marketNews")}
             headlines={snapshot.market_headlines}
             emptyLabel={t("noMarketNews")}
+            sourceLanguage={t("sourceLanguage")}
           />
         </div>
       )}
@@ -58,10 +60,12 @@ function HeadlineList({
   title,
   headlines,
   emptyLabel,
+  sourceLanguage,
 }: {
   title: string;
   headlines: Headline[];
   emptyLabel: string;
+  sourceLanguage: string;
 }) {
   return (
     <div className="min-w-0">
@@ -78,6 +82,7 @@ function HeadlineList({
               <span className="flex flex-wrap gap-x-3 text-[11px] text-muted">
                 <span className="font-bold text-ink">{isoMinute(headline.published_at)}</span>
                 <span className="break-words">{headline.publisher}</span>
+                <span>{sourceLanguage}</span>
               </span>
               {/* The headline is the publisher's wording, in the publisher's
                   language. */}

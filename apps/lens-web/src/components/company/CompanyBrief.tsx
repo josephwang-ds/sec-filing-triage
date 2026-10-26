@@ -54,6 +54,9 @@ export async function CompanyBrief({ snapshot }: { snapshot: CompanySnapshot }) 
                   className="lens-serif mt-2 mb-0 text-base break-words text-paper"
                 >
                   {text}
+                  {untranslated ? (
+                    <span className="mt-1 block text-[11px] text-paper/70">{t("sourceLanguage")}</span>
+                  ) : null}
                 </p>
               );
             })}

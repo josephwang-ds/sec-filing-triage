@@ -138,6 +138,96 @@ test("a broken payload offers a retry rather than a blank card", async ({ page }
   await expect(page.locator("#events").getByRole("button", { name: "Check again" })).toBeVisible();
 });
 
+test("event ask sends the version on the page and shows the evidence boundary", async ({ page }) => {
+  let posted: Record<string, unknown> | null = null;
+  await page.route("**/api/ask", async (route) => {
+    if (route.request().method() === "POST") {
+      posted = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: [
+            {
+              text: "The evidence records a headline and nothing further.",
+              citations: [{ id: "c1", label: "Source item", url: "https://example.invalid/fixture/one" }],
+            },
+          ],
+          boundaries: [{ text: "It does not establish a price move.", citations: [] }],
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        models: [{ id: "openai", provider: "openai", model: "fixture" }],
+        scopes: [],
+        default_scope: "core",
+        limits: { configured: true },
+      }),
+    });
+  });
+  await serve(
+    page,
+    feed({
+      events: [{ ...EVENT, ask_enabled: true, manifest_version: "9f2c1d44" }],
+    }),
+  );
+  await page.goto("/en/company/syn112");
+  await page.locator("#events").getByRole("button", { name: "Ask about this event" }).click();
+  await expect(page.locator("#events").getByText("It does not establish a price move.")).toBeVisible();
+  expect(posted).toMatchObject({
+    ticker: "SYN112",
+    event_version: "9f2c1d44",
+    event_id: "evt-1",
+  });
+  expect(posted).not.toHaveProperty("evidence");
+});
+
+test("a missing event version is reported and Ask is not called", async ({ page }) => {
+  let posts = 0;
+  await page.route("**/api/ask", async (route) => {
+    if (route.request().method() === "POST") posts += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ models: [], scopes: [], default_scope: "core", limits: {} }),
+    });
+  });
+  await serve(page, feed({ manifest_version: null, events: [{ ...EVENT, ask_enabled: true }] }));
+  await page.goto("/zh/company/syn112");
+  const events = page.locator("#events");
+  await expect(events.getByText("本页没有已发布的事件版本，因此没有发送提问。没有改用其他版本。")).toBeVisible();
+  await events.getByRole("button", { name: "询问这条事件" }).click();
+  expect(posts).toBe(0);
+  await expect(events).not.toContainText("manifest_version");
+});
+
+test("an item on a different version is not sent to Ask", async ({ page }) => {
+  let posts = 0;
+  await page.route("**/api/ask", async (route) => {
+    if (route.request().method() === "POST") posts += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ models: [{ id: "openai" }], scopes: [], default_scope: "core", limits: {} }),
+    });
+  });
+  await serve(
+    page,
+    feed({
+      events: [{ ...EVENT, ask_enabled: true, manifest_version: "other-version" }],
+    }),
+  );
+  await page.goto("/en/company/syn112");
+  await page.locator("#events").getByRole("button", { name: "Ask about this event" }).click();
+  await expect(page.locator("#events").getByText("A different version was not substituted.")).toBeVisible();
+  expect(posts).toBe(0);
+  await expect(page.locator("#events")).not.toContainText("other-version");
+});
+
 test("the card does not widen the page with a long headline", async ({ page }) => {
   await serve(
     page,

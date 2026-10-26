@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { eventFeed, inCoverage, publishedVersion, resolveView } from "@/lib/contracts/events";
+import {
+  coverageGapLines,
+  eventAskDecision,
+  eventFeed,
+  inCoverage,
+  publishedVersion,
+  resolveView,
+} from "@/lib/contracts/events";
 
 function feed(overrides: Record<string, unknown> = {}) {
   return eventFeed.parse({
@@ -78,6 +85,48 @@ describe("resolveView", () => {
     expect(inCoverage(feed({ coverage_tier: "high_frequency" }))).toBe(true);
     expect(inCoverage(feed({ coverage_tier: "ordinary" }))).toBe(true);
     expect(inCoverage(feed({ coverage_tier: "unsupported" }))).toBe(false);
+  });
+});
+
+describe("eventAskDecision", () => {
+  const item = {
+    id: "evt-1",
+    title: "A headline",
+    ask_enabled: true,
+    manifest_version: "abc123",
+  };
+
+  it("sends only the version published on the page", () => {
+    expect(eventAskDecision(feed(), item)).toEqual({ state: "ready", version: "abc123" });
+  });
+
+  it("refuses to ask when the page has no version", () => {
+    expect(eventAskDecision(feed({ manifest_version: null }), item).state).toBe("missing_version");
+    expect(eventAskDecision(feed({ manifest_version: "none" }), item).state).toBe("missing_version");
+  });
+
+  it("refuses an item that is not on the page version", () => {
+    expect(
+      eventAskDecision(feed(), { ...item, manifest_version: "other" }).state,
+    ).toBe("version_mismatch");
+  });
+
+  it("stays off when the feed has not enabled questions for the item", () => {
+    expect(eventAskDecision(feed(), { ...item, ask_enabled: false }).state).toBe("disabled");
+  });
+});
+
+describe("coverageGapLines", () => {
+  it("keeps the recorded window and drops gaps with nothing in them", () => {
+    const lines = coverageGapLines(
+      feed({
+        coverage_gaps: [
+          { start: "2026-01-01", end: "2026-01-03", reason: "provider_lookback" },
+          {},
+        ],
+      }),
+    );
+    expect(lines).toEqual(["2026-01-01 → 2026-01-03 (provider_lookback)"]);
   });
 });
 

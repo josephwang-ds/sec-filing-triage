@@ -162,6 +162,9 @@ function FilingCard({
                       key={passage.anchor}
                       className="m-0 border-l-2 border-accent/40 bg-panel px-4 py-3"
                     >
+                      <p className="m-0 mb-1 text-[11px] font-bold tracking-wide text-muted uppercase">
+                        {t("sourceLanguage")}
+                      </p>
                       {/* Filed text, in the language it was filed in. */}
                       <p lang="en" className="lens-serif m-0 mb-2 text-sm break-words">
                         {passage.text}
@@ -215,9 +218,14 @@ function FilingCard({
                         : ""}
                     </p>
                     {change.current ? (
-                      <p lang="en" className="m-0 mt-1 text-xs break-words text-muted">
-                        {change.current.text}
-                      </p>
+                      <>
+                        <p className="m-0 mt-1 text-[11px] font-bold tracking-wide text-muted uppercase">
+                          {t("sourceLanguage")}
+                        </p>
+                        <p lang="en" className="m-0 mt-1 text-xs break-words text-muted">
+                          {change.current.text}
+                        </p>
+                      </>
                     ) : null}
                   </div>
                 ))}

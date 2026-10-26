@@ -102,6 +102,18 @@ describe("keys the components actually ask for", () => {
     // These are built from engine values at runtime, so a literal scan cannot
     // see them. The engine's full value set is listed here instead.
     const families: Record<string, string[]> = {
+      "events.askError": [
+        "event_version_unavailable",
+        "event_not_in_version",
+        "client_evidence_rejected",
+        "ask_not_configured",
+        "model_not_available",
+        "grounding_validation_failed",
+        "provider_failed",
+        "question_scope",
+        "network",
+        "unknown",
+      ],
       "events.view": [
         "loading",
         "events",

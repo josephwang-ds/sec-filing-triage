@@ -108,6 +108,7 @@
       "uncertainties": "解读性的"
     },
     "mode": "生成方式：{mode}",
+    "sourceLanguage": "此处为英文原文，引擎未提供中文。",
     "boundary": "这些是历史观测，不是预测。"
   },
   "news": {
@@ -129,7 +130,8 @@
       "body": "新闻来源已配置，但在该时间窗内没有返回任何内容。上方的披露与价格历史不受影响。"
     },
     "generated": "采集于 {time}。",
-    "boundary": "新闻标题为发布方原文，保留其发布时使用的语言。"
+    "sourceLanguage": "英文标题原文",
+    "boundary": "新闻标题为发布方原文，保留英文，即其发布时使用的语言。"
   },
   "financials": {
     "eyebrow": "申报结果",
@@ -150,6 +152,7 @@
     },
     "yoyBadge": "同比 {value}",
     "yoyUnavailable": "无同比",
+    "yoyWithheld": "变动：{change}。零基数或涉及亏损时不显示增长百分比。",
     "currentPeriod": "本期：{start} — {end} · {unit}",
     "priorPeriod": "上年同期：{value}（{start} — {end}）",
     "noPrior": "该报告中没有可比的上年同期数据。",
@@ -259,6 +262,7 @@
     "base": "该公司自身越过这一门槛的频率",
     "history": "参与比较的历史披露数量",
     "why": "依据",
+    "sourceLanguage": "以下依据为英文原文，评分程序以此语言写出。",
     "boundary": "它估计的是反应可能有多大，而不是方向。这是阅读优先级，不是投资建议。",
     "model": "{estimator} · 校准方法 {calibration} · 评估截至 {through}",
     "state": {
@@ -287,6 +291,7 @@
     "sourcePassage": "原文段落",
     "moveBadge": "披露后 {move}",
     "passages": "文件原文摘录",
+    "sourceLanguage": "原文为英文（申报文本）",
     "noPassages": "无法从缓存的主文档中确定性地提取段落，因此不作引用。",
     "keyNumbers": "文件中的数字",
     "comparison": "与上一份可比披露的对照",
@@ -342,7 +347,7 @@
     },
     "notCovered": {
       "title": "这家公司暂无事件覆盖",
-      "body": "{ticker} 不在当前事件刷新所抓取的公司范围内，因此没有为它发布事件源。",
+      "body": "{ticker} 不在实时事件覆盖范围内。动态事件目前只为 AAPL、JPM 和 NVDA 发布，因此不为这家公司展示事件源。",
       "footnote": "这是覆盖范围的边界，并不表示没有发生任何事情。本页的披露、财报结果与价格历史不受影响。"
     },
     "unavailable": {
@@ -373,6 +378,30 @@
       "body": "目前没有任何未来事项获得公司或申报文件确认的日期。预计日期不会在这里被当作已确认日期展示。"
     },
     "partialGaps": "该时间窗内记录到 {count} 处覆盖缺口。",
+    "gap": "覆盖缺口",
+    "initializationNote": "首次只覆盖一段有限的近期窗口，不是全部历史。",
+    "buildSnapshot": "这份内容随站点构建打包，不是盘中实时更新。",
+    "originalTitle": "原始英文标题",
+    "ask": "询问这条事件",
+    "askOff": "在卡片与服务器使用同一已发布版本之前，不启用事件提问。",
+    "asking": "正在按本页显示的版本询问…",
+    "askQuestion": "这条事件的证据写了什么？哪些内容证据没有给出？",
+    "missingVersion": "本页没有已发布的事件版本，因此没有发送提问。没有改用其他版本。",
+    "versionMismatch": "这条事件不属于本页显示的版本，因此没有发送提问。没有改用其他版本。",
+    "askBoundaries": "证据边界",
+    "askEmpty": "没有可显示的回答。",
+    "askError": {
+      "event_version_unavailable": "无法读取这个事件版本。请刷新页面后再问。没有改用其他版本。",
+      "event_not_in_version": "这条事件不在本页已发布的版本中。",
+      "client_evidence_rejected": "事件证据由服务器按版本读取。自行附带证据的提问已被拒绝。",
+      "ask_not_configured": "这里没有配置模型，因此没有发送提问。",
+      "model_not_available": "所选模型不可用。",
+      "grounding_validation_failed": "模型回答未通过证据校验，因此未展示。",
+      "provider_failed": "所选模型暂时不可用。",
+      "question_scope": "请就所提供的证据提问，而不是询问买卖建议或股价预测。",
+      "network": "请求没有完成。没有改试其他版本。",
+      "unknown": "提问没有得到回答。没有改试其他版本。"
+    },
     "askDisabled": "当卡片与服务器不在同一个已发布事件版本上时，事件相关提问将被停用。",
     "boundary": "事件条目是已发布的新闻标题与申报索引记录，并附来源链接。它们不是分析，事件源也不是交易信号。"
   },
@@ -654,7 +683,7 @@
       "universe": "样本范围是当前上市大盘股的便利样本，没有做幸存者偏差控制，因此无法说明已退市公司的情况。",
       "costs": "任何环节都没有计入交易成本、价差、滑点或容量假设。排序结果不等于策略结果。",
       "magnitude": "标签衡量的是波动幅度，不是方向。本页任何内容都不说明价格曾经或将要往哪个方向走。",
-      "coverage": "动态事件覆盖比快照覆盖窄得多：多数公司有申报文件与价格历史，但没有实时事件源。",
+      "coverage": "动态事件目前只为 AAPL、JPM 和 NVDA 发布。其他公司仍有申报文件、已申报财报和价格历史。",
       "generalisation": "结果是在所评估交易日内、基于美国 8-K 披露测得的，不应假定可以推广到其他文件类型、其他市场或其他时期。"
     },
     "provenance": {

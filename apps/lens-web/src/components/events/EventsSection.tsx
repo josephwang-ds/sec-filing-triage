@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  coverageGapLines,
+  eventAskDecision,
   eventFeed,
   inCoverage,
   publishedVersion,
@@ -12,6 +14,7 @@ import {
   type PublicEvent,
   type UpcomingEvent,
 } from "@/lib/contracts/events";
+import { EventAsk } from "@/components/events/EventAsk";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SourceLink } from "@/components/ui/SourceLink";
 
@@ -100,6 +103,7 @@ export function EventsSection({ ticker }: { ticker: string }) {
   const upcoming = feed?.upcoming ?? [];
   const events = feed?.events ?? [];
   const showEvents = view === "events" || view === "partial";
+  const gaps = feed ? coverageGapLines(feed) : [];
   // The layout rule that fixes the screenshot: a second column exists only when
   // there is something confirmed to put in it.
   const twoColumn = showEvents && upcoming.length > 0;
@@ -130,6 +134,12 @@ export function EventsSection({ ticker }: { ticker: string }) {
 
       {checked ? (
         <p className="mt-3 mb-0 text-xs text-muted">{t("checkedAt", { time: checked })}</p>
+      ) : null}
+      {feed?.initialization ? (
+        <p className="mt-2 mb-0 text-xs text-muted">{t("initializationNote")}</p>
+      ) : null}
+      {feed?.storage === "build_snapshot" ? (
+        <p className="mt-2 mb-0 text-xs text-muted">{t("buildSnapshot")}</p>
       ) : null}
 
       <div className="mt-6">
@@ -190,7 +200,9 @@ export function EventsSection({ ticker }: { ticker: string }) {
               title={t("stale.title")}
               body={checked ? t("stale.bodyWithTime", { time: checked }) : t("stale.body")}
             />
-            {events.length ? <RecentList events={events} chinese={chinese} t={t} /> : null}
+            {events.length ? (
+              <RecentList events={events} feed={feed} ticker={ticker} chinese={chinese} t={t} />
+            ) : null}
           </div>
         ) : null}
 
@@ -205,7 +217,7 @@ export function EventsSection({ ticker }: { ticker: string }) {
               <h3 className="m-0 mb-3 text-xs font-bold tracking-wide text-muted uppercase">
                 {t("recent")}
               </h3>
-              <RecentList events={events} chinese={chinese} t={t} />
+              <RecentList events={events} feed={feed} ticker={ticker} chinese={chinese} t={t} />
             </div>
             {twoColumn ? (
               <div className="min-w-0">
@@ -228,10 +240,20 @@ export function EventsSection({ ticker }: { ticker: string }) {
           </p>
         ) : null}
 
-        {view === "partial" && (feed?.coverage_gaps.length ?? 0) > 0 ? (
-          <p className="mt-4 mb-0 text-xs text-muted">
-            {t("partialGaps", { count: feed?.coverage_gaps.length ?? 0 })}
+        {showEvents && !version ? (
+          <p role="status" className="mt-4 mb-0 text-xs break-words text-caution">
+            {t("missingVersion")}
           </p>
+        ) : null}
+
+        {gaps.length > 0 ? (
+          <ul className="mt-4 mb-0 flex list-none flex-col gap-1 p-0 text-xs break-words text-muted">
+            {gaps.map((line, index) => (
+              <li key={`${line}-${index}`}>
+                <span className="font-bold text-ink">{t("gap")}</span> {line}
+              </li>
+            ))}
+          </ul>
         ) : null}
       </div>
 
@@ -303,10 +325,14 @@ function Skeleton() {
 
 function RecentList({
   events,
+  feed,
+  ticker,
   chinese,
   t,
 }: {
   events: PublicEvent[];
+  feed: EventFeed | null;
+  ticker: string;
   chinese: boolean;
   t: Translator;
 }) {
@@ -335,6 +361,9 @@ function RecentList({
             </div>
             {/* The headline stays in the language it was published in. A
                 translated headline is no longer the source's words. */}
+            <p className="m-0 text-[11px] font-bold tracking-wide text-muted uppercase">
+              {t("originalTitle")}
+            </p>
             <p lang={event.title_language ?? "en"} className="m-0 text-sm break-words text-ink">
               {event.title ?? t("untitled")}
             </p>
@@ -349,6 +378,9 @@ function RecentList({
             {significance ? <p className="m-0 text-xs text-muted">{significance}</p> : null}
             {precision ? <p className="m-0 text-[11px] text-muted italic">{precision}</p> : null}
             {event.source_url ? <SourceLink href={event.source_url}>{t("source")}</SourceLink> : null}
+            {feed ? (
+              <EventAsk ticker={ticker} event={event} decision={eventAskDecision(feed, event)} />
+            ) : null}
           </li>
         );
       })}

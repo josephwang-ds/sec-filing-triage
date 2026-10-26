@@ -108,6 +108,7 @@
       "uncertainties": "INTERPRETED"
     },
     "mode": "Generated: {mode}",
+    "sourceLanguage": "Shown in English. No Chinese text was supplied for this statement.",
     "boundary": "Historical observations, not forecasts."
   },
   "news": {
@@ -129,7 +130,8 @@
       "body": "The headline source is configured but returned nothing for this window. The filings and price history above are unaffected."
     },
     "generated": "Collected {time}.",
-    "boundary": "Headlines are published wording, kept in the language they were published in."
+    "sourceLanguage": "English headline",
+    "boundary": "Headlines are published wording, kept in English, the language they were published in."
   },
   "financials": {
     "eyebrow": "FILED RESULTS",
@@ -150,6 +152,7 @@
     },
     "yoyBadge": "{value} YoY",
     "yoyUnavailable": "No YoY",
+    "yoyWithheld": "Change: {change}. Growth percentage withheld for a zero base or a loss.",
     "currentPeriod": "Current: {start} — {end} · {unit}",
     "priorPeriod": "Prior year: {value} ({start} — {end})",
     "noPrior": "No comparable prior-year period in this filing.",
@@ -259,6 +262,7 @@
     "base": "how often this issuer clears its own bar",
     "history": "earlier filings behind the comparison",
     "why": "Why",
+    "sourceLanguage": "These reasons are in English, as the scorer wrote them.",
     "boundary": "This estimates how large a reaction may be, not which way it goes. It is a reading priority, not investment advice.",
     "model": "{estimator} · calibration {calibration} · evaluated through {through}",
     "state": {
@@ -287,6 +291,7 @@
     "sourcePassage": "Source passage",
     "moveBadge": "{move} after filing",
     "passages": "Quoted from the filing",
+    "sourceLanguage": "English, as filed",
     "noPassages": "No passage could be extracted deterministically from the cached primary document, so none is quoted.",
     "keyNumbers": "Numbers in the filing",
     "comparison": "Against the prior comparable filing",
@@ -342,7 +347,7 @@
     },
     "notCovered": {
       "title": "No event coverage for this company",
-      "body": "{ticker} is outside the set of companies the event refresh currently fetches, so no event feed is published for it.",
+      "body": "{ticker} is outside the live event set. Dynamic events are published for AAPL, JPM and NVDA only, so no event feed is shown for this company.",
       "footnote": "This is a coverage boundary, not a statement that nothing happened. Filings, financial results and price history on this page are unaffected."
     },
     "unavailable": {
@@ -373,6 +378,30 @@
       "body": "Nothing ahead has a date confirmed by the company or a filing. An expected date is not shown here as a confirmed one."
     },
     "partialGaps": "{count} coverage gap(s) recorded for this window.",
+    "gap": "Coverage gap",
+    "initializationNote": "First load covers a bounded recent window, not the full history.",
+    "buildSnapshot": "This copy was packaged with the site build. It is not a live intraday feed.",
+    "originalTitle": "Original English title",
+    "ask": "Ask about this event",
+    "askOff": "Event questions stay off until this card and the server share one published version.",
+    "asking": "Asking about the version on this page…",
+    "askQuestion": "What does this event's evidence say, and what does it not establish?",
+    "missingVersion": "This page has no published event version, so the question was not sent. A different version was not used.",
+    "versionMismatch": "This item is not on the version shown on this page, so the question was not sent. A different version was not substituted.",
+    "askBoundaries": "Evidence limits",
+    "askEmpty": "No answer text was returned.",
+    "askError": {
+      "event_version_unavailable": "This event version could not be read. Refresh the page and ask again. A different version was not substituted.",
+      "event_not_in_version": "That item is not in the published version on this page.",
+      "client_evidence_rejected": "The server loads event evidence itself. A question that supplies its own evidence was refused.",
+      "ask_not_configured": "No model is configured here, so the question was not sent.",
+      "model_not_available": "The selected model is not available.",
+      "grounding_validation_failed": "The model answer was withheld because it did not pass evidence validation.",
+      "provider_failed": "The selected model is temporarily unavailable.",
+      "question_scope": "Ask about the supplied evidence, not what to buy or a price forecast.",
+      "network": "The request did not complete. No other version was tried.",
+      "unknown": "The question was not answered. No other version was tried."
+    },
     "askDisabled": "Event questions are disabled while the card and the server are not on the same published feed version.",
     "boundary": "Event items are published headlines and filing index entries, linked to their source. They are not analysis, and the feed is not a trading signal."
   },
@@ -654,7 +683,7 @@
       "universe": "The universe is a convenience sample of currently listed large caps. It is not survivorship-controlled, so it cannot speak to issuers that delisted.",
       "costs": "No transaction cost, spread, slippage or capacity assumption is applied anywhere. A ranking result is not a strategy result.",
       "magnitude": "The label is the magnitude of a move, not its direction. Nothing here says which way a price went or will go.",
-      "coverage": "Dynamic event coverage is narrower than snapshot coverage: most companies have filings and price history but no live event feed.",
+      "coverage": "Dynamic events are published for AAPL, JPM and NVDA only. Other companies still have filings, filed results and price history.",
       "generalisation": "Results are measured on US 8-K disclosures over the evaluated sessions and should not be assumed to carry to other filing types, markets or periods."
     },
     "provenance": {

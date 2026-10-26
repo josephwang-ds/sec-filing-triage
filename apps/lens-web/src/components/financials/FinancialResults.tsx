@@ -117,6 +117,11 @@ function MetricCard({
       ) : (
         <p className="m-0 text-xs text-muted">{t("noPrior")}</p>
       )}
+      {!yoy && metric.change !== null && metric.change !== undefined ? (
+        <p className="m-0 text-xs break-words text-muted">
+          {t("yoyWithheld", { change: filedMoney(metric.change, metric.unit, locale) ?? "" })}
+        </p>
+      ) : null}
       <p className="m-0 text-xs text-muted">{definition}</p>
 
       {reference ? (

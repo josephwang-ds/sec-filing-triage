@@ -105,9 +105,49 @@ export type UpcomingEvent = z.infer<typeof upcomingEvent>;
  * only a version when it is a non-empty string that is not the placeholder.
  */
 export function publishedVersion(feed: EventFeed): string | null {
-  const raw = (feed.manifest_version ?? "").trim();
+  return versionToken(feed.manifest_version);
+}
+
+/** A version string, or nothing. "none" and "null" are placeholders, not versions. */
+function versionToken(value: string | null | undefined): string | null {
+  const raw = (value ?? "").trim();
   if (!raw || raw.toLowerCase() === "none" || raw.toLowerCase() === "null") return null;
   return raw;
+}
+
+/**
+ * Whether an event question may be sent, and with which version.
+ *
+ * The version is the one published on this page. A missing version is an error,
+ * not a cue to ask against some other feed. A mismatch is the same: the item's
+ * version and the page's version have to be the one the reader is looking at.
+ */
+export type EventAskDecision =
+  | { state: "ready"; version: string }
+  | { state: "missing_version" }
+  | { state: "version_mismatch" }
+  | { state: "disabled" };
+
+export function eventAskDecision(feed: EventFeed, event: PublicEvent): EventAskDecision {
+  const pageVersion = publishedVersion(feed);
+  if (!pageVersion) return { state: "missing_version" };
+  if (!event.ask_enabled) return { state: "disabled" };
+  if (versionToken(event.manifest_version) !== pageVersion) return { state: "version_mismatch" };
+  return { state: "ready", version: pageVersion };
+}
+
+/** Coverage gaps as the refresh job recorded them: start, end, and reason. */
+export function coverageGapLines(feed: EventFeed): string[] {
+  return feed.coverage_gaps.flatMap((gap) => {
+    if (!gap || typeof gap !== "object") return [];
+    const row = gap as Record<string, unknown>;
+    const start = typeof row.start === "string" ? row.start : "";
+    const end = typeof row.end === "string" ? row.end : "";
+    const reason = typeof row.reason === "string" ? row.reason : "";
+    if (!start && !end && !reason) return [];
+    const span = [start, end].filter(Boolean).join(" → ");
+    return [reason ? `${span} (${reason})`.trim() : span];
+  });
 }
 
 /** Whether this issuer is inside the fetch set at all. */

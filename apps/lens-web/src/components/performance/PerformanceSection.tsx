@@ -150,6 +150,20 @@ export function PerformanceSection({
         </div>
       </div>
 
+      {benchmarks.some((entry) => entry.status !== "available") ? (
+        <ul className="mt-3 mb-0 flex list-none flex-col gap-1 p-0">
+          {benchmarks
+            .filter((entry) => entry.status !== "available")
+            .map((entry) => (
+              <li key={entry.symbol} className="text-xs break-words text-muted">
+                {t(`unavailable.${entry.reason ?? "missing_prices"}` as "unavailable.missing_prices", {
+                  symbol: entry.symbol,
+                })}
+              </li>
+            ))}
+        </ul>
+      ) : null}
+
       <p className="mt-3 mb-0 max-w-[70ch] text-sm text-muted">
         {t("intro", { benchmark: symbol, benchmarkNote: t(`benchmarkNote.${symbol}` as "benchmarkNote.SPY") })}
       </p>
