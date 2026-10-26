@@ -1,3 +1,25 @@
+## 上线后核对 — 2026-10-26（以下旧记录仅代表各自日期）
+
+- code_ready / production_enabled：PR #35 已合并；生产功能验收见下文。
+- reliability_verified：**no**。尚无完整 48 小时观测与独立恢复证明。
+- 自动 schedule 已实际运行，不再是“仅写了 cron”。本次读取的连续六次 refresh 创建时间间隔为 146–254 分钟，monitor 为 126–262 分钟，未达到 30/15 分钟目标。这不是排队原因诊断；需对照计划、创建、开始与完成时刻。
+- [生产 refresh 40255036793](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40255036793)：生产步骤成功，Finnhub/SEC/Blob 配置存在；news requests=3，SEC not_due、requests=0，redeployed=false。
+- [monitor 40252527988](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40252527988)：六项任务 current；news missed_windows=1。current 不代表调度按时。EVENTS_RERUN_URL/TOKEN 未注入，independent_wake=not_configured，rerun_requested=false。
+- Vercel 当前部署/环境作用域本次读取返回团队授权 403，公开健康接口本次未读取成功。下方生产验收是历史证据，不是本次实时复验。
+- 本分支约束事件 runtime 安装使用 requirements.lock，避免已锁定包自动升级；约束文件不会主动安装可选 ML 栈，也不是独立完整 runtime lock。新增传递依赖仍需另行锁定。
+- monitor 保留公开健康输出 14 天；保留 pipefail，健康失败不会被 tee 掩盖。若安装/读存储失败，可能没有健康文件，应检查失败日志。此改动不构成外部通知或独立监控。
+
+### 下一步与验收证据
+
+1. 导出两项 workflow 的 schedule 运行记录，对齐计划/创建/开始/完成时间；报告间隔与排队延迟，不凭 success 认定准点。
+2. 在 GitHub 外配置独立时钟和认证执行入口；协议为 POST、Bearer EVENTS_RERUN_TOKEN、JSON {"source":"events-monitor"}。接收成功之后仍须验证 checkpoint 推进。
+3. 隔离演练停止主调度，验证外部发现、补跑、冷却/并发保护和健康恢复；不对生产做删除/损坏演练。
+4. 核对实际告警接收渠道及故障/恢复送达；当前日志不是送达证明。
+5. 复核 Vercel 域名/部署、Production 与 Preview Blob 隔离及 Ask 共享限流。不要把 refresh 未注入 VERCEL_TOKEN 当作缺配置，它不部署站点。
+6. 配置验证完成后记 T0，连续观测 48 小时，包含美股活跃窗口。先约定调度延迟和恢复时限；保留六任务水位、缺口、预算、版本一致性和独立恢复记录。未完成前维持 reliability_verified=no。
+
+---
+
 ## 生产发布验收 — 2026-10-25（优先于下方历史记录）
 
 正式站：https://lens.josephjwang.com/ 。已将验收过的暂存生产构建晋升到正式域名，不是重新构建预览版。
