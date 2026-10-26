@@ -193,6 +193,8 @@ def parse_financial_section(html: str) -> dict | None:
                 bounds = re.match(r"Prior year: (\d{4}-\d{2}-\d{2}) — (\d{4}-\d{2}-\d{2})", en)
                 if bounds:
                     prior_start, prior_end = bounds.group(1), bounds.group(2)
+        if change is None and prior_value is not None:
+            change = value - prior_value
         concept = codes[code_at] if code_at < len(codes) else ""
         code_at += 1
         reference = _reference([en for en, _zh in pairs], match.group(3), sic)
