@@ -74,8 +74,55 @@ describe("real-data release guard", () => {
       LENS_SNAPSHOT_DIR: dir,
     });
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toContain("no filed financial report");
-    expect(result.stderr).toContain("AAPL");
+    expect(result.stderr).toContain("AAPL (no filed report)");
+  });
+
+  it("fails a release build when a required filing has no displayable figures", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lens-emptyfin-"));
+    fs.writeFileSync(
+      path.join(dir, "aapl.json"),
+      JSON.stringify({
+        ticker: "AAPL",
+        profile: {},
+        performance: {},
+        benchmark: "SPY",
+        financial_results: { status: "available", metrics: [], extraction: "company_facts" },
+      }),
+    );
+    const result = stageWith({
+      LENS_REQUIRE_ENGINE: "1",
+      LENS_REQUIRE_FINANCIALS: "1",
+      LENS_REQUIRED_TICKERS: "AAPL",
+      LENS_SNAPSHOT_DIR: dir,
+    });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("filing without displayable figures");
+  });
+
+  it("rejects a published-page read-back as the release source", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lens-htmlfin-"));
+    fs.writeFileSync(
+      path.join(dir, "aapl.json"),
+      JSON.stringify({
+        ticker: "AAPL",
+        profile: {},
+        performance: {},
+        benchmark: "SPY",
+        financial_results: {
+          status: "available",
+          extraction: "published_html_fallback",
+          metrics: [{ id: "revenue", value: 1 }],
+        },
+      }),
+    );
+    const result = stageWith({
+      LENS_REQUIRE_ENGINE: "1",
+      LENS_REQUIRE_FINANCIALS: "1",
+      LENS_REQUIRED_TICKERS: "AAPL",
+      LENS_SNAPSHOT_DIR: dir,
+    });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("published HTML fallback");
   });
 
   it("never silently accepts explicit fixtures under real-data verification", () => {

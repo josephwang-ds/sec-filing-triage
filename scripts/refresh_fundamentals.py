@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
+from company_lens.financial_results import filed_figures_status, load_financial_results
 from company_lens.refresh import refresh_fundamentals
 from company_lens.universe import supported_companies
 
@@ -23,6 +25,22 @@ def main() -> int:
     )
     parser.add_argument("--universe", default=None)
     parser.add_argument("--requested-years", type=int, default=10)
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="read cached Company Facts only; do not call SEC",
+    )
+    parser.add_argument(
+        "--cache-dir",
+        default="data/cache/edgar",
+        help="Edgar cache used by --offline",
+    )
+    parser.add_argument(
+        "--require",
+        nargs="+",
+        default=[],
+        help="tickers that must have structured, displayable filed figures",
+    )
     parser.add_argument(
         "--fundamentals-dir",
         default=None,
@@ -44,6 +62,8 @@ def main() -> int:
             else args.tickers
         ),
         requested_years=args.requested_years,
+        offline=args.offline,
+        cache_dir=args.cache_dir,
     )
     print(
         f"Fundamentals refresh {result.status}: checked {result.companies_checked} "
@@ -56,6 +76,20 @@ def main() -> int:
     for path in result.artifact_paths:
         print(f"artifact: {path}")
     print(f"checked at {result.checked_at}")
+    blocked = []
+    for ticker in [item.upper() for item in args.require]:
+        report = load_financial_results(data_dir, ticker)
+        kind = filed_figures_status(report)
+        if kind != "numbers":
+            blocked.append(f"{ticker}={kind}")
+    if blocked:
+        print(
+            "required issuers lack structured displayable figures: " + ", ".join(blocked),
+            file=sys.stderr,
+        )
+        return 1
+    if args.offline:
+        return 0
     return 0 if result.status == "current" else 2
 
 

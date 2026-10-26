@@ -18,6 +18,17 @@ export LENS_REQUIRE_ENGINE=1
 export LENS_REQUIRE_FINANCIALS=1
 export LENS_REQUIRED_TICKERS="${LENS_REQUIRED_TICKERS:-AAPL,JPM,NVDA}"
 
+if [[ "${LENS_REBUILD_FINANCIALS:-1}" == "1" && "$SNAPSHOT_DIR" == "$ROOT/data/build/company_pages" ]]; then
+  # Structured figures from the Edgar cache. A miss fails here; this script
+  # does not read the old site's HTML.
+  PYTHONPATH=src python3 "$ROOT/scripts/refresh_fundamentals.py" \
+    --data-dir "$ROOT/data/build" \
+    --all \
+    --offline \
+    --require AAPL JPM NVDA
+  PYTHONPATH=src python3 "$ROOT/scripts/build_company_pages.py" --data-dir "$ROOT/data/build"
+fi
+
 if [[ ! -d "$SNAPSHOT_DIR" ]]; then
   echo "No company snapshots at $SNAPSHOT_DIR" >&2
   exit 1

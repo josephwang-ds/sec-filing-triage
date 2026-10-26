@@ -10,6 +10,11 @@ on:
       - "apps/lens-web/**"
       - "scripts/compare_lens_pages.py"
       - "scripts/export_ask_evidence.py"
+      - "scripts/refresh_fundamentals.py"
+      - "scripts/build_company_pages.py"
+      - "src/company_lens/refresh.py"
+      - "src/company_lens/financial_results.py"
+      - "src/company_lens/financial_context.py"
   workflow_dispatch:
 
 permissions:
@@ -49,6 +54,8 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
+            data/build/financial_results
+            data/build/fundamentals
           key: company-lens-cache-lens-v2-readonly
           restore-keys: |
             company-lens-cache-
@@ -64,6 +71,14 @@ jobs:
             fi
           done
           echo "Restored existing research panels; no network ingest or production mutation."
+
+      - name: Rebuild structured filed results from the restored Company Facts cache
+        env:
+          PYTHONPATH: src
+        run: |
+          # Page-function parity continues when a company has no cached facts.
+          # Publishable acceptance is the separate job, and it does fail closed.
+          python scripts/refresh_fundamentals.py --all --offline
 
       - name: Generate real-company snapshots and grounded Ask evidence
         env:
@@ -148,6 +163,81 @@ jobs:
             data/build/company_pages/*.json
             apps/lens-web/.lens/manifest.json
 
+  publishable-financials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/lens-web/package-lock.json
+      - run: pip install -e .
+      - name: Restore the identical read-only production research cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache
+            data/build/*.parquet
+            data/build/*.csv
+            data/build/*.json
+            data/build/financial_results
+            data/build/fundamentals
+          key: company-lens-cache-lens-v2-readonly
+          restore-keys: |
+            company-lens-cache-
+      - name: Require structured displayable figures for the published three
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          test -s data/build/universe.csv
+          python scripts/refresh_fundamentals.py --all --offline --require AAPL JPM NVDA
+          python scripts/build_company_pages.py
+          python scripts/export_ask_evidence.py \
+            --source data/build/company_pages \
+            --out data/build/ask-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for ticker in ("aapl", "jpm", "nvda"):
+              report = json.loads(Path(f"data/build/company_pages/{ticker}.json").read_text())["financial_results"]
+              assert report["extraction"] == "company_facts", ticker
+              assert report["status"] == "available" and report["metrics"], ticker
+              assert report.get("source_url", "").startswith("https://www.sec.gov/"), ticker
+              print(ticker, report["form"], report["period_end"], len(report["metrics"]))
+          PY
+      - name: Build Next.js only from that structured snapshot
+        working-directory: apps/lens-web
+        env:
+          LENS_REQUIRE_ENGINE: "1"
+          LENS_REQUIRE_FINANCIALS: "1"
+          LENS_REQUIRED_TICKERS: "AAPL,JPM,NVDA"
+        run: |
+          npm ci
+          npm run build
+      - name: Upload the structured snapshots used for publishable acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lens-v2-structured-financials-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            data/build/company_pages/aapl.json
+            data/build/company_pages/jpm.json
+            data/build/company_pages/nvda.json
+            data/build/financial_results/aapl.json
+            data/build/financial_results/jpm.json
+            data/build/financial_results/nvda.json
+
   fixture-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -197,6 +287,8 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
+            data/build/financial_results
+            data/build/fundamentals
           key: company-lens-cache-lens-v2-readonly
           restore-keys: |
             company-lens-cache-
@@ -206,6 +298,11 @@ jobs:
           test -s data/build/universe.csv
           test -s data/build/events.parquet
           test -s data/build/prices.parquet
+      - name: Rebuild structured filed results when Company Facts are cached
+        env:
+          PYTHONPATH: src
+        run: python scripts/refresh_fundamentals.py --all --offline
+
       - name: Build entire real company universe
         env:
           PYTHONPATH: src
@@ -246,4 +343,5 @@ jobs:
           retention-days: 7
           path: |
             data/build/company_pages/*.json
+            data/build/financial_results/*.json
             apps/lens-web/.lens/manifest.json

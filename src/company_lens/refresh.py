@@ -207,6 +207,26 @@ def refresh_market_data(
     return result
 
 
+def read_cached_company_record(cache_dir: str | Path, cik: int) -> tuple[dict, dict]:
+    """Company Facts and submissions already on disk. Never opens a network socket."""
+    root = Path(cache_dir)
+    facts_path = root / "companyfacts" / f"CIK{cik:010d}.json"
+    head_path = root / "submissions" / f"CIK{cik:010d}.json"
+    if not facts_path.is_file() or not head_path.is_file():
+        raise FileNotFoundError(f"cached Company Facts or submissions missing for CIK {cik:010d}")
+    facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    head = json.loads(head_path.read_text(encoding="utf-8"))
+    shards = []
+    for extra in head.get("filings", {}).get("files", []) or []:
+        name = str(extra.get("name") or "")
+        shard_path = root / "submissions" / name
+        if not name or not shard_path.is_file():
+            raise FileNotFoundError(f"cached submissions shard missing for CIK {cik:010d}")
+        shards.append(json.loads(shard_path.read_text(encoding="utf-8")))
+    head["_shards"] = shards
+    return facts, head
+
+
 def refresh_fundamentals(
     *,
     data_dir: str | Path = "data/build",
@@ -215,10 +235,15 @@ def refresh_fundamentals(
     requested_years: int = 10,
     client: Any | None = None,
     refresh: bool = True,
+    offline: bool = False,
+    cache_dir: str | Path | None = None,
 ) -> FundamentalsRefreshResult:
-    """Fetch Company Facts, normalize annual series, and write local artifacts.
+    """Normalize Company Facts into local artifacts.
 
-    Defaults to AAPL only. Tests inject a fake client so the suite never hits SEC.
+    The default still fetches through an Edgar client. ``offline`` reads only
+    the cache directory and records a miss when a file is absent; it does not
+    construct a client and does not call SEC. Tests inject a fake client so
+    the suite never hits SEC.
     """
     root = Path(data_dir)
     universe = Path(universe_path) if universe_path else root / "universe.csv"
@@ -241,7 +266,8 @@ def refresh_fundamentals(
             for ticker in sorted(requested)
         ]
 
-    sec = client or EdgarClient()
+    sec = None if offline else (client or EdgarClient())
+    facts_cache = Path(cache_dir) if cache_dir else Path("data/cache/edgar")
     refreshed: list[str] = []
     failures: list[dict[str, str]] = []
     artifacts: list[str] = []
@@ -260,8 +286,11 @@ def refresh_fundamentals(
             )
             continue
         try:
-            facts = sec.company_facts(company.cik, refresh=refresh)
-            submissions = sec.submissions(company.cik, refresh=False)
+            if offline:
+                facts, submissions = read_cached_company_record(facts_cache, company.cik)
+            else:
+                facts = sec.company_facts(company.cik, refresh=refresh)
+                submissions = sec.submissions(company.cik, refresh=False)
             section = build_fundamentals_section(
                 facts,
                 ticker=company.ticker,
@@ -271,9 +300,21 @@ def refresh_fundamentals(
             path = fundamentals_path(root, company.ticker)
             save_fundamentals(section, path)
             results = build_financial_results(facts, submissions, company.cik)
+            results["extraction"] = "company_facts"
             save_financial_results(results, root, company.ticker)
             refreshed.append(company.ticker)
             artifacts.append(str(path))
+        except FileNotFoundError as exc:
+            failure = {
+                "ticker": company.ticker,
+                "exception_type": "CacheMiss",
+                "message": str(exc),
+            }
+            failures.append(failure)
+            print(
+                f"fundamentals refresh failed ticker={failure['ticker']} "
+                f"type={failure['exception_type']} message={failure['message']}"
+            )
         except Exception as exc:  # noqa: BLE001 - isolate per-issuer failures
             failure = _safe_refresh_failure(company.ticker, exc)
             failures.append(failure)

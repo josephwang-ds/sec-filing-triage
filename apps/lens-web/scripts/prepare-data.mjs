@@ -55,16 +55,28 @@ function gitCommit() {
   }
 }
 
+function financialGap(report) {
+  if (!report || report.status === "unavailable" || report.status == null) return "no filed report";
+  if (report.extraction === "published_html_fallback") {
+    return "published HTML fallback is not a structured source";
+  }
+  const metrics = Array.isArray(report.metrics) ? report.metrics : [];
+  if (report.status === "available" && metrics.length > 0) return null;
+  return "filing without displayable figures";
+}
+
 function missingFinancials(files) {
-  return files.flatMap((file) => {
-    if (!fs.existsSync(file)) {
-      const ticker = path.basename(file, ".json").toUpperCase();
-      return requiredTickers.includes(ticker) ? [ticker] : [];
-    }
+  const byTicker = new Map();
+  for (const file of files) {
+    if (!fs.existsSync(file)) continue;
     const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
     const ticker = String(parsed.ticker ?? "").toUpperCase();
-    if (!requiredTickers.includes(ticker)) return [];
-    return parsed.financial_results?.status === "available" ? [] : [ticker];
+    if (ticker) byTicker.set(ticker, parsed.financial_results ?? null);
+  }
+  return requiredTickers.flatMap((ticker) => {
+    if (!byTicker.has(ticker)) return [`${ticker} (snapshot absent)`];
+    const gap = financialGap(byTicker.get(ticker));
+    return gap ? [`${ticker} (${gap})`] : [];
   });
 }
 
@@ -73,8 +85,8 @@ function assertFinancials(files) {
   const missing = missingFinancials(files);
   if (missing.length) {
     console.error(
-      `lens-web data: required issuers have no filed financial report: ${missing.join(", ")}. ` +
-        "Refusing a release build that would render an empty results card.",
+      `lens-web data: required issuers are not a structured filed report: ${missing.join(", ")}. ` +
+        "Refusing a release build that would render an empty results card or rounded page text.",
     );
     process.exit(1);
   }
@@ -279,7 +291,14 @@ const evidenceWanted = [
   "calibration_metrics.json",
   "insider_metrics.json",
   "leakage_study.csv",
+  "capacity_profile.csv",
+  "reaction_capture.csv",
+  "anchoring_study.csv",
   "model_comparison.csv",
+  "model_comparison_paired.csv",
+  "calibration_comparison.csv",
+  "volatility_by_regime.csv",
+  "volatility_paired.csv",
   "nlp_feature_ablation.csv",
   "self_relative_ablation.csv",
   "volatility_forecasters.csv",
@@ -317,7 +336,7 @@ function stageReport(fixtures) {
 <body>
 <main>
 <h1>The full generated report is not in this build.</h1>
-<p>The Next.js research page includes the leakage ladder, ranking metrics, baselines and feature ablations. It does not include the published Python research page's capacity profile, tradability notes, model-comparison narrative, calibration or volatility sections, and it does not include the standalone report's queue and time-sweep charts.</p>
+<p>The Next.js research page reads the exported evidence for the leakage ladder, ranking metrics, baselines, ablations, capacity, tradability, model comparison, calibration and volatility. It does not include the standalone report's queue and time-sweep charts, because those charts are not in the evidence export.</p>
 <p>When the Python pipeline has written <code>data/build/report.html</code>, a release build serves that file at this URL. This page is that entry. It is not a redirect to Research.</p>
 <p><a href="/research">Research tables</a></p>
 </main>

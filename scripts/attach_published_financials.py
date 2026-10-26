@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 # The published page's attributes are long and use Chinese punctuation.
 # ruff: noqa: E501
-"""Copy filed-result cards from the published Python pages onto engine snapshots.
+"""Migration fallback: read filed-result cards back from published HTML.
 
-The company-page JSON from the read-only parity artifact has prices, filings
-and history, but not ``financial_results``: that directory is not in the
-Actions cache. The published HTML is the Python renderer's own output, so the
-numbers below are read back from the attributes that renderer wrote. Nothing
-is recomputed, and a page without a report stays unavailable.
+This is not the release path. ``scripts/refresh_fundamentals.py --offline``
+rebuilds ``financial_results`` from cached Company Facts, and that is what a
+release build accepts. The amounts recovered here are the rounded figures the
+old page displayed (亿美元 / $x.xxB). They are marked
+``extraction=published_html_fallback`` and ``value_precision=display_rounded``
+so they cannot be mistaken for the XBRL fact. A missing change is left
+missing; it is not reconstructed by subtracting the two rounded amounts.
 """
 
 from __future__ import annotations
@@ -193,8 +195,6 @@ def parse_financial_section(html: str) -> dict | None:
                 bounds = re.match(r"Prior year: (\d{4}-\d{2}-\d{2}) — (\d{4}-\d{2}-\d{2})", en)
                 if bounds:
                     prior_start, prior_end = bounds.group(1), bounds.group(2)
-        if change is None and prior_value is not None:
-            change = value - prior_value
         concept = codes[code_at] if code_at < len(codes) else ""
         code_at += 1
         reference = _reference([en for en, _zh in pairs], match.group(3), sic)
@@ -239,6 +239,8 @@ def parse_financial_section(html: str) -> dict | None:
     return {
         "status": "available",
         "reason": None,
+        "extraction": "published_html_fallback",
+        "value_precision": "display_rounded",
         "metrics": metrics,
         "form": match.group(4),
         "period_end": match.group(2),
@@ -259,32 +261,79 @@ def fetch(origin: str, ticker: str) -> str:
         return response.read().decode("utf-8", "replace")
 
 
+def _figures(report: dict) -> str:
+    metrics = report.get("metrics") or []
+    if report.get("status") == "unavailable":
+        return "unavailable"
+    if report.get("status") == "available" and metrics:
+        return "numbers"
+    return "filing_only"
+
+
 def attach_tree(source: Path, destination: Path, origin: str, required: list[str]) -> int:
+    """Copy snapshots and attach a fallback card. Required tickers must be present.
+
+    An empty source, a missing required ticker, a required report that is
+    unavailable, and a required report with no displayable metrics each fail
+    on their own. Other issuers may lack a report or lack figures.
+    """
     destination.mkdir(parents=True, exist_ok=True)
-    missing = []
+    required_set = {ticker.upper() for ticker in required}
+    seen: dict[str, str] = {}
+    absent_page: list[str] = []
+    unavailable: list[str] = []
+    filing_only: list[str] = []
     copied = 0
-    for path in sorted(source.glob("*.json")):
+    paths = sorted(source.glob("*.json")) if source.is_dir() else []
+    for path in paths:
         snapshot = json.loads(path.read_text(encoding="utf-8"))
         ticker = str(snapshot.get("ticker") or "").upper()
+        if path.stem.upper() != ticker:
+            raise SystemExit(f"ticker mismatch: {path.name} contains {ticker or '(none)'}")
+        if ticker in seen:
+            raise SystemExit(f"duplicate ticker {ticker}: {seen[ticker]} and {path.name}")
+        seen[ticker] = path.name
         if ticker.startswith("SYN"):
             raise SystemExit(f"refusing synthetic snapshot {ticker} in {path}")
         try:
             report = parse_financial_section(fetch(origin, ticker))
         except Exception as error:  # noqa: BLE001 - one issuer must not invent a report
             report = None
-            print(f"{ticker}: published page not read ({error})", file=sys.stderr)
+            print(f"{ticker}: published page not read ({type(error).__name__})", file=sys.stderr)
         if report is None:
-            if ticker in required:
-                missing.append(ticker)
-            report = {"status": "unavailable", "metrics": [], "reason": "published_page_missing"}
-        elif report.get("status") != "available" and ticker in required:
-            missing.append(ticker)
+            if ticker in required_set:
+                absent_page.append(ticker)
+            report = {
+                "status": "unavailable",
+                "metrics": [],
+                "reason": "published_page_missing",
+                "extraction": "published_html_fallback",
+            }
+            kind = "unavailable"
+        else:
+            kind = _figures(report)
+            if ticker in required_set and kind == "unavailable":
+                unavailable.append(ticker)
+            elif ticker in required_set and kind == "filing_only":
+                filing_only.append(ticker)
         snapshot["financial_results"] = report
-        (destination / path.name).write_text(json.dumps(snapshot, ensure_ascii=False) + "\n", encoding="utf-8")
+        (destination / path.name).write_text(
+            json.dumps(snapshot, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         copied += 1
-        print(f"{ticker}: {report.get('status')} {report.get('form') or ''}".rstrip())
-    if missing:
-        raise SystemExit("required issuers have no published financial report: " + ", ".join(missing))
+        print(f"{ticker}: {kind} {report.get('form') or ''}".rstrip())
+    missing_files = sorted(required_set - set(seen))
+    problems = []
+    if missing_files:
+        problems.append("absent from source: " + ", ".join(missing_files))
+    if absent_page:
+        problems.append("published page missing: " + ", ".join(absent_page))
+    if unavailable:
+        problems.append("report unavailable: " + ", ".join(unavailable))
+    if filing_only:
+        problems.append("filing without displayable figures: " + ", ".join(filing_only))
+    if problems:
+        raise SystemExit("required issuers are not a displayable fallback: " + "; ".join(problems))
     print(f"attached financial reports onto {copied} snapshot(s) -> {destination}")
     return copied
 

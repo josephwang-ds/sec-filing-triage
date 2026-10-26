@@ -100,11 +100,16 @@ jobs:
           # cost a run: the scheduled job restored a warm data/cache, found no
           # panels, and died on `missing local event panel`. The generated HTML
           # beside them is not cached, because it is rebuilt every run by design.
+          # financial_results/ and fundamentals/ are directories. A top-level
+          # data/build/*.json glob does not include them, so a later read-only
+          # job would rebuild pages with the filed-results section missing.
           path: |
             data/cache
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
+            data/build/financial_results
+            data/build/fundamentals
           key: company-lens-cache-${{ github.run_id }}
           restore-keys: |
             company-lens-cache-
@@ -180,6 +185,8 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
+            data/build/financial_results
+            data/build/fundamentals
           key: company-lens-cache-${{ github.run_id }}
 
       # The audit trail the Vultr timer never had -- the reason nobody noticed it
