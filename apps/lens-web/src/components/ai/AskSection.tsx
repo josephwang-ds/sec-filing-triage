@@ -176,9 +176,11 @@ export function AskSection({ ticker, evidenceAsOf }: { ticker: string; evidenceA
           <p className="lens-eyebrow m-0 mb-2">{t("eyebrow")}</p>
           <h2 className="lens-serif m-0 text-2xl text-balance md:text-3xl">{t("title")}</h2>
         </div>
-        <span className="shrink-0 rounded-full border border-positive/30 px-2.5 py-1 text-[11px] font-bold tracking-wide text-positive uppercase">
-          {t("validated")}
-        </span>
+        {configured ? (
+          <span className="shrink-0 rounded-full border border-positive/30 px-2.5 py-1 text-[11px] font-bold tracking-wide text-positive uppercase">
+            {t("validated")}
+          </span>
+        ) : null}
       </div>
       <p className="mt-3 mb-6 max-w-[70ch] text-sm text-muted">{t("intro")}</p>
 
