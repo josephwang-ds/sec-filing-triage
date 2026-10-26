@@ -23,11 +23,14 @@ It runs on pushes to `feat/lens-nextjs-v2` and can also be manually dispatched a
 
 1. Restores the production refresh's *existing* `company-lens-cache-` panels.
 2. **Fails immediately** if universe, events or price data are missing. It never crawls SEC or substitutes synthetic fixtures.
-3. Builds AAPL, JPM, NVDA with the unchanged Python engine.
-4. Exports the original Ask evidence allow-lists.
-5. Builds Next.js with `LENS_REQUIRE_ENGINE=1`, `LENS_REQUIRED_TICKERS=AAPL,JPM,NVDA`.
-6. Compares both rendered pages in Chromium.
-7. Uploads a short-lived artifact with public-company snapshot JSON and parity results, **not** raw cache panels, private tokens or credentials.
+3. Rebuilds structured `financial_results` from cached Company Facts when those files are in the restored cache. A cache miss does not fail this page-function job and does not call SEC.
+4. Builds AAPL, JPM, NVDA with the unchanged Python engine.
+5. Exports the original Ask evidence allow-lists.
+6. Builds Next.js with `LENS_REQUIRE_ENGINE=1`, `LENS_REQUIRED_TICKERS=AAPL,JPM,NVDA`. This page-function build does not require filed figures, so a cache without Company Facts can still compare prices, filings and history.
+7. Compares both rendered pages in Chromium.
+8. Uploads a short-lived artifact with public-company snapshot JSON and parity results, **not** raw cache panels, private tokens or credentials.
+
+`publishable-financials` is the separate acceptance job. It runs the same offline rebuild with `--require AAPL JPM NVDA`, then builds Next.js with `LENS_REQUIRE_FINANCIALS=1`. It fails when a required issuer is absent, has no report, has a filing without figures, or only has the rounded HTML fallback. It does not call SEC and it does not read the old site.
 
 If the cache has expired, the job intentionally fails: use an existing authorised `refresh.yml` process to warm it, rather than silently replacing actual data with fixtures.
 
@@ -67,3 +70,15 @@ To test one **real** Ask response, the existing provider configuration must be e
 - Event feed and one permitted Ask request must be verified against that preview.
 - Accessibility, Safari/WebKit, deployed legacy URLs and rate limits must be checked.
 - Keep the current production domain, Blob storage and Python refresh workflows unchanged until approved.
+
+## Handoff, 2026-10-26
+
+The protected preview `dpl_DwHQwMehZZiRXGi2Ka9VT3wY4DDr` showed filed figures that were read back from the published HTML. Those amounts are display-rounded. They are not the release source. `scripts/attach_published_financials.py` remains only as that marked fallback (`extraction=published_html_fallback`). A release build rejects it.
+
+The release path is: cached Company Facts → `refresh_fundamentals.py --offline` → `financial_results/{ticker}.json` with `extraction=company_facts` → `build_company_pages.py` → the same snapshot for the page and for Ask evidence. `refresh.yml` now saves `data/build/financial_results` and `data/build/fundamentals`, which the old `data/build/*.json` glob left out. Until a refresh has run with that path, the files are rebuilt from `data/cache` when the facts are already there.
+
+`scripts/stage_lens_web.sh` rebuilds those structured results before the Next.js build when it is pointed at the default snapshot directory. `LENS_REBUILD_FINANCIALS=0` skips that for a directory that was already built. `LENS_USE_FIXTURES=1` is still the only fixture path.
+
+Ask without a provider key stays unconfigured and does not show the “citation checked” badge. No provider was called. The variables that would be required on the `lens-web` Preview environment, and are not set, are `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `DASHSCOPE_API_KEY`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY`.
+
+The research page now renders capacity, tradability, model comparison, calibration and volatility from `evidence/real_run`, or an explicit unavailable state when a file in that group is missing. The standalone report’s queue and time-sweep charts are still absent. Production domain was not switched.

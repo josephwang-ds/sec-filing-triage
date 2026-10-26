@@ -14,7 +14,7 @@ with the reason.
 | `/overview.html` | `/zh/overview`, `/en/overview` | done — figures read from the evidence package |
 | `/research.html` | `/zh/research`, `/en/research` | done — figures read from the evidence package |
 | `/earnings.html` | `/zh/earnings`, `/en/earnings` | done — explicit legacy redirect to the retirement notice |
-| `/report.html` | `/report.html` | The Python report stays at this URL when `data/build/report.html` is present. Otherwise the URL is an explicit notice, not a redirect to Research. Capacity, queue and time-sweep charts are not on the research page. |
+| `/report.html` | `/report.html` | The Python report stays at this URL when `data/build/report.html` is present. Otherwise the URL is an explicit notice, not a redirect to Research. The research page now reads capacity, tradability, model comparison, calibration and volatility from `evidence/real_run`. The standalone report's queue and time-sweep charts are still not there. |
 | `/api/ask` | `/api/ask` | done — the same handler, adapted |
 | `/api/events` | `/api/events` | done — read-only proxy |
 | — | `/api/events?view=health` | done — passed through |
