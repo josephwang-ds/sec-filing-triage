@@ -1,8 +1,8 @@
 name: Events monitor
 
 # Reads task checkpoints. A page that returns HTTP 200 is not a pass.
-# EVENTS_RERUN_TOKEN is not a repository secret today, so this job alerts and
-# prints the recovery entry. It does not wake the refresh workflow by itself.
+# Without both rerun credentials this job reports health only.
+# This GitHub workflow is not an independent wake or a notification channel.
 # Production health checks run every fifteen minutes for the released scope.
 
 on:
@@ -24,7 +24,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install -e .
+      - name: Install runtime with reviewed dependency constraints
+        run: |
+          python -m pip install -c requirements.lock -e .
+          python -m pip check
 
       - name: Report durable checkpoint health
         env:
@@ -40,4 +43,14 @@ jobs:
           # EVENTS_RERUN_URL is configured, and the script calls that URL itself.
           # The released health set is the three verified companies, not the other
           # seventeen high-frequency names.
-          python scripts/events_monitor.py --supported AAPL JPM NVDA
+          python scripts/events_monitor.py --supported AAPL JPM NVDA \
+            | tee "${{ runner.temp }}/events-health.txt"
+
+      - name: Retain public health observation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: events-health-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/events-health.txt
+          if-no-files-found: warn
+          retention-days: 14
