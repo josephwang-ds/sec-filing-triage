@@ -211,7 +211,9 @@ def parse_financial_section(html: str) -> dict | None:
                     }
                 )
         if reference is not None:
-            reference["members"] = members
+            # The published member link does not repeat the filing date the
+            # evidence packet requires, so those rows stay out of the packet.
+            reference["members"] = [member for member in members if member.get("filed")]
         metrics.append(
             {
                 "id": metric_id,
