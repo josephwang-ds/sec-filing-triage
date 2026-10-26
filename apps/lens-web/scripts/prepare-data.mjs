@@ -26,6 +26,7 @@ const stage = path.join(appRoot, ".lens");
 // Real-data verification and release builds must fail closed. A missing runner
 // cache must never silently turn a production build into a synthetic demo.
 const requireEngine = /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_ENGINE ?? "");
+const requireFinancials = /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_FINANCIALS ?? "");
 const requiredTickers = (process.env.LENS_REQUIRED_TICKERS ?? "")
   .split(/[,\s]+/)
   .map((ticker) => ticker.trim().toUpperCase())
@@ -51,6 +52,31 @@ function gitCommit() {
     }).trim();
   } catch {
     return null;
+  }
+}
+
+function missingFinancials(files) {
+  return files.flatMap((file) => {
+    if (!fs.existsSync(file)) {
+      const ticker = path.basename(file, ".json").toUpperCase();
+      return requiredTickers.includes(ticker) ? [ticker] : [];
+    }
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    const ticker = String(parsed.ticker ?? "").toUpperCase();
+    if (!requiredTickers.includes(ticker)) return [];
+    return parsed.financial_results?.status === "available" ? [] : [ticker];
+  });
+}
+
+function assertFinancials(files) {
+  if (!requireFinancials) return;
+  const missing = missingFinancials(files);
+  if (missing.length) {
+    console.error(
+      `lens-web data: required issuers have no filed financial report: ${missing.join(", ")}. ` +
+        "Refusing a release build that would render an empty results card.",
+    );
+    process.exit(1);
   }
 }
 
@@ -154,6 +180,9 @@ if (/^(1|true|yes)$/i.test(process.env.LENS_USE_STAGED ?? "")) {
       process.exit(1);
     }
     assertRequiredTickers(stagedTickers, "staged manifest");
+    assertFinancials(
+      requiredTickers.map((ticker) => path.join(stage, "snapshots", `${ticker.toLowerCase()}.json`)),
+    );
     console.log(
       `lens-web data: using the staged directory as uploaded` +
         ` (${staged.tickers?.length ?? 0} snapshot(s) from ${staged.source};` +
@@ -196,6 +225,7 @@ assertRequiredTickers(
   chosen.map((file) => JSON.parse(fs.readFileSync(file, "utf8")).ticker),
   useFixtures ? "fixtures" : "engine",
 );
+assertFinancials(chosen);
 
 if (chosen.length === 0) {
   console.error(

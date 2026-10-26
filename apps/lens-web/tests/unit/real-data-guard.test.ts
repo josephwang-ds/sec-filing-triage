@@ -55,6 +55,29 @@ describe("real-data release guard", () => {
     expect(result.stderr).not.toContain("from engine");
   });
 
+  it("fails a release build when a required issuer has no filed report", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lens-nofin-"));
+    fs.writeFileSync(
+      path.join(dir, "aapl.json"),
+      JSON.stringify({
+        ticker: "AAPL",
+        profile: {},
+        performance: {},
+        benchmark: "SPY",
+        financial_results: { status: "unavailable", metrics: [] },
+      }),
+    );
+    const result = stageWith({
+      LENS_REQUIRE_ENGINE: "1",
+      LENS_REQUIRE_FINANCIALS: "1",
+      LENS_REQUIRED_TICKERS: "AAPL",
+      LENS_SNAPSHOT_DIR: dir,
+    });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("no filed financial report");
+    expect(result.stderr).toContain("AAPL");
+  });
+
   it("never silently accepts explicit fixtures under real-data verification", () => {
     const result = stageWith({
       LENS_USE_FIXTURES: "1",

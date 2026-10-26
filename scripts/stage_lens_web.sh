@@ -15,6 +15,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SNAPSHOT_DIR="${LENS_SNAPSHOT_DIR:-$ROOT/data/build/company_pages}"
 export LENS_SNAPSHOT_DIR="$SNAPSHOT_DIR"
 export LENS_REQUIRE_ENGINE=1
+export LENS_REQUIRE_FINANCIALS=1
 export LENS_REQUIRED_TICKERS="${LENS_REQUIRED_TICKERS:-AAPL,JPM,NVDA}"
 
 if [[ ! -d "$SNAPSHOT_DIR" ]]; then
