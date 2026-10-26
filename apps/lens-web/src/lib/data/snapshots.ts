@@ -20,8 +20,15 @@ export interface Manifest {
   source: DataSource;
   snapshot_dir: string;
   generated_at: string;
+  /** Commit that staged this build, when git was available. */
+  git_commit?: string | null;
+  ticker_count?: number;
+  /** Observation dates carried by the snapshots themselves. */
+  as_of?: string[];
   tickers: string[];
   ask: { available: boolean; reason: string | null };
+  /** "engine" when data/build/report.html was copied; "absent" when only the notice is served. */
+  report?: "engine" | "absent";
 }
 
 export interface CompanyListing {

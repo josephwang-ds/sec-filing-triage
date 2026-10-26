@@ -15,6 +15,7 @@
  * `filing_triage.synth`; they are not market data and must never be presented
  * as any.
  */
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -29,6 +30,29 @@ const requiredTickers = (process.env.LENS_REQUIRED_TICKERS ?? "")
   .split(/[,\s]+/)
   .map((ticker) => ticker.trim().toUpperCase())
   .filter(Boolean);
+// A release build that does not name its issuers still has to prove the three
+// companies the live event feed and the parity job actually cover.
+if (requireEngine && requiredTickers.length === 0) {
+  requiredTickers.push("AAPL", "JPM", "NVDA");
+}
+
+function isSyntheticTicker(ticker) {
+  return /^SYN/i.test(String(ticker ?? "").trim());
+}
+
+function gitCommit() {
+  const fromEnv = (process.env.LENS_BUILD_COMMIT || process.env.GITHUB_SHA || "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    return execSync("git rev-parse HEAD", {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return null;
+  }
+}
 
 function assertRequiredTickers(tickers, source) {
   const present = new Set(tickers.map((ticker) => String(ticker).toUpperCase()));
@@ -115,11 +139,21 @@ if (/^(1|true|yes)$/i.test(process.env.LENS_USE_STAGED ?? "")) {
   const existing = path.join(stage, "manifest.json");
   if (fs.existsSync(existing)) {
     const staged = JSON.parse(fs.readFileSync(existing, "utf8"));
-    if (requireEngine && staged.source !== "engine") {
-      console.error("lens-web data: LENS_REQUIRE_ENGINE=1 refuses staged fixtures.");
+    const stagedTickers = staged.tickers ?? [];
+    const stagedSynthetic = stagedTickers.filter(isSyntheticTicker);
+    if (stagedSynthetic.length || (requireEngine && staged.source !== "engine")) {
+      console.error(
+        stagedSynthetic.length
+          ? `lens-web data: staged manifest contains synthetic tickers (${stagedSynthetic.join(", ")}). Refusing to treat them as engine output.`
+          : "lens-web data: LENS_REQUIRE_ENGINE=1 refuses staged fixtures.",
+      );
       process.exit(1);
     }
-    assertRequiredTickers(staged.tickers ?? [], "staged manifest");
+    if (!staged.source) {
+      console.error("lens-web data: staged manifest has no source. Refusing an unknown data origin.");
+      process.exit(1);
+    }
+    assertRequiredTickers(stagedTickers, "staged manifest");
     console.log(
       `lens-web data: using the staged directory as uploaded` +
         ` (${staged.tickers?.length ?? 0} snapshot(s) from ${staged.source};` +
@@ -143,6 +177,21 @@ if (requireEngine && useFixtures) {
   );
   process.exit(1);
 }
+
+if (!useFixtures) {
+  const synthetic = chosen.flatMap((file) => {
+    const ticker = String(JSON.parse(fs.readFileSync(file, "utf8")).ticker ?? "");
+    return isSyntheticTicker(ticker) ? [ticker.toUpperCase()] : [];
+  });
+  if (synthetic.length) {
+    console.error(
+      `lens-web data: refusing synthetic snapshots in ${snapshotDir}: ${synthetic.join(", ")}.\n` +
+        "They are not engine output and were not relabelled. Remove them from the engine directory,\n" +
+        "or set LENS_USE_FIXTURES=1 for an explicitly synthetic development build.",
+    );
+    process.exit(1);
+  }
+}
 assertRequiredTickers(
   chosen.map((file) => JSON.parse(fs.readFileSync(file, "utf8")).ticker),
   useFixtures ? "fixtures" : "engine",
@@ -164,10 +213,12 @@ reset(stage);
 const snapshotStage = path.join(stage, "snapshots");
 fs.mkdirSync(snapshotStage, { recursive: true });
 const tickers = [];
+const asOf = [];
 for (const file of chosen) {
   const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
   const ticker = String(parsed.ticker).toUpperCase();
   tickers.push(ticker);
+  if (parsed.as_of) asOf.push(String(parsed.as_of));
   fs.copyFileSync(file, path.join(snapshotStage, `${ticker.toLowerCase()}.json`));
 }
 
@@ -215,13 +266,50 @@ for (const name of evidenceWanted) {
   evidenceStaged.push(name);
 }
 
+function stageReport(fixtures) {
+  const destination = path.join(appRoot, "public", "report.html");
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  const engineReport = path.join(repoRoot, "data", "build", "report.html");
+  const engineText = fs.existsSync(engineReport) ? fs.readFileSync(engineReport, "utf8") : "";
+  // The research page has the evidence tables. It does not have this report's
+  // capacity chart, queue or time sweep, so a redirect is not a substitute.
+  if (!fixtures && engineText.includes("Which filings deserve a human read?")) {
+    fs.writeFileSync(destination, engineText);
+    return "engine";
+  }
+  fs.writeFileSync(
+    destination,
+    `<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filing triage report</title>
+<body>
+<main>
+<h1>The full generated report is not in this build.</h1>
+<p>The Next.js research page includes the leakage ladder, ranking metrics, baselines and feature ablations. It does not include the published Python research page's capacity profile, tradability notes, model-comparison narrative, calibration or volatility sections, and it does not include the standalone report's queue and time-sweep charts.</p>
+<p>When the Python pipeline has written <code>data/build/report.html</code>, a release build serves that file at this URL. This page is that entry. It is not a redirect to Research.</p>
+<p><a href="/research">Research tables</a></p>
+</main>
+</body>
+</html>
+`,
+  );
+  return "absent";
+}
+
+const report = stageReport(useFixtures);
 const manifest = {
   source: useFixtures ? "fixtures" : "engine",
   snapshot_dir: useFixtures ? "fixtures/snapshots" : snapshotDir,
   generated_at: new Date().toISOString(),
+  git_commit: gitCommit(),
+  ticker_count: tickers.length,
+  as_of: [...new Set(asOf)].sort(),
   tickers: tickers.sort(),
   ask,
   evidence: evidenceStaged,
+  report,
 };
 fs.writeFileSync(path.join(stage, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 

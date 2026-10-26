@@ -6,13 +6,13 @@
   "scripts": {
     "prepare-data": "node scripts/prepare-data.mjs",
     "dev": "npm run prepare-data && next dev",
-    "build": "npm run prepare-data && next build",
+    "build": "LENS_REQUIRE_ENGINE=1 npm run prepare-data && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build",
+    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build:fixtures",
     "dev:fixtures": "LENS_USE_FIXTURES=1 npm run prepare-data && next dev --port 4311",
     "build:fixtures": "LENS_USE_FIXTURES=1 npm run prepare-data && next build"
   },

@@ -3,6 +3,7 @@ node_modules/
 out/
 # Build inputs copied out of the Python engine; reproducible, never committed.
 .lens/
+public/report.html
 next-env.d.ts
 playwright-report/
 test-results/

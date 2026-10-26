@@ -17,16 +17,16 @@ const legacyRedirects = [
   // The inferred earnings calendar was retired upstream; preserve its
   // withdrawal notice instead of reviving unverified reporting dates.
   { source: "/earnings.html", destination: "/earnings", permanent: true },
-  // The old generated research report is not shipped with this app. Route old
-  // citations to the evidence-backed research page instead of a 404.
-  { source: "/report.html", destination: "/research", permanent: false },
+  // /report.html is served from public/report.html, written by prepare-data.
+  // A redirect to Research would hide the sections the research page does not have.
   { source: "/404.html", destination: "/not-found", permanent: false },
   // Any other `<ticker>.html`. Kept last so the named pages above win, and
   // bounded to the shape of a symbol: 1-6 letters, digits or dots. An unknown
   // one lands on the company route, which answers with the boundary page
   // rather than inventing a company.
   {
-    source: "/:ticker([A-Za-z0-9.]{1,6}).html",
+    // `report` is reserved: /report.html is the Python report, not a ticker.
+    source: "/:ticker((?!report\\.)[A-Za-z0-9.]{1,6}).html",
     destination: "/company/:ticker",
     permanent: true,
   },

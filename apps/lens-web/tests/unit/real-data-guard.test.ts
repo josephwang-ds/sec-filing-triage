@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -38,6 +40,19 @@ describe("real-data release guard", () => {
     });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("AAPL, JPM, NVDA");
+  });
+
+  it("refuses synthetic files sitting in the engine directory", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lens-syn-"));
+    fs.writeFileSync(
+      path.join(dir, "syn001.json"),
+      JSON.stringify({ ticker: "SYN001", profile: {}, performance: {}, benchmark: "SPY" }),
+    );
+    const result = stageWith({ LENS_SNAPSHOT_DIR: dir });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("refusing synthetic snapshots");
+    expect(result.stderr).toContain("SYN001");
+    expect(result.stderr).not.toContain("from engine");
   });
 
   it("never silently accepts explicit fixtures under real-data verification", () => {

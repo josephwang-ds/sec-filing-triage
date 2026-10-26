@@ -10,7 +10,6 @@ const REDIRECTS: [string, RegExp][] = [
   ["/overview.html", /\/(zh|en)\/overview$/],
   ["/research.html", /\/(zh|en)\/research$/],
   ["/earnings.html", /\/(zh|en)\/earnings$/],
-  ["/report.html", /\/(zh|en)\/research$/],
   ["/syn112.html", /\/(zh|en)\/company\/syn112$/],
   ["/syn071.html", /\/(zh|en)\/company\/syn071$/],
 ];
@@ -22,6 +21,14 @@ for (const [from, to] of REDIRECTS) {
     expect(page.url()).toMatch(to);
   });
 }
+
+test("/report.html stays the report entry instead of redirecting to research", async ({ page }) => {
+  const response = await page.goto("/report.html");
+  expect(response?.status()).toBe(200);
+  expect(page.url()).toMatch(/\/report\.html$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/report/i);
+  await expect(page.getByRole("heading", { level: 1 })).not.toHaveText("How this is measured");
+});
 
 test("a citation's in-page anchor survives the redirect", async ({ page }) => {
   // Ask citations point at `/<ticker>.html#performance`, which has to land on

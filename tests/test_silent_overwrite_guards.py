@@ -171,6 +171,15 @@ class TestTheDeployRefusesAMismatchedProject:
         assert "DEPLOY-CALLED" not in done.stdout
         assert "cannot be verified" in done.stderr
 
+    def test_the_python_bundle_is_not_published_onto_the_next_project(self, bundle, tmp_path):
+        lens_web = "prj_FZTMwbFl4fVES1HqAXn8LjvwnDpG"
+        (bundle / ".vercel" / "project.json").write_text(json.dumps(
+            {"projectId": lens_web, "orgId": "team_x", "projectName": "lens-web"}))
+        done = self._run(bundle, lens_web, tmp_path)
+        assert done.returncode == 1
+        assert "DEPLOY-CALLED" not in done.stdout
+        assert "lens-web" in done.stderr
+
     def test_a_matching_id_deploys_and_names_the_target(self, bundle, tmp_path):
         done = self._run(bundle, self.LINKED, tmp_path)
         assert done.returncode == 0
