@@ -55,8 +55,6 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
-            data/build/financial_results
-            data/build/fundamentals
           key: lens-stage-${{ github.run_id }}
           restore-keys: |
             company-lens-cache-

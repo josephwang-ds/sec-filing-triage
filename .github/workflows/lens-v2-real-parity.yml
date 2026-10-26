@@ -54,8 +54,6 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
-            data/build/financial_results
-            data/build/fundamentals
           key: company-lens-cache-lens-v2-readonly
           restore-keys: |
             company-lens-cache-
@@ -188,8 +186,6 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
-            data/build/financial_results
-            data/build/fundamentals
           key: company-lens-cache-lens-v2-readonly
           restore-keys: |
             company-lens-cache-
@@ -287,8 +283,6 @@ jobs:
             data/build/*.parquet
             data/build/*.csv
             data/build/*.json
-            data/build/financial_results
-            data/build/fundamentals
           key: company-lens-cache-lens-v2-readonly
           restore-keys: |
             company-lens-cache-

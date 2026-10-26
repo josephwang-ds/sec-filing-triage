@@ -75,7 +75,7 @@ To test one **real** Ask response, the existing provider configuration must be e
 
 The protected preview `dpl_DwHQwMehZZiRXGi2Ka9VT3wY4DDr` showed filed figures that were read back from the published HTML. Those amounts are display-rounded. They are not the release source. `scripts/attach_published_financials.py` remains only as that marked fallback (`extraction=published_html_fallback`). A release build rejects it.
 
-The release path is: cached Company Facts → `refresh_fundamentals.py --offline` → `financial_results/{ticker}.json` with `extraction=company_facts` → `build_company_pages.py` → the same snapshot for the page and for Ask evidence. `refresh.yml` now saves `data/build/financial_results` and `data/build/fundamentals`, which the old `data/build/*.json` glob left out. Until a refresh has run with that path, the files are rebuilt from `data/cache` when the facts are already there.
+The release path is: cached Company Facts → `refresh_fundamentals.py --offline` → `financial_results/{ticker}.json` with `extraction=company_facts` → `build_company_pages.py` → the same snapshot for the page and for Ask evidence. Those JSON files are not a separate Actions cache path. `actions/cache` versions an entry by its path list, so adding the directory would hide every cache saved with the existing list. Company Facts already live under `data/cache`, and the offline rebuild reads them from there. The parity artifact is what carries the rebuilt `financial_results`.
 
 `scripts/stage_lens_web.sh` rebuilds those structured results before the Next.js build when it is pointed at the default snapshot directory. `LENS_REBUILD_FINANCIALS=0` skips that for a directory that was already built. `LENS_USE_FIXTURES=1` is still the only fixture path.
 
