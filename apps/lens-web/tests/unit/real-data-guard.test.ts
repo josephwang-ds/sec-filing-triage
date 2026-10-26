@@ -17,6 +17,7 @@ function stageWith(env: Record<string, string>) {
       LENS_USE_FIXTURES: "",
       LENS_REQUIRED_TICKERS: "",
       LENS_REQUIRE_ENGINE: "",
+      LENS_REQUIRE_FINANCIALS: "",
       ...env,
     },
   });
@@ -122,7 +123,7 @@ describe("real-data release guard", () => {
       LENS_SNAPSHOT_DIR: dir,
     });
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toContain("published HTML fallback");
+    expect(result.stderr).toContain("extraction must be company_facts");
   });
 
   it("never silently accepts explicit fixtures under real-data verification", () => {

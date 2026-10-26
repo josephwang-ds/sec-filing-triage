@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/lens-v2-real-parity.yml"
       - "apps/lens-web/**"
+      - "scripts/stage_lens_web.sh"
       - "scripts/compare_lens_pages.py"
       - "scripts/export_ask_evidence.py"
       - "scripts/refresh_fundamentals.py"
@@ -121,7 +122,7 @@ jobs:
         run: |
           npm run lint
           npm run test:unit
-          npm run build
+          npm run build:parity
           node -e '
             const fs = require("node:fs");
             const m = JSON.parse(fs.readFileSync(".lens/manifest.json", "utf8"));
@@ -258,7 +259,7 @@ jobs:
         run: npx playwright test
 
   full-universe-build:
-    needs: [compare-real-issuers]
+    needs: [compare-real-issuers, publishable-financials]
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -295,7 +296,7 @@ jobs:
       - name: Rebuild structured filed results when Company Facts are cached
         env:
           PYTHONPATH: src
-        run: python scripts/refresh_fundamentals.py --all --offline
+        run: python scripts/refresh_fundamentals.py --all --offline --require AAPL JPM NVDA
 
       - name: Build entire real company universe
         env:

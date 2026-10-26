@@ -25,15 +25,16 @@ const stage = path.join(appRoot, ".lens");
 
 // Real-data verification and release builds must fail closed. A missing runner
 // cache must never silently turn a production build into a synthetic demo.
-const requireEngine = /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_ENGINE ?? "");
-const requireFinancials = /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_FINANCIALS ?? "");
+const release = process.argv.includes("--release");
+const requireEngine = release || /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_ENGINE ?? "");
+const requireFinancials = release || /^(1|true|yes)$/i.test(process.env.LENS_REQUIRE_FINANCIALS ?? "");
 const requiredTickers = (process.env.LENS_REQUIRED_TICKERS ?? "")
   .split(/[,\s]+/)
   .map((ticker) => ticker.trim().toUpperCase())
   .filter(Boolean);
-// A release build that does not name its issuers still has to prove the three
-// companies the live event feed and the parity job actually cover.
-if (requireEngine && requiredTickers.length === 0) {
+// Publishing always requires the baseline three; environment overrides can
+// add issuers but cannot remove the release acceptance set.
+if (release || (requireEngine && requiredTickers.length === 0)) {
   requiredTickers.push("AAPL", "JPM", "NVDA");
 }
 
@@ -57,11 +58,15 @@ function gitCommit() {
 
 function financialGap(report) {
   if (!report || report.status === "unavailable" || report.status == null) return "no filed report";
-  if (report.extraction === "published_html_fallback") {
-    return "published HTML fallback is not a structured source";
+  if (report.extraction !== "company_facts") {
+    return "extraction must be company_facts (missing, unknown and HTML sources are not publishable)";
   }
   const metrics = Array.isArray(report.metrics) ? report.metrics : [];
-  if (report.status === "available" && metrics.length > 0) return null;
+  if (report.status === "available" && metrics.length > 0) {
+    if (!/^https:\/\/www\.sec\.gov\/Archives\//.test(report.source_url ?? "")) return "missing SEC filing source";
+    if (![report.period_end, report.filed].every((date) => /^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) || !report.form) return "missing filing metadata";
+    return null;
+  }
   return "filing without displayable figures";
 }
 
