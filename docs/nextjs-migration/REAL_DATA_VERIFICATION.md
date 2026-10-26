@@ -71,6 +71,31 @@ To test one **real** Ask response, the existing provider configuration must be e
 - Accessibility, Safari/WebKit, deployed legacy URLs and rate limits must be checked.
 - Keep the current production domain, Blob storage and Python refresh workflows unchanged until approved.
 
+## Accepted preview, 2026-10-26
+
+Source commit `6f6c246`. It includes `681ec94`, `08eb838`, `65e5455` and `b1b0cee`. The first parity run on `b1b0cee` ([40281602900](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40281602900)) missed the production cache because the path list had changed the cache version. `6f6c246` restores the saved path list. Company Facts stay inside `data/cache`.
+
+Runs for this commit, not for `c1594f8`:
+
+- CI [40282638587](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40282638587) succeeded.
+- Parity [40282634069](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40282634069) succeeded, including `publishable-financials`, page comparison and the 194-company build.
+- Cache hit: `company-lens-cache-40092399434`. Offline rebuild wrote `extraction=company_facts`.
+- Artifact: `lens-v2-full-real-snapshots-40282634069`. `as_of` is `2026-10-23`. 194 companies, no SYN.
+- Preview: `dpl_E3F63buv61bJTDf9xT6XeEb8gTpG`, https://lens-87edkuc5e-josewang-projects.vercel.app, target preview, project `lens-web`. The remote build used the uploaded staged engine directory, 194 snapshots.
+
+| Issuer | Filing | Figures |
+| --- | --- | --- |
+| AAPL | 10-Q, period ended 2026-06-27, filed 2026-07-31, `aapl-20260627.htm` | Revenue 109,417,000,000 USD, shown as $109.42B / 1,094.17 亿美元, YoY +16.4% from 16.3565%. Net income, EPS and gross profit are present. |
+| JPM | 10-Q, period ended 2026-06-30, filed 2026-08-06, `jpm-20260630.htm` | Net income 21,155,000,000 USD and EPS 7.70. No revenue or gross profit, because it is a financial issuer. |
+| NVDA | 10-Q, period ended 2026-07-26, filed 2026-08-26, `nvda-20260726.htm` | Revenue 96,221,000,000 USD, shown as $96.22B, YoY +105.9% from 105.8511%. |
+| KO, V | 10-Q located, `metadata_only`, zero metrics | The page says the report was found and the figures were not extractable, and links the filing. No approximate number is shown. |
+
+The displayed AAPL and NVDA amounts match the previous HTML-readback preview because that readback had rounded these same facts. The stored YoY is now the filing ratio, not `displayed percent / 100`. Ask evidence for AAPL revenue is `$109.42B` from this same snapshot.
+
+Browser check on the preview: Chinese and English, 390px with no document overflow, SPY/QQQ switch, live AAPL events (255, status current), research sections for capacity, tradability (45.7% already in the open), model comparison, calibration (`identity`) and volatility (`har`). Ask shows not configured and does not show the citation-checked badge. No provider key was set and no model was called.
+
+Still absent: the standalone report's queue and time-sweep charts. Production domain `lens.josephjwang.com` was not moved. Project `company-lens-josephjwang` was not modified.
+
 ## Handoff, 2026-10-26
 
 The protected preview `dpl_DwHQwMehZZiRXGi2Ka9VT3wY4DDr` showed filed figures that were read back from the published HTML. Those amounts are display-rounded. They are not the release source. `scripts/attach_published_financials.py` remains only as that marked fallback (`extraction=published_html_fallback`). A release build rejects it.
