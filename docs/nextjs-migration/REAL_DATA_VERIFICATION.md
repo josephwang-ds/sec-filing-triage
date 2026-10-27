@@ -1,4 +1,10 @@
-# Real company data: Lens v2 read-only verification
+# Real company data: Lens v2 verification and release
+
+## Current publication status (2026-10-27)
+
+Published at https://lens.josephjwang.com after the user explicitly authorized production publication and domain reassignment. Production deployment `dpl_74dtNYLQxLayYJ9dzagRgdfm3bWf` is READY; source `a6b7face25f401c1ffbd45275dadf2695a17fd4f` (application code unchanged from tested `0db3c21`). The production domain alias was independently checked against that exact deployment and project `prj_FZTMwbFl4fVES1HqAXn8LjvwnDpG`.
+
+This is publication of the available feature set, not a claim that all previously listed feature gates have been completed: Ask has no provider configured; events currently expose an honest degraded status; queue/time-sweep remain unmigrated. Details and rollback instructions are below.
 
 ## Current release rules (2026-10-26)
 
@@ -138,8 +144,24 @@ The research page now renders capacity, tradability, model comparison, calibrati
 - Ask visibly reports no provider configured in both languages. No real provider request was made. Evidence parity is not model-response acceptance.
 - Real events endpoint: AAPL returned 255 events with 255 source URLs, `status=critical`, `checked_at=2026-10-26T06:56:32.509286+00:00` (14:56 Shanghai). The UI truthfully reports overdue checks and the last good copy. The historical `current` result does not apply now. The upstream refresh was not modified or triggered.
 
-### Production cutover decision
+### Pre-release cutover assessment (2026-10-26; historical)
 
 Not ready for production cutover yet. Remaining gates: select/configure one approved model provider and perform a budgeted real Ask acceptance; investigate the upstream events freshness failure and verify a fresh successful check; complete any required full accessibility/Safari-application and rate-limit acceptance (only basic keyboard, Playwright WebKit and existing offline endpoint tests were exercised here). Queue/time-sweep remain intentionally unmigrated and documented. No production alias/domain was moved, no merge was performed, and the old Vercel project was untouched.
 
 The Vercel connector returned team-scope 403. Existing authenticated CLI access to the specified team worked with the stale local proxy variables unset; Preview browser checks used a short-lived same-project OIDC token scoped to the Preview origin. Deployment Protection was not disabled, and no provider key or token was copied into the repository.
+
+## Production publication and final acceptance (2026-10-27)
+
+- User explicitly selected “发布新版生产站并切换域名”, superseding the earlier prohibition on domain cutover. No merge or changes to the old project's application/credentials were performed. Its domain association was changed only as necessary for this authorized migration.
+- Staged production with `--prod --skip-domain`, using the same strict release entry and artifact `lens-v2-full-real-snapshots-40329300882`: 194 real companies, as_of 2026-10-23, structured Company Facts and newly staged same-source Ask evidence. Source `a6b7fac` had passing CI [40332212931](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40332212931); application parity and full-universe acceptance remain [40329300882](https://github.com/josephwang-ds/sec-filing-triage/actions/runs/40329300882).
+- Candidate: https://lens-6z0wsi7sv-josewang-projects.vercel.app; deployment `dpl_74dtNYLQxLayYJ9dzagRgdfm3bWf`. CLI lost its waiting connection, but subsequent service-side inspection confirmed READY, no build error. No duplicate deployment was created.
+- Promoted the production deployment, verified functionality at `lens-web-opal.vercel.app`, then reassigned `lens.josephjwang.com` to `lens-web`. Domain verified=true; alias API confirms the precise deployment ID above. HTTPS returned Next.js assets and expected filed figures without authentication.
+- Final **public production domain** Chromium and WebKit acceptance passed: AAPL/JPM/NVDA/KO/V, both locales, 390px, dates, current metric values and YoY against Ask evidence, currency/unit display and SEC links, genuine absence messages, SPY/QQQ, all five research modules, document width, legacy AAPL link and basic keyboard focus. Both final browser console error lists were empty. Earlier prepublication Preview navigation timed out; the default production domain had transient WebKit prefetch messages; neither result was counted as a clean final-domain run.
+- Production runtime error query for this deployment over the preceding hour returned zero entries. This is a bounded release-time check, not continuous monitoring or a full security/accessibility audit.
+- Production Ask renders the unconfigured state. Only GET status was checked; no provider key was added and no model request was sent. Rate-limit configuration is exposed, but production quota exhaustion was not exercised.
+- Production events: AAPL `status=degraded`, 298 events, checked_at `2026-10-27T04:52:08.131753+00:00` (12:52 Shanghai). The existing upstream is still `https://company-lens-josephjwang.vercel.app`; custom-domain migration therefore does not create an API recursion. Refresh degradation remains an upstream follow-up.
+- Deployment Protection was not disabled. The old project `prj_0lwe9BxOY7VU0WjLlwTiijSFQokr` retains its verified `company-lens-josephjwang.vercel.app` domain.
+
+### Rollback reference (recorded, not executed)
+
+To restore the custom domain to the old site after an explicit rollback decision, run `vercel domains add lens.josephjwang.com company-lens-josephjwang --force --scope josewang-projects`, then verify the alias target, HTTPS and old-page content. The old project's application was not removed. New-site promotion and custom-domain reassignment are separate operations; merely rolling back a deployment in lens-web does not return the domain to the old project.
