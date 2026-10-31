@@ -70,7 +70,10 @@ def financial_results_packet(
         if metric["prior_value"] is not None:
             item["prior_period"] = {"start": metric["prior_start"], "end": metric["prior_end"]}
             item["prior"] = _value(metric["prior_value"], unit)
-            item["absolute_change"] = _value(metric["change"], unit)
+            # A missing change stays missing. Subtracting two rounded displays
+            # would invent a figure the filing did not give us.
+            if metric.get("change") is not None:
+                item["absolute_change"] = _value(metric["change"], unit)
         if metric["yoy"] is not None:
             item["yoy"] = f"{metric['yoy']:+.1%}"
         else:

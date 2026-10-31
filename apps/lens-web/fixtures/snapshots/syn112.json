@@ -1,0 +1,4663 @@
+{
+  "schema_version": "2.0",
+  "ticker": "SYN112",
+  "company_name": "Synthetic Issuer 112 Inc.",
+  "as_of": "2024-12-31",
+  "benchmark": "SPY",
+  "period": {
+    "start": "2022-01-03",
+    "end": "2024-12-31"
+  },
+  "profile": {
+    "display_name": "Synthetic Issuer 112 Inc.",
+    "official_name": "Synthetic Issuer 112 Inc.",
+    "category": "Company evidence profile",
+    "category_zh": "公司证据档案",
+    "summary": "Historical market context and recent SEC disclosures for Synthetic Issuer 112 Inc. This view uses the current local evidence snapshot.",
+    "summary_zh": "Synthetic Issuer 112 Inc 的历史市场背景与近期 SEC 披露。本视图使用当前本地证据快照。",
+    "cik": "0001000112",
+    "source_label": "SEC EDGAR company record",
+    "source_url": "https://www.sec.gov/edgar/browse/?CIK=1000112&owner=exclude",
+    "method": "curated category for featured examples; otherwise evidence-profile copy; issuer identity linked to SEC",
+    "coverage": {
+      "price_start": "2022-01-03",
+      "price_end": "2024-12-31",
+      "filings_in_snapshot": 5
+    }
+  },
+  "market": {
+    "latest_adjusted_close": 281.4002473863609,
+    "price_date": "2024-12-31",
+    "price_field": "vendor-adjusted close"
+  },
+  "performance": {
+    "initial_investment": 10000,
+    "ending_value": 10351.704333969894,
+    "asset": {
+      "total_return": 0.03517043339698933,
+      "cagr": 0.01161774791947634,
+      "annualized_volatility": 0.25875807288650005,
+      "max_drawdown": -0.391879015535311,
+      "current_drawdown": -0.32950131389063053,
+      "max_drawdown_date": "2024-11-08",
+      "recovery_sessions": null,
+      "worst_day": -0.05595929017172352
+    },
+    "benchmark": {
+      "total_return": 0.27815994241114095,
+      "cagr": 0.08546808630689395,
+      "annualized_volatility": 0.15822793761935616,
+      "max_drawdown": -0.21941292080381902,
+      "current_drawdown": -0.11471729628847882,
+      "max_drawdown_date": "2024-07-29",
+      "recovery_sessions": null,
+      "worst_day": -0.027628185357974178
+    },
+    "relative_total_return": -0.24298950901415162,
+    "beta": 0.4618960714913184,
+    "correlation": 0.28244476383394407,
+    "observations": 753,
+    "dividends": "included when supplied by the adjusted-price vendor"
+  },
+  "growth": [
+    {
+      "date": "2022-01-03",
+      "asset_value": 10000,
+      "benchmark_value": 10000
+    },
+    {
+      "date": "2022-01-11",
+      "asset_value": 10126.695919639746,
+      "benchmark_value": 10396.337771018778
+    },
+    {
+      "date": "2022-01-20",
+      "asset_value": 10489.925489744432,
+      "benchmark_value": 10495.73860984456
+    },
+    {
+      "date": "2022-01-28",
+      "asset_value": 9968.231488553609,
+      "benchmark_value": 10596.500528684737
+    },
+    {
+      "date": "2022-02-07",
+      "asset_value": 10263.520009372873,
+      "benchmark_value": 10841.95978149278
+    },
+    {
+      "date": "2022-02-15",
+      "asset_value": 10812.497398813286,
+      "benchmark_value": 10772.471046341656
+    },
+    {
+      "date": "2022-02-22",
+      "asset_value": 10790.1111524048,
+      "benchmark_value": 10876.85085722093
+    },
+    {
+      "date": "2022-03-02",
+      "asset_value": 10408.418940557158,
+      "benchmark_value": 10479.74890845058
+    },
+    {
+      "date": "2022-03-10",
+      "asset_value": 10232.06890952002,
+      "benchmark_value": 10596.754562166974
+    },
+    {
+      "date": "2022-03-18",
+      "asset_value": 10347.359138332857,
+      "benchmark_value": 10882.189960378208
+    },
+    {
+      "date": "2022-03-28",
+      "asset_value": 9759.068583279935,
+      "benchmark_value": 10324.783524275268
+    },
+    {
+      "date": "2022-04-05",
+      "asset_value": 9915.570452085278,
+      "benchmark_value": 10392.592530621152
+    },
+    {
+      "date": "2022-04-13",
+      "asset_value": 9542.266901015197,
+      "benchmark_value": 10120.385613091248
+    },
+    {
+      "date": "2022-04-22",
+      "asset_value": 8756.796767217726,
+      "benchmark_value": 10009.309382632127
+    },
+    {
+      "date": "2022-05-02",
+      "asset_value": 8744.917688332009,
+      "benchmark_value": 10029.373904049395
+    },
+    {
+      "date": "2022-05-10",
+      "asset_value": 9240.465614715404,
+      "benchmark_value": 10128.157481124712
+    },
+    {
+      "date": "2022-05-18",
+      "asset_value": 8989.454585966401,
+      "benchmark_value": 10591.450067208174
+    },
+    {
+      "date": "2022-05-26",
+      "asset_value": 9013.254044081492,
+      "benchmark_value": 10907.363060422496
+    },
+    {
+      "date": "2022-06-02",
+      "asset_value": 9313.732719013316,
+      "benchmark_value": 11222.482822175249
+    },
+    {
+      "date": "2022-06-10",
+      "asset_value": 9530.403296114986,
+      "benchmark_value": 11430.716766886742
+    },
+    {
+      "date": "2022-06-21",
+      "asset_value": 9443.940050119549,
+      "benchmark_value": 11834.132171449832
+    },
+    {
+      "date": "2022-06-29",
+      "asset_value": 8997.00518358836,
+      "benchmark_value": 11728.506296016762
+    },
+    {
+      "date": "2022-07-08",
+      "asset_value": 8980.21537083071,
+      "benchmark_value": 11504.806180892487
+    },
+    {
+      "date": "2022-07-18",
+      "asset_value": 8879.747872879112,
+      "benchmark_value": 11641.689174847434
+    },
+    {
+      "date": "2022-07-26",
+      "asset_value": 10038.794299221214,
+      "benchmark_value": 12186.790138429631
+    },
+    {
+      "date": "2022-08-03",
+      "asset_value": 10002.566033253557,
+      "benchmark_value": 12541.721160283763
+    },
+    {
+      "date": "2022-08-11",
+      "asset_value": 10096.422026050357,
+      "benchmark_value": 12325.539403429051
+    },
+    {
+      "date": "2022-08-19",
+      "asset_value": 10002.198677381384,
+      "benchmark_value": 12114.865080099999
+    },
+    {
+      "date": "2022-08-29",
+      "asset_value": 10521.869189926569,
+      "benchmark_value": 12383.819927209192
+    },
+    {
+      "date": "2022-09-07",
+      "asset_value": 9645.665895005568,
+      "benchmark_value": 11895.543081103744
+    },
+    {
+      "date": "2022-09-13",
+      "asset_value": 9520.300015793624,
+      "benchmark_value": 12001.724200264267
+    },
+    {
+      "date": "2022-09-21",
+      "asset_value": 9875.16436982503,
+      "benchmark_value": 12049.662905762558
+    },
+    {
+      "date": "2022-09-29",
+      "asset_value": 10255.137545039697,
+      "benchmark_value": 12167.989100612142
+    },
+    {
+      "date": "2022-10-07",
+      "asset_value": 10548.302665349403,
+      "benchmark_value": 11846.16956950582
+    },
+    {
+      "date": "2022-10-17",
+      "asset_value": 10577.12780846791,
+      "benchmark_value": 11944.913530548183
+    },
+    {
+      "date": "2022-10-25",
+      "asset_value": 11072.882072866574,
+      "benchmark_value": 12074.1679543697
+    },
+    {
+      "date": "2022-11-02",
+      "asset_value": 10800.877032611934,
+      "benchmark_value": 12292.936756776118
+    },
+    {
+      "date": "2022-11-10",
+      "asset_value": 10173.526348980997,
+      "benchmark_value": 12036.028088281895
+    },
+    {
+      "date": "2022-11-18",
+      "asset_value": 10362.81880991847,
+      "benchmark_value": 12361.685682701242
+    },
+    {
+      "date": "2022-11-29",
+      "asset_value": 10664.188524536681,
+      "benchmark_value": 12130.41099538967
+    },
+    {
+      "date": "2022-12-07",
+      "asset_value": 10525.771807654943,
+      "benchmark_value": 12074.300800803461
+    },
+    {
+      "date": "2022-12-15",
+      "asset_value": 10453.37071929629,
+      "benchmark_value": 12026.512991576084
+    },
+    {
+      "date": "2022-12-21",
+      "asset_value": 10398.63498207224,
+      "benchmark_value": 12070.252131614463
+    },
+    {
+      "date": "2022-12-30",
+      "asset_value": 11268.277768536918,
+      "benchmark_value": 12728.851626577527
+    },
+    {
+      "date": "2023-01-10",
+      "asset_value": 11459.667815676708,
+      "benchmark_value": 12717.444500081501
+    },
+    {
+      "date": "2023-01-19",
+      "asset_value": 11070.626789533984,
+      "benchmark_value": 12607.390872013957
+    },
+    {
+      "date": "2023-01-27",
+      "asset_value": 10587.354997251303,
+      "benchmark_value": 12738.797385664064
+    },
+    {
+      "date": "2023-02-06",
+      "asset_value": 10926.440122467533,
+      "benchmark_value": 12958.32840822358
+    },
+    {
+      "date": "2023-02-14",
+      "asset_value": 10802.307461269005,
+      "benchmark_value": 13196.53900197947
+    },
+    {
+      "date": "2023-02-23",
+      "asset_value": 10604.169340015576,
+      "benchmark_value": 13042.91115612326
+    },
+    {
+      "date": "2023-03-03",
+      "asset_value": 10689.071086693604,
+      "benchmark_value": 12919.141085153724
+    },
+    {
+      "date": "2023-03-13",
+      "asset_value": 10556.19774328838,
+      "benchmark_value": 12544.134122047126
+    },
+    {
+      "date": "2023-03-21",
+      "asset_value": 11280.52195749239,
+      "benchmark_value": 12354.89461049451
+    },
+    {
+      "date": "2023-03-27",
+      "asset_value": 10896.160559083159,
+      "benchmark_value": 12422.144691932495
+    },
+    {
+      "date": "2023-04-04",
+      "asset_value": 10937.191649994573,
+      "benchmark_value": 12568.1901148189
+    },
+    {
+      "date": "2023-04-13",
+      "asset_value": 10952.499629358379,
+      "benchmark_value": 11964.583820512393
+    },
+    {
+      "date": "2023-04-21",
+      "asset_value": 11672.898485491552,
+      "benchmark_value": 12935.836047314957
+    },
+    {
+      "date": "2023-05-01",
+      "asset_value": 11899.06714644877,
+      "benchmark_value": 12693.781399482968
+    },
+    {
+      "date": "2023-05-09",
+      "asset_value": 12328.079394023558,
+      "benchmark_value": 12800.679368473922
+    },
+    {
+      "date": "2023-05-17",
+      "asset_value": 12896.924328525905,
+      "benchmark_value": 13499.13604148152
+    },
+    {
+      "date": "2023-05-25",
+      "asset_value": 12665.006295890744,
+      "benchmark_value": 13938.882002691389
+    },
+    {
+      "date": "2023-06-05",
+      "asset_value": 12533.378814745916,
+      "benchmark_value": 13850.972578371917
+    },
+    {
+      "date": "2023-06-13",
+      "asset_value": 13681.87208581317,
+      "benchmark_value": 14263.690538186607
+    },
+    {
+      "date": "2023-06-22",
+      "asset_value": 13794.47592888905,
+      "benchmark_value": 14380.127085247139
+    },
+    {
+      "date": "2023-06-30",
+      "asset_value": 13415.934079195564,
+      "benchmark_value": 14069.028648812366
+    },
+    {
+      "date": "2023-07-07",
+      "asset_value": 13217.436911837496,
+      "benchmark_value": 14009.486491811009
+    },
+    {
+      "date": "2023-07-17",
+      "asset_value": 13049.639198007812,
+      "benchmark_value": 13531.236523987342
+    },
+    {
+      "date": "2023-07-25",
+      "asset_value": 13259.512991686082,
+      "benchmark_value": 13535.655659246753
+    },
+    {
+      "date": "2023-08-02",
+      "asset_value": 13158.740301528542,
+      "benchmark_value": 13542.326640358036
+    },
+    {
+      "date": "2023-08-10",
+      "asset_value": 12901.368596246006,
+      "benchmark_value": 12750.203791214066
+    },
+    {
+      "date": "2023-08-18",
+      "asset_value": 12759.496335843485,
+      "benchmark_value": 12814.520411277166
+    },
+    {
+      "date": "2023-08-28",
+      "asset_value": 12525.540466029366,
+      "benchmark_value": 12217.049673443276
+    },
+    {
+      "date": "2023-09-06",
+      "asset_value": 12454.457539412078,
+      "benchmark_value": 12223.48566259222
+    },
+    {
+      "date": "2023-09-14",
+      "asset_value": 13261.974082820267,
+      "benchmark_value": 12577.450939203072
+    },
+    {
+      "date": "2023-09-22",
+      "asset_value": 13312.531589434422,
+      "benchmark_value": 12364.49940094915
+    },
+    {
+      "date": "2023-10-02",
+      "asset_value": 13488.471396986388,
+      "benchmark_value": 12488.803793416295
+    },
+    {
+      "date": "2023-10-10",
+      "asset_value": 13108.066460335063,
+      "benchmark_value": 12087.99072198222
+    },
+    {
+      "date": "2023-10-16",
+      "asset_value": 13871.288411741967,
+      "benchmark_value": 12122.553217648952
+    },
+    {
+      "date": "2023-10-24",
+      "asset_value": 15120.11137069544,
+      "benchmark_value": 12742.50759662487
+    },
+    {
+      "date": "2023-11-01",
+      "asset_value": 14883.554578749847,
+      "benchmark_value": 13120.85496094348
+    },
+    {
+      "date": "2023-11-09",
+      "asset_value": 14508.139055484793,
+      "benchmark_value": 12951.73801011872
+    },
+    {
+      "date": "2023-11-17",
+      "asset_value": 14926.176226297734,
+      "benchmark_value": 13093.074189628625
+    },
+    {
+      "date": "2023-11-28",
+      "asset_value": 14892.859876822633,
+      "benchmark_value": 12489.17235412313
+    },
+    {
+      "date": "2023-12-06",
+      "asset_value": 14420.109036643269,
+      "benchmark_value": 12421.391192103622
+    },
+    {
+      "date": "2023-12-14",
+      "asset_value": 13488.297104094685,
+      "benchmark_value": 12189.275984681442
+    },
+    {
+      "date": "2023-12-22",
+      "asset_value": 14069.706693303757,
+      "benchmark_value": 12494.216954765958
+    },
+    {
+      "date": "2024-01-03",
+      "asset_value": 14930.750153136572,
+      "benchmark_value": 12558.275875191875
+    },
+    {
+      "date": "2024-01-11",
+      "asset_value": 14228.971664051613,
+      "benchmark_value": 12655.63184519873
+    },
+    {
+      "date": "2024-01-18",
+      "asset_value": 15069.414387227305,
+      "benchmark_value": 12910.189044019948
+    },
+    {
+      "date": "2024-01-26",
+      "asset_value": 15238.854846737131,
+      "benchmark_value": 12468.00062665804
+    },
+    {
+      "date": "2024-02-05",
+      "asset_value": 14812.709583425532,
+      "benchmark_value": 12185.93782262532
+    },
+    {
+      "date": "2024-02-13",
+      "asset_value": 15111.191895302216,
+      "benchmark_value": 12741.02681317267
+    },
+    {
+      "date": "2024-02-22",
+      "asset_value": 14473.462314744345,
+      "benchmark_value": 12472.807357096897
+    },
+    {
+      "date": "2024-03-01",
+      "asset_value": 15045.331106216083,
+      "benchmark_value": 12169.407124136324
+    },
+    {
+      "date": "2024-03-11",
+      "asset_value": 15333.093580236258,
+      "benchmark_value": 12427.434796580752
+    },
+    {
+      "date": "2024-03-19",
+      "asset_value": 15002.582799221955,
+      "benchmark_value": 12550.263349671757
+    },
+    {
+      "date": "2024-03-27",
+      "asset_value": 13605.974471379028,
+      "benchmark_value": 12420.892055477783
+    },
+    {
+      "date": "2024-04-05",
+      "asset_value": 12796.937106365009,
+      "benchmark_value": 11830.059237270778
+    },
+    {
+      "date": "2024-04-15",
+      "asset_value": 12967.321477501155,
+      "benchmark_value": 12382.352066081781
+    },
+    {
+      "date": "2024-04-23",
+      "asset_value": 12915.284831463918,
+      "benchmark_value": 12605.754860592311
+    },
+    {
+      "date": "2024-04-29",
+      "asset_value": 13211.721542921123,
+      "benchmark_value": 12626.251193256381
+    },
+    {
+      "date": "2024-05-07",
+      "asset_value": 13519.175973663783,
+      "benchmark_value": 12347.898743961972
+    },
+    {
+      "date": "2024-05-15",
+      "asset_value": 12913.80605745784,
+      "benchmark_value": 11781.057768780774
+    },
+    {
+      "date": "2024-05-23",
+      "asset_value": 12722.030355542054,
+      "benchmark_value": 11410.621148166456
+    },
+    {
+      "date": "2024-06-03",
+      "asset_value": 12434.857549174321,
+      "benchmark_value": 11420.081364348056
+    },
+    {
+      "date": "2024-06-11",
+      "asset_value": 12458.456231001604,
+      "benchmark_value": 11920.290354117047
+    },
+    {
+      "date": "2024-06-20",
+      "asset_value": 12294.211840568503,
+      "benchmark_value": 11888.47490673453
+    },
+    {
+      "date": "2024-06-28",
+      "asset_value": 11951.228526868172,
+      "benchmark_value": 12412.516488676165
+    },
+    {
+      "date": "2024-07-09",
+      "asset_value": 11273.953205002645,
+      "benchmark_value": 12355.97431031656
+    },
+    {
+      "date": "2024-07-17",
+      "asset_value": 10871.776000253982,
+      "benchmark_value": 12189.853075186998
+    },
+    {
+      "date": "2024-07-25",
+      "asset_value": 9959.741887442608,
+      "benchmark_value": 11574.23367449176
+    },
+    {
+      "date": "2024-08-02",
+      "asset_value": 10148.66943635054,
+      "benchmark_value": 11559.579323198259
+    },
+    {
+      "date": "2024-08-08",
+      "asset_value": 10341.801377131193,
+      "benchmark_value": 11576.608787798492
+    },
+    {
+      "date": "2024-08-16",
+      "asset_value": 10276.495780457353,
+      "benchmark_value": 11821.936508492248
+    },
+    {
+      "date": "2024-08-26",
+      "asset_value": 10202.229167177082,
+      "benchmark_value": 11971.82651938897
+    },
+    {
+      "date": "2024-09-04",
+      "asset_value": 10310.395833011717,
+      "benchmark_value": 11784.305983880135
+    },
+    {
+      "date": "2024-09-12",
+      "asset_value": 10591.253332554235,
+      "benchmark_value": 11643.659551242064
+    },
+    {
+      "date": "2024-09-20",
+      "asset_value": 10568.00442495288,
+      "benchmark_value": 11829.08170629711
+    },
+    {
+      "date": "2024-09-30",
+      "asset_value": 10230.530723299336,
+      "benchmark_value": 12144.267727240656
+    },
+    {
+      "date": "2024-10-08",
+      "asset_value": 10555.021115743464,
+      "benchmark_value": 12712.802208345278
+    },
+    {
+      "date": "2024-10-16",
+      "asset_value": 9748.846066959595,
+      "benchmark_value": 12342.887820547461
+    },
+    {
+      "date": "2024-10-24",
+      "asset_value": 10290.277840454803,
+      "benchmark_value": 12825.28707809964
+    },
+    {
+      "date": "2024-11-01",
+      "asset_value": 10382.872858816561,
+      "benchmark_value": 12798.215329923543
+    },
+    {
+      "date": "2024-11-11",
+      "asset_value": 9598.55045426478,
+      "benchmark_value": 13015.749696358364
+    },
+    {
+      "date": "2024-11-15",
+      "asset_value": 10198.956525268854,
+      "benchmark_value": 12998.950067164735
+    },
+    {
+      "date": "2024-11-25",
+      "asset_value": 9930.897414834895,
+      "benchmark_value": 13316.766755043036
+    },
+    {
+      "date": "2024-12-04",
+      "asset_value": 9961.941375204493,
+      "benchmark_value": 13200.133478055785
+    },
+    {
+      "date": "2024-12-12",
+      "asset_value": 10084.49826258058,
+      "benchmark_value": 13467.740651226442
+    },
+    {
+      "date": "2024-12-20",
+      "asset_value": 10502.472579448959,
+      "benchmark_value": 13508.8300677698
+    },
+    {
+      "date": "2024-12-31",
+      "asset_value": 10351.704333969894,
+      "benchmark_value": 12781.59942411141
+    }
+  ],
+  "period_options": {
+    "1Y": {
+      "period": {
+        "start": "2024-01-02",
+        "end": "2024-12-31"
+      },
+      "performance": {
+        "initial_investment": 10000,
+        "ending_value": 6841.500827584122,
+        "asset": {
+          "total_return": -0.31584991724158784,
+          "cagr": -0.3167357792368707,
+          "annualized_volatility": 0.2533383015276744,
+          "max_drawdown": -0.391879015535311,
+          "current_drawdown": -0.32950131389063075,
+          "max_drawdown_date": "2024-11-08",
+          "recovery_sessions": null,
+          "worst_day": -0.04250396242832344
+        },
+        "benchmark": {
+          "total_return": 0.013283334808886105,
+          "cagr": 0.013328977812182563,
+          "annualized_volatility": 0.1691901592280397,
+          "max_drawdown": -0.13527082491355358,
+          "current_drawdown": -0.055840685253887634,
+          "max_drawdown_date": "2024-07-29",
+          "recovery_sessions": 197,
+          "worst_day": -0.02439945596608417
+        },
+        "relative_total_return": -0.32913325205047395,
+        "beta": 0.45345147717882306,
+        "correlation": 0.30283430165688596,
+        "observations": 252,
+        "dividends": "included when supplied by the adjusted-price vendor"
+      },
+      "growth": [
+        {
+          "date": "2024-01-02",
+          "asset_value": 10000,
+          "benchmark_value": 10000
+        },
+        {
+          "date": "2024-01-04",
+          "asset_value": 9945.791823176101,
+          "benchmark_value": 10042.815452888146
+        },
+        {
+          "date": "2024-01-08",
+          "asset_value": 9345.550092809775,
+          "benchmark_value": 9846.785778679596
+        },
+        {
+          "date": "2024-01-10",
+          "asset_value": 9188.95972309691,
+          "benchmark_value": 9864.773502781714
+        },
+        {
+          "date": "2024-01-12",
+          "asset_value": 9648.153605209474,
+          "benchmark_value": 10159.174777106315
+        },
+        {
+          "date": "2024-01-17",
+          "asset_value": 9829.877337858166,
+          "benchmark_value": 10332.137262487213
+        },
+        {
+          "date": "2024-01-19",
+          "asset_value": 10034.19012373877,
+          "benchmark_value": 10098.895199895662
+        },
+        {
+          "date": "2024-01-23",
+          "asset_value": 10003.059288503764,
+          "benchmark_value": 10011.13519220377
+        },
+        {
+          "date": "2024-01-25",
+          "asset_value": 10152.786520800853,
+          "benchmark_value": 9933.316111262095
+        },
+        {
+          "date": "2024-01-29",
+          "asset_value": 9968.876686103817,
+          "benchmark_value": 9704.396723289898
+        },
+        {
+          "date": "2024-01-30",
+          "asset_value": 9877.150629693078,
+          "benchmark_value": 9725.310803548424
+        },
+        {
+          "date": "2024-02-01",
+          "asset_value": 9602.225991073086,
+          "benchmark_value": 9745.948413268261
+        },
+        {
+          "date": "2024-02-05",
+          "asset_value": 9789.80480935979,
+          "benchmark_value": 9660.612341981569
+        },
+        {
+          "date": "2024-02-07",
+          "asset_value": 9860.04818852014,
+          "benchmark_value": 9658.565311864637
+        },
+        {
+          "date": "2024-02-09",
+          "asset_value": 10147.38944630776,
+          "benchmark_value": 9875.199068034593
+        },
+        {
+          "date": "2024-02-13",
+          "asset_value": 9987.073482985095,
+          "benchmark_value": 10100.668711137121
+        },
+        {
+          "date": "2024-02-15",
+          "asset_value": 9893.258388773587,
+          "benchmark_value": 10124.233606056634
+        },
+        {
+          "date": "2024-02-20",
+          "asset_value": 10045.23972368423,
+          "benchmark_value": 9968.251446587092
+        },
+        {
+          "date": "2024-02-22",
+          "asset_value": 9565.594341734513,
+          "benchmark_value": 9888.03311218353
+        },
+        {
+          "date": "2024-02-26",
+          "asset_value": 9763.364454645605,
+          "benchmark_value": 9979.80280806611
+        },
+        {
+          "date": "2024-02-28",
+          "asset_value": 9846.58198086015,
+          "benchmark_value": 9896.390406614706
+        },
+        {
+          "date": "2024-03-01",
+          "asset_value": 9943.54570934501,
+          "benchmark_value": 9647.507345700704
+        },
+        {
+          "date": "2024-03-05",
+          "asset_value": 9701.77998715126,
+          "benchmark_value": 9448.558863726246
+        },
+        {
+          "date": "2024-03-07",
+          "asset_value": 9593.858475519935,
+          "benchmark_value": 9721.086167958156
+        },
+        {
+          "date": "2024-03-11",
+          "asset_value": 10133.729580584084,
+          "benchmark_value": 9852.06323243445
+        },
+        {
+          "date": "2024-03-13",
+          "asset_value": 10174.607935348646,
+          "benchmark_value": 9986.818826628933
+        },
+        {
+          "date": "2024-03-15",
+          "asset_value": 10049.227684923944,
+          "benchmark_value": 9984.293080521442
+        },
+        {
+          "date": "2024-03-19",
+          "asset_value": 9915.29310781751,
+          "benchmark_value": 9949.437685940653
+        },
+        {
+          "date": "2024-03-20",
+          "asset_value": 9933.288641956477,
+          "benchmark_value": 10005.803810662177
+        },
+        {
+          "date": "2024-03-22",
+          "asset_value": 9712.028613133249,
+          "benchmark_value": 9927.578725654952
+        },
+        {
+          "date": "2024-03-26",
+          "asset_value": 8956.447772746344,
+          "benchmark_value": 9856.480152761202
+        },
+        {
+          "date": "2024-03-28",
+          "asset_value": 8736.41865461601,
+          "benchmark_value": 9627.025811647087
+        },
+        {
+          "date": "2024-04-02",
+          "asset_value": 8712.92827696995,
+          "benchmark_value": 9627.191609610587
+        },
+        {
+          "date": "2024-04-04",
+          "asset_value": 8344.851272846212,
+          "benchmark_value": 9449.809892449985
+        },
+        {
+          "date": "2024-04-08",
+          "asset_value": 8496.63452584408,
+          "benchmark_value": 9431.23704999555
+        },
+        {
+          "date": "2024-04-10",
+          "asset_value": 8664.427877400429,
+          "benchmark_value": 9820.91849656692
+        },
+        {
+          "date": "2024-04-12",
+          "asset_value": 8609.715394063014,
+          "benchmark_value": 9724.672976572965
+        },
+        {
+          "date": "2024-04-16",
+          "asset_value": 8616.650731651865,
+          "benchmark_value": 9820.920772279744
+        },
+        {
+          "date": "2024-04-18",
+          "asset_value": 8721.764888316167,
+          "benchmark_value": 9799.618729604503
+        },
+        {
+          "date": "2024-04-22",
+          "asset_value": 8577.034040011493,
+          "benchmark_value": 10064.428737321985
+        },
+        {
+          "date": "2024-04-24",
+          "asset_value": 8585.836631034472,
+          "benchmark_value": 9976.506417134753
+        },
+        {
+          "date": "2024-04-26",
+          "asset_value": 8520.831941772005,
+          "benchmark_value": 9890.467525322298
+        },
+        {
+          "date": "2024-04-30",
+          "asset_value": 8832.841824530804,
+          "benchmark_value": 9969.51264328678
+        },
+        {
+          "date": "2024-05-02",
+          "asset_value": 9011.822253479384,
+          "benchmark_value": 10019.420402724598
+        },
+        {
+          "date": "2024-05-06",
+          "asset_value": 8901.095384405102,
+          "benchmark_value": 9957.487570737116
+        },
+        {
+          "date": "2024-05-08",
+          "asset_value": 9027.295248433373,
+          "benchmark_value": 9670.177089160397
+        },
+        {
+          "date": "2024-05-10",
+          "asset_value": 8721.548099689217,
+          "benchmark_value": 9331.945103727352
+        },
+        {
+          "date": "2024-05-13",
+          "asset_value": 8747.038225456761,
+          "benchmark_value": 9397.464293076042
+        },
+        {
+          "date": "2024-05-15",
+          "asset_value": 8534.80856668521,
+          "benchmark_value": 9339.636697585074
+        },
+        {
+          "date": "2024-05-17",
+          "asset_value": 8637.634106545482,
+          "benchmark_value": 9231.909667263324
+        },
+        {
+          "date": "2024-05-21",
+          "asset_value": 8497.763042819242,
+          "benchmark_value": 9029.76003787049
+        },
+        {
+          "date": "2024-05-23",
+          "asset_value": 8408.062904228273,
+          "benchmark_value": 9045.966678820965
+        },
+        {
+          "date": "2024-05-28",
+          "asset_value": 8307.27262723835,
+          "benchmark_value": 9000.26587516715
+        },
+        {
+          "date": "2024-05-30",
+          "asset_value": 8220.39834454938,
+          "benchmark_value": 8976.52125304752
+        },
+        {
+          "date": "2024-06-03",
+          "asset_value": 8218.268747726215,
+          "benchmark_value": 9053.466428329953
+        },
+        {
+          "date": "2024-06-05",
+          "asset_value": 8192.856049398912,
+          "benchmark_value": 9369.020969534291
+        },
+        {
+          "date": "2024-06-07",
+          "asset_value": 8012.777367055074,
+          "benchmark_value": 9332.120548079301
+        },
+        {
+          "date": "2024-06-11",
+          "asset_value": 8233.865252035312,
+          "benchmark_value": 9450.015730523206
+        },
+        {
+          "date": "2024-06-13",
+          "asset_value": 8218.462446349953,
+          "benchmark_value": 9397.971365716496
+        },
+        {
+          "date": "2024-06-17",
+          "asset_value": 8292.81536705789,
+          "benchmark_value": 9365.929291331946
+        },
+        {
+          "date": "2024-06-20",
+          "asset_value": 8125.31519140552,
+          "benchmark_value": 9424.793485988319
+        },
+        {
+          "date": "2024-06-24",
+          "asset_value": 7917.814930805176,
+          "benchmark_value": 9437.380530205552
+        },
+        {
+          "date": "2024-06-26",
+          "asset_value": 7827.53449494411,
+          "benchmark_value": 9747.098519296436
+        },
+        {
+          "date": "2024-06-28",
+          "asset_value": 7898.635550176967,
+          "benchmark_value": 9840.236486593276
+        },
+        {
+          "date": "2024-07-02",
+          "asset_value": 7713.599371879437,
+          "benchmark_value": 9705.168351051052
+        },
+        {
+          "date": "2024-07-03",
+          "asset_value": 7730.923983550547,
+          "benchmark_value": 9719.656028203575
+        },
+        {
+          "date": "2024-07-08",
+          "asset_value": 7560.983642216932,
+          "benchmark_value": 9723.330941787659
+        },
+        {
+          "date": "2024-07-10",
+          "asset_value": 7403.430261411758,
+          "benchmark_value": 9800.837583909328
+        },
+        {
+          "date": "2024-07-12",
+          "asset_value": 7231.377457812404,
+          "benchmark_value": 9807.115765273771
+        },
+        {
+          "date": "2024-07-16",
+          "asset_value": 7213.259710433241,
+          "benchmark_value": 9656.87750165898
+        },
+        {
+          "date": "2024-07-18",
+          "asset_value": 7202.179063546901,
+          "benchmark_value": 9777.567240283484
+        },
+        {
+          "date": "2024-07-22",
+          "asset_value": 6979.365218713689,
+          "benchmark_value": 9741.366333202708
+        },
+        {
+          "date": "2024-07-24",
+          "asset_value": 6704.95352424808,
+          "benchmark_value": 9394.181598801828
+        },
+        {
+          "date": "2024-07-26",
+          "asset_value": 6681.231554809308,
+          "benchmark_value": 9157.94951787143
+        },
+        {
+          "date": "2024-07-30",
+          "asset_value": 6713.750651710186,
+          "benchmark_value": 9005.810453294775
+        },
+        {
+          "date": "2024-08-01",
+          "asset_value": 6735.110238714051,
+          "benchmark_value": 9129.437947271457
+        },
+        {
+          "date": "2024-08-05",
+          "asset_value": 6836.88347782742,
+          "benchmark_value": 9194.385206833085
+        },
+        {
+          "date": "2024-08-07",
+          "asset_value": 6846.626583613836,
+          "benchmark_value": 9244.304543693093
+        },
+        {
+          "date": "2024-08-09",
+          "asset_value": 6732.498032860971,
+          "benchmark_value": 9093.736163093234
+        },
+        {
+          "date": "2024-08-13",
+          "asset_value": 6858.162007576712,
+          "benchmark_value": 9314.239770929653
+        },
+        {
+          "date": "2024-08-15",
+          "asset_value": 6814.785238745768,
+          "benchmark_value": 9346.207838131177
+        },
+        {
+          "date": "2024-08-19",
+          "asset_value": 6854.115732544753,
+          "benchmark_value": 9365.832842234406
+        },
+        {
+          "date": "2024-08-21",
+          "asset_value": 6977.869063530895,
+          "benchmark_value": 9367.051273710704
+        },
+        {
+          "date": "2024-08-22",
+          "asset_value": 6787.9500481007635,
+          "benchmark_value": 9235.128248891802
+        },
+        {
+          "date": "2024-08-26",
+          "asset_value": 6742.711831654201,
+          "benchmark_value": 9490.871914227013
+        },
+        {
+          "date": "2024-08-28",
+          "asset_value": 6866.844978031871,
+          "benchmark_value": 9493.7241824238
+        },
+        {
+          "date": "2024-08-30",
+          "asset_value": 7012.1819364549365,
+          "benchmark_value": 9400.12727614657
+        },
+        {
+          "date": "2024-09-04",
+          "asset_value": 6814.199802132283,
+          "benchmark_value": 9342.211776116988
+        },
+        {
+          "date": "2024-09-06",
+          "asset_value": 6917.949762169277,
+          "benchmark_value": 9484.216753291388
+        },
+        {
+          "date": "2024-09-10",
+          "asset_value": 6902.5904649707945,
+          "benchmark_value": 9243.167037833124
+        },
+        {
+          "date": "2024-09-12",
+          "asset_value": 6999.820136094861,
+          "benchmark_value": 9230.711891350114
+        },
+        {
+          "date": "2024-09-16",
+          "asset_value": 7083.147381442254,
+          "benchmark_value": 9212.511720131402
+        },
+        {
+          "date": "2024-09-18",
+          "asset_value": 7076.473292260051,
+          "benchmark_value": 9157.531329621066
+        },
+        {
+          "date": "2024-09-20",
+          "asset_value": 6984.454799579873,
+          "benchmark_value": 9377.708502171132
+        },
+        {
+          "date": "2024-09-24",
+          "asset_value": 6825.9764062444265,
+          "benchmark_value": 9686.082797159092
+        },
+        {
+          "date": "2024-09-26",
+          "asset_value": 6826.837480753557,
+          "benchmark_value": 9668.616221879942
+        },
+        {
+          "date": "2024-09-30",
+          "asset_value": 6761.416492585921,
+          "benchmark_value": 9627.577655310413
+        },
+        {
+          "date": "2024-10-02",
+          "asset_value": 6769.209599474517,
+          "benchmark_value": 9940.454692703974
+        },
+        {
+          "date": "2024-10-04",
+          "asset_value": 6840.985922625313,
+          "benchmark_value": 9923.973671114276
+        },
+        {
+          "date": "2024-10-08",
+          "asset_value": 6975.874055981014,
+          "benchmark_value": 10078.29316895794
+        },
+        {
+          "date": "2024-10-10",
+          "asset_value": 6833.092781164955,
+          "benchmark_value": 9986.196984395816
+        },
+        {
+          "date": "2024-10-14",
+          "asset_value": 6746.591678700536,
+          "benchmark_value": 10033.545780068627
+        },
+        {
+          "date": "2024-10-15",
+          "asset_value": 6642.320458487428,
+          "benchmark_value": 9897.617511823986
+        },
+        {
+          "date": "2024-10-17",
+          "asset_value": 6475.562056210266,
+          "benchmark_value": 9911.410776344606
+        },
+        {
+          "date": "2024-10-21",
+          "asset_value": 6490.031390897265,
+          "benchmark_value": 9877.788923109729
+        },
+        {
+          "date": "2024-10-23",
+          "asset_value": 6515.4620676995855,
+          "benchmark_value": 10001.833123598713
+        },
+        {
+          "date": "2024-10-25",
+          "asset_value": 6836.677344582637,
+          "benchmark_value": 10204.25456610971
+        },
+        {
+          "date": "2024-10-29",
+          "asset_value": 6829.924999038139,
+          "benchmark_value": 10359.551350673459
+        },
+        {
+          "date": "2024-10-31",
+          "asset_value": 7047.413935022463,
+          "benchmark_value": 10273.872264236483
+        },
+        {
+          "date": "2024-11-04",
+          "asset_value": 6826.603819271846,
+          "benchmark_value": 10330.132353719417
+        },
+        {
+          "date": "2024-11-06",
+          "asset_value": 6531.477090824619,
+          "benchmark_value": 10409.132581885431
+        },
+        {
+          "date": "2024-11-08",
+          "asset_value": 6205.023670706793,
+          "benchmark_value": 10376.355733325223
+        },
+        {
+          "date": "2024-11-12",
+          "asset_value": 6379.369793876539,
+          "benchmark_value": 10143.699954298207
+        },
+        {
+          "date": "2024-11-14",
+          "asset_value": 6686.519833267596,
+          "benchmark_value": 10397.957345394543
+        },
+        {
+          "date": "2024-11-18",
+          "asset_value": 6615.311325521579,
+          "benchmark_value": 10300.798363908789
+        },
+        {
+          "date": "2024-11-20",
+          "asset_value": 6632.284884404843,
+          "benchmark_value": 10408.768494974043
+        },
+        {
+          "date": "2024-11-22",
+          "asset_value": 6678.0750325936915,
+          "benchmark_value": 10579.374062966079
+        },
+        {
+          "date": "2024-11-26",
+          "asset_value": 6492.7893919129165,
+          "benchmark_value": 10381.843359566867
+        },
+        {
+          "date": "2024-11-29",
+          "asset_value": 6482.118469317281,
+          "benchmark_value": 10306.65877775437
+        },
+        {
+          "date": "2024-12-03",
+          "asset_value": 6440.3916806187235,
+          "benchmark_value": 10329.977400930089
+        },
+        {
+          "date": "2024-12-04",
+          "asset_value": 6583.904250351465,
+          "benchmark_value": 10464.63343651271
+        },
+        {
+          "date": "2024-12-06",
+          "asset_value": 6770.597281500429,
+          "benchmark_value": 10548.48275667167
+        },
+        {
+          "date": "2024-12-10",
+          "asset_value": 6906.557009226706,
+          "benchmark_value": 10543.587587055843
+        },
+        {
+          "date": "2024-12-12",
+          "asset_value": 6664.902800866294,
+          "benchmark_value": 10676.78363763513
+        },
+        {
+          "date": "2024-12-16",
+          "asset_value": 6567.523943537905,
+          "benchmark_value": 10475.11379497067
+        },
+        {
+          "date": "2024-12-18",
+          "asset_value": 6969.086579872873,
+          "benchmark_value": 10615.79076130198
+        },
+        {
+          "date": "2024-12-20",
+          "asset_value": 6941.144426641869,
+          "benchmark_value": 10709.357981141675
+        },
+        {
+          "date": "2024-12-24",
+          "asset_value": 6975.719483771996,
+          "benchmark_value": 10646.081932312049
+        },
+        {
+          "date": "2024-12-27",
+          "asset_value": 6703.865463528026,
+          "benchmark_value": 10345.358279133885
+        },
+        {
+          "date": "2024-12-31",
+          "asset_value": 6841.500827584122,
+          "benchmark_value": 10132.833348088861
+        }
+      ],
+      "coverage": {
+        "status": "full",
+        "requested_start": "2023-12-31",
+        "start": "2024-01-02",
+        "end": "2024-12-31",
+        "observations": 252
+      }
+    },
+    "3Y": {
+      "period": {
+        "start": "2022-01-03",
+        "end": "2024-12-31"
+      },
+      "performance": {
+        "initial_investment": 10000,
+        "ending_value": 10351.704333969894,
+        "asset": {
+          "total_return": 0.03517043339698933,
+          "cagr": 0.01161774791947634,
+          "annualized_volatility": 0.25875807288650005,
+          "max_drawdown": -0.391879015535311,
+          "current_drawdown": -0.32950131389063053,
+          "max_drawdown_date": "2024-11-08",
+          "recovery_sessions": null,
+          "worst_day": -0.05595929017172352
+        },
+        "benchmark": {
+          "total_return": 0.27815994241114095,
+          "cagr": 0.08546808630689395,
+          "annualized_volatility": 0.15822793761935616,
+          "max_drawdown": -0.21941292080381902,
+          "current_drawdown": -0.11471729628847882,
+          "max_drawdown_date": "2024-07-29",
+          "recovery_sessions": null,
+          "worst_day": -0.027628185357974178
+        },
+        "relative_total_return": -0.24298950901415162,
+        "beta": 0.4618960714913184,
+        "correlation": 0.28244476383394407,
+        "observations": 753,
+        "dividends": "included when supplied by the adjusted-price vendor"
+      },
+      "growth": [
+        {
+          "date": "2022-01-03",
+          "asset_value": 10000,
+          "benchmark_value": 10000
+        },
+        {
+          "date": "2022-01-11",
+          "asset_value": 10126.695919639746,
+          "benchmark_value": 10396.337771018778
+        },
+        {
+          "date": "2022-01-20",
+          "asset_value": 10489.925489744432,
+          "benchmark_value": 10495.73860984456
+        },
+        {
+          "date": "2022-01-28",
+          "asset_value": 9968.231488553609,
+          "benchmark_value": 10596.500528684737
+        },
+        {
+          "date": "2022-02-07",
+          "asset_value": 10263.520009372873,
+          "benchmark_value": 10841.95978149278
+        },
+        {
+          "date": "2022-02-15",
+          "asset_value": 10812.497398813286,
+          "benchmark_value": 10772.471046341656
+        },
+        {
+          "date": "2022-02-22",
+          "asset_value": 10790.1111524048,
+          "benchmark_value": 10876.85085722093
+        },
+        {
+          "date": "2022-03-02",
+          "asset_value": 10408.418940557158,
+          "benchmark_value": 10479.74890845058
+        },
+        {
+          "date": "2022-03-10",
+          "asset_value": 10232.06890952002,
+          "benchmark_value": 10596.754562166974
+        },
+        {
+          "date": "2022-03-18",
+          "asset_value": 10347.359138332857,
+          "benchmark_value": 10882.189960378208
+        },
+        {
+          "date": "2022-03-28",
+          "asset_value": 9759.068583279935,
+          "benchmark_value": 10324.783524275268
+        },
+        {
+          "date": "2022-04-05",
+          "asset_value": 9915.570452085278,
+          "benchmark_value": 10392.592530621152
+        },
+        {
+          "date": "2022-04-13",
+          "asset_value": 9542.266901015197,
+          "benchmark_value": 10120.385613091248
+        },
+        {
+          "date": "2022-04-22",
+          "asset_value": 8756.796767217726,
+          "benchmark_value": 10009.309382632127
+        },
+        {
+          "date": "2022-05-02",
+          "asset_value": 8744.917688332009,
+          "benchmark_value": 10029.373904049395
+        },
+        {
+          "date": "2022-05-10",
+          "asset_value": 9240.465614715404,
+          "benchmark_value": 10128.157481124712
+        },
+        {
+          "date": "2022-05-18",
+          "asset_value": 8989.454585966401,
+          "benchmark_value": 10591.450067208174
+        },
+        {
+          "date": "2022-05-26",
+          "asset_value": 9013.254044081492,
+          "benchmark_value": 10907.363060422496
+        },
+        {
+          "date": "2022-06-02",
+          "asset_value": 9313.732719013316,
+          "benchmark_value": 11222.482822175249
+        },
+        {
+          "date": "2022-06-10",
+          "asset_value": 9530.403296114986,
+          "benchmark_value": 11430.716766886742
+        },
+        {
+          "date": "2022-06-21",
+          "asset_value": 9443.940050119549,
+          "benchmark_value": 11834.132171449832
+        },
+        {
+          "date": "2022-06-29",
+          "asset_value": 8997.00518358836,
+          "benchmark_value": 11728.506296016762
+        },
+        {
+          "date": "2022-07-08",
+          "asset_value": 8980.21537083071,
+          "benchmark_value": 11504.806180892487
+        },
+        {
+          "date": "2022-07-18",
+          "asset_value": 8879.747872879112,
+          "benchmark_value": 11641.689174847434
+        },
+        {
+          "date": "2022-07-26",
+          "asset_value": 10038.794299221214,
+          "benchmark_value": 12186.790138429631
+        },
+        {
+          "date": "2022-08-03",
+          "asset_value": 10002.566033253557,
+          "benchmark_value": 12541.721160283763
+        },
+        {
+          "date": "2022-08-11",
+          "asset_value": 10096.422026050357,
+          "benchmark_value": 12325.539403429051
+        },
+        {
+          "date": "2022-08-19",
+          "asset_value": 10002.198677381384,
+          "benchmark_value": 12114.865080099999
+        },
+        {
+          "date": "2022-08-29",
+          "asset_value": 10521.869189926569,
+          "benchmark_value": 12383.819927209192
+        },
+        {
+          "date": "2022-09-07",
+          "asset_value": 9645.665895005568,
+          "benchmark_value": 11895.543081103744
+        },
+        {
+          "date": "2022-09-13",
+          "asset_value": 9520.300015793624,
+          "benchmark_value": 12001.724200264267
+        },
+        {
+          "date": "2022-09-21",
+          "asset_value": 9875.16436982503,
+          "benchmark_value": 12049.662905762558
+        },
+        {
+          "date": "2022-09-29",
+          "asset_value": 10255.137545039697,
+          "benchmark_value": 12167.989100612142
+        },
+        {
+          "date": "2022-10-07",
+          "asset_value": 10548.302665349403,
+          "benchmark_value": 11846.16956950582
+        },
+        {
+          "date": "2022-10-17",
+          "asset_value": 10577.12780846791,
+          "benchmark_value": 11944.913530548183
+        },
+        {
+          "date": "2022-10-25",
+          "asset_value": 11072.882072866574,
+          "benchmark_value": 12074.1679543697
+        },
+        {
+          "date": "2022-11-02",
+          "asset_value": 10800.877032611934,
+          "benchmark_value": 12292.936756776118
+        },
+        {
+          "date": "2022-11-10",
+          "asset_value": 10173.526348980997,
+          "benchmark_value": 12036.028088281895
+        },
+        {
+          "date": "2022-11-18",
+          "asset_value": 10362.81880991847,
+          "benchmark_value": 12361.685682701242
+        },
+        {
+          "date": "2022-11-29",
+          "asset_value": 10664.188524536681,
+          "benchmark_value": 12130.41099538967
+        },
+        {
+          "date": "2022-12-07",
+          "asset_value": 10525.771807654943,
+          "benchmark_value": 12074.300800803461
+        },
+        {
+          "date": "2022-12-15",
+          "asset_value": 10453.37071929629,
+          "benchmark_value": 12026.512991576084
+        },
+        {
+          "date": "2022-12-21",
+          "asset_value": 10398.63498207224,
+          "benchmark_value": 12070.252131614463
+        },
+        {
+          "date": "2022-12-30",
+          "asset_value": 11268.277768536918,
+          "benchmark_value": 12728.851626577527
+        },
+        {
+          "date": "2023-01-10",
+          "asset_value": 11459.667815676708,
+          "benchmark_value": 12717.444500081501
+        },
+        {
+          "date": "2023-01-19",
+          "asset_value": 11070.626789533984,
+          "benchmark_value": 12607.390872013957
+        },
+        {
+          "date": "2023-01-27",
+          "asset_value": 10587.354997251303,
+          "benchmark_value": 12738.797385664064
+        },
+        {
+          "date": "2023-02-06",
+          "asset_value": 10926.440122467533,
+          "benchmark_value": 12958.32840822358
+        },
+        {
+          "date": "2023-02-14",
+          "asset_value": 10802.307461269005,
+          "benchmark_value": 13196.53900197947
+        },
+        {
+          "date": "2023-02-23",
+          "asset_value": 10604.169340015576,
+          "benchmark_value": 13042.91115612326
+        },
+        {
+          "date": "2023-03-03",
+          "asset_value": 10689.071086693604,
+          "benchmark_value": 12919.141085153724
+        },
+        {
+          "date": "2023-03-13",
+          "asset_value": 10556.19774328838,
+          "benchmark_value": 12544.134122047126
+        },
+        {
+          "date": "2023-03-21",
+          "asset_value": 11280.52195749239,
+          "benchmark_value": 12354.89461049451
+        },
+        {
+          "date": "2023-03-27",
+          "asset_value": 10896.160559083159,
+          "benchmark_value": 12422.144691932495
+        },
+        {
+          "date": "2023-04-04",
+          "asset_value": 10937.191649994573,
+          "benchmark_value": 12568.1901148189
+        },
+        {
+          "date": "2023-04-13",
+          "asset_value": 10952.499629358379,
+          "benchmark_value": 11964.583820512393
+        },
+        {
+          "date": "2023-04-21",
+          "asset_value": 11672.898485491552,
+          "benchmark_value": 12935.836047314957
+        },
+        {
+          "date": "2023-05-01",
+          "asset_value": 11899.06714644877,
+          "benchmark_value": 12693.781399482968
+        },
+        {
+          "date": "2023-05-09",
+          "asset_value": 12328.079394023558,
+          "benchmark_value": 12800.679368473922
+        },
+        {
+          "date": "2023-05-17",
+          "asset_value": 12896.924328525905,
+          "benchmark_value": 13499.13604148152
+        },
+        {
+          "date": "2023-05-25",
+          "asset_value": 12665.006295890744,
+          "benchmark_value": 13938.882002691389
+        },
+        {
+          "date": "2023-06-05",
+          "asset_value": 12533.378814745916,
+          "benchmark_value": 13850.972578371917
+        },
+        {
+          "date": "2023-06-13",
+          "asset_value": 13681.87208581317,
+          "benchmark_value": 14263.690538186607
+        },
+        {
+          "date": "2023-06-22",
+          "asset_value": 13794.47592888905,
+          "benchmark_value": 14380.127085247139
+        },
+        {
+          "date": "2023-06-30",
+          "asset_value": 13415.934079195564,
+          "benchmark_value": 14069.028648812366
+        },
+        {
+          "date": "2023-07-07",
+          "asset_value": 13217.436911837496,
+          "benchmark_value": 14009.486491811009
+        },
+        {
+          "date": "2023-07-17",
+          "asset_value": 13049.639198007812,
+          "benchmark_value": 13531.236523987342
+        },
+        {
+          "date": "2023-07-25",
+          "asset_value": 13259.512991686082,
+          "benchmark_value": 13535.655659246753
+        },
+        {
+          "date": "2023-08-02",
+          "asset_value": 13158.740301528542,
+          "benchmark_value": 13542.326640358036
+        },
+        {
+          "date": "2023-08-10",
+          "asset_value": 12901.368596246006,
+          "benchmark_value": 12750.203791214066
+        },
+        {
+          "date": "2023-08-18",
+          "asset_value": 12759.496335843485,
+          "benchmark_value": 12814.520411277166
+        },
+        {
+          "date": "2023-08-28",
+          "asset_value": 12525.540466029366,
+          "benchmark_value": 12217.049673443276
+        },
+        {
+          "date": "2023-09-06",
+          "asset_value": 12454.457539412078,
+          "benchmark_value": 12223.48566259222
+        },
+        {
+          "date": "2023-09-14",
+          "asset_value": 13261.974082820267,
+          "benchmark_value": 12577.450939203072
+        },
+        {
+          "date": "2023-09-22",
+          "asset_value": 13312.531589434422,
+          "benchmark_value": 12364.49940094915
+        },
+        {
+          "date": "2023-10-02",
+          "asset_value": 13488.471396986388,
+          "benchmark_value": 12488.803793416295
+        },
+        {
+          "date": "2023-10-10",
+          "asset_value": 13108.066460335063,
+          "benchmark_value": 12087.99072198222
+        },
+        {
+          "date": "2023-10-16",
+          "asset_value": 13871.288411741967,
+          "benchmark_value": 12122.553217648952
+        },
+        {
+          "date": "2023-10-24",
+          "asset_value": 15120.11137069544,
+          "benchmark_value": 12742.50759662487
+        },
+        {
+          "date": "2023-11-01",
+          "asset_value": 14883.554578749847,
+          "benchmark_value": 13120.85496094348
+        },
+        {
+          "date": "2023-11-09",
+          "asset_value": 14508.139055484793,
+          "benchmark_value": 12951.73801011872
+        },
+        {
+          "date": "2023-11-17",
+          "asset_value": 14926.176226297734,
+          "benchmark_value": 13093.074189628625
+        },
+        {
+          "date": "2023-11-28",
+          "asset_value": 14892.859876822633,
+          "benchmark_value": 12489.17235412313
+        },
+        {
+          "date": "2023-12-06",
+          "asset_value": 14420.109036643269,
+          "benchmark_value": 12421.391192103622
+        },
+        {
+          "date": "2023-12-14",
+          "asset_value": 13488.297104094685,
+          "benchmark_value": 12189.275984681442
+        },
+        {
+          "date": "2023-12-22",
+          "asset_value": 14069.706693303757,
+          "benchmark_value": 12494.216954765958
+        },
+        {
+          "date": "2024-01-03",
+          "asset_value": 14930.750153136572,
+          "benchmark_value": 12558.275875191875
+        },
+        {
+          "date": "2024-01-11",
+          "asset_value": 14228.971664051613,
+          "benchmark_value": 12655.63184519873
+        },
+        {
+          "date": "2024-01-18",
+          "asset_value": 15069.414387227305,
+          "benchmark_value": 12910.189044019948
+        },
+        {
+          "date": "2024-01-26",
+          "asset_value": 15238.854846737131,
+          "benchmark_value": 12468.00062665804
+        },
+        {
+          "date": "2024-02-05",
+          "asset_value": 14812.709583425532,
+          "benchmark_value": 12185.93782262532
+        },
+        {
+          "date": "2024-02-13",
+          "asset_value": 15111.191895302216,
+          "benchmark_value": 12741.02681317267
+        },
+        {
+          "date": "2024-02-22",
+          "asset_value": 14473.462314744345,
+          "benchmark_value": 12472.807357096897
+        },
+        {
+          "date": "2024-03-01",
+          "asset_value": 15045.331106216083,
+          "benchmark_value": 12169.407124136324
+        },
+        {
+          "date": "2024-03-11",
+          "asset_value": 15333.093580236258,
+          "benchmark_value": 12427.434796580752
+        },
+        {
+          "date": "2024-03-19",
+          "asset_value": 15002.582799221955,
+          "benchmark_value": 12550.263349671757
+        },
+        {
+          "date": "2024-03-27",
+          "asset_value": 13605.974471379028,
+          "benchmark_value": 12420.892055477783
+        },
+        {
+          "date": "2024-04-05",
+          "asset_value": 12796.937106365009,
+          "benchmark_value": 11830.059237270778
+        },
+        {
+          "date": "2024-04-15",
+          "asset_value": 12967.321477501155,
+          "benchmark_value": 12382.352066081781
+        },
+        {
+          "date": "2024-04-23",
+          "asset_value": 12915.284831463918,
+          "benchmark_value": 12605.754860592311
+        },
+        {
+          "date": "2024-04-29",
+          "asset_value": 13211.721542921123,
+          "benchmark_value": 12626.251193256381
+        },
+        {
+          "date": "2024-05-07",
+          "asset_value": 13519.175973663783,
+          "benchmark_value": 12347.898743961972
+        },
+        {
+          "date": "2024-05-15",
+          "asset_value": 12913.80605745784,
+          "benchmark_value": 11781.057768780774
+        },
+        {
+          "date": "2024-05-23",
+          "asset_value": 12722.030355542054,
+          "benchmark_value": 11410.621148166456
+        },
+        {
+          "date": "2024-06-03",
+          "asset_value": 12434.857549174321,
+          "benchmark_value": 11420.081364348056
+        },
+        {
+          "date": "2024-06-11",
+          "asset_value": 12458.456231001604,
+          "benchmark_value": 11920.290354117047
+        },
+        {
+          "date": "2024-06-20",
+          "asset_value": 12294.211840568503,
+          "benchmark_value": 11888.47490673453
+        },
+        {
+          "date": "2024-06-28",
+          "asset_value": 11951.228526868172,
+          "benchmark_value": 12412.516488676165
+        },
+        {
+          "date": "2024-07-09",
+          "asset_value": 11273.953205002645,
+          "benchmark_value": 12355.97431031656
+        },
+        {
+          "date": "2024-07-17",
+          "asset_value": 10871.776000253982,
+          "benchmark_value": 12189.853075186998
+        },
+        {
+          "date": "2024-07-25",
+          "asset_value": 9959.741887442608,
+          "benchmark_value": 11574.23367449176
+        },
+        {
+          "date": "2024-08-02",
+          "asset_value": 10148.66943635054,
+          "benchmark_value": 11559.579323198259
+        },
+        {
+          "date": "2024-08-08",
+          "asset_value": 10341.801377131193,
+          "benchmark_value": 11576.608787798492
+        },
+        {
+          "date": "2024-08-16",
+          "asset_value": 10276.495780457353,
+          "benchmark_value": 11821.936508492248
+        },
+        {
+          "date": "2024-08-26",
+          "asset_value": 10202.229167177082,
+          "benchmark_value": 11971.82651938897
+        },
+        {
+          "date": "2024-09-04",
+          "asset_value": 10310.395833011717,
+          "benchmark_value": 11784.305983880135
+        },
+        {
+          "date": "2024-09-12",
+          "asset_value": 10591.253332554235,
+          "benchmark_value": 11643.659551242064
+        },
+        {
+          "date": "2024-09-20",
+          "asset_value": 10568.00442495288,
+          "benchmark_value": 11829.08170629711
+        },
+        {
+          "date": "2024-09-30",
+          "asset_value": 10230.530723299336,
+          "benchmark_value": 12144.267727240656
+        },
+        {
+          "date": "2024-10-08",
+          "asset_value": 10555.021115743464,
+          "benchmark_value": 12712.802208345278
+        },
+        {
+          "date": "2024-10-16",
+          "asset_value": 9748.846066959595,
+          "benchmark_value": 12342.887820547461
+        },
+        {
+          "date": "2024-10-24",
+          "asset_value": 10290.277840454803,
+          "benchmark_value": 12825.28707809964
+        },
+        {
+          "date": "2024-11-01",
+          "asset_value": 10382.872858816561,
+          "benchmark_value": 12798.215329923543
+        },
+        {
+          "date": "2024-11-11",
+          "asset_value": 9598.55045426478,
+          "benchmark_value": 13015.749696358364
+        },
+        {
+          "date": "2024-11-15",
+          "asset_value": 10198.956525268854,
+          "benchmark_value": 12998.950067164735
+        },
+        {
+          "date": "2024-11-25",
+          "asset_value": 9930.897414834895,
+          "benchmark_value": 13316.766755043036
+        },
+        {
+          "date": "2024-12-04",
+          "asset_value": 9961.941375204493,
+          "benchmark_value": 13200.133478055785
+        },
+        {
+          "date": "2024-12-12",
+          "asset_value": 10084.49826258058,
+          "benchmark_value": 13467.740651226442
+        },
+        {
+          "date": "2024-12-20",
+          "asset_value": 10502.472579448959,
+          "benchmark_value": 13508.8300677698
+        },
+        {
+          "date": "2024-12-31",
+          "asset_value": 10351.704333969894,
+          "benchmark_value": 12781.59942411141
+        }
+      ],
+      "coverage": {
+        "status": "full",
+        "requested_start": "2021-12-31",
+        "start": "2022-01-03",
+        "end": "2024-12-31",
+        "observations": 753
+      }
+    },
+    "5Y": {
+      "period": {
+        "start": "2022-01-03",
+        "end": "2024-12-31"
+      },
+      "performance": {
+        "initial_investment": 10000,
+        "ending_value": 10351.704333969894,
+        "asset": {
+          "total_return": 0.03517043339698933,
+          "cagr": 0.01161774791947634,
+          "annualized_volatility": 0.25875807288650005,
+          "max_drawdown": -0.391879015535311,
+          "current_drawdown": -0.32950131389063053,
+          "max_drawdown_date": "2024-11-08",
+          "recovery_sessions": null,
+          "worst_day": -0.05595929017172352
+        },
+        "benchmark": {
+          "total_return": 0.27815994241114095,
+          "cagr": 0.08546808630689395,
+          "annualized_volatility": 0.15822793761935616,
+          "max_drawdown": -0.21941292080381902,
+          "current_drawdown": -0.11471729628847882,
+          "max_drawdown_date": "2024-07-29",
+          "recovery_sessions": null,
+          "worst_day": -0.027628185357974178
+        },
+        "relative_total_return": -0.24298950901415162,
+        "beta": 0.4618960714913184,
+        "correlation": 0.28244476383394407,
+        "observations": 753,
+        "dividends": "included when supplied by the adjusted-price vendor"
+      },
+      "growth": [
+        {
+          "date": "2022-01-03",
+          "asset_value": 10000,
+          "benchmark_value": 10000
+        },
+        {
+          "date": "2022-01-11",
+          "asset_value": 10126.695919639746,
+          "benchmark_value": 10396.337771018778
+        },
+        {
+          "date": "2022-01-20",
+          "asset_value": 10489.925489744432,
+          "benchmark_value": 10495.73860984456
+        },
+        {
+          "date": "2022-01-28",
+          "asset_value": 9968.231488553609,
+          "benchmark_value": 10596.500528684737
+        },
+        {
+          "date": "2022-02-07",
+          "asset_value": 10263.520009372873,
+          "benchmark_value": 10841.95978149278
+        },
+        {
+          "date": "2022-02-15",
+          "asset_value": 10812.497398813286,
+          "benchmark_value": 10772.471046341656
+        },
+        {
+          "date": "2022-02-22",
+          "asset_value": 10790.1111524048,
+          "benchmark_value": 10876.85085722093
+        },
+        {
+          "date": "2022-03-02",
+          "asset_value": 10408.418940557158,
+          "benchmark_value": 10479.74890845058
+        },
+        {
+          "date": "2022-03-10",
+          "asset_value": 10232.06890952002,
+          "benchmark_value": 10596.754562166974
+        },
+        {
+          "date": "2022-03-18",
+          "asset_value": 10347.359138332857,
+          "benchmark_value": 10882.189960378208
+        },
+        {
+          "date": "2022-03-28",
+          "asset_value": 9759.068583279935,
+          "benchmark_value": 10324.783524275268
+        },
+        {
+          "date": "2022-04-05",
+          "asset_value": 9915.570452085278,
+          "benchmark_value": 10392.592530621152
+        },
+        {
+          "date": "2022-04-13",
+          "asset_value": 9542.266901015197,
+          "benchmark_value": 10120.385613091248
+        },
+        {
+          "date": "2022-04-22",
+          "asset_value": 8756.796767217726,
+          "benchmark_value": 10009.309382632127
+        },
+        {
+          "date": "2022-05-02",
+          "asset_value": 8744.917688332009,
+          "benchmark_value": 10029.373904049395
+        },
+        {
+          "date": "2022-05-10",
+          "asset_value": 9240.465614715404,
+          "benchmark_value": 10128.157481124712
+        },
+        {
+          "date": "2022-05-18",
+          "asset_value": 8989.454585966401,
+          "benchmark_value": 10591.450067208174
+        },
+        {
+          "date": "2022-05-26",
+          "asset_value": 9013.254044081492,
+          "benchmark_value": 10907.363060422496
+        },
+        {
+          "date": "2022-06-02",
+          "asset_value": 9313.732719013316,
+          "benchmark_value": 11222.482822175249
+        },
+        {
+          "date": "2022-06-10",
+          "asset_value": 9530.403296114986,
+          "benchmark_value": 11430.716766886742
+        },
+        {
+          "date": "2022-06-21",
+          "asset_value": 9443.940050119549,
+          "benchmark_value": 11834.132171449832
+        },
+        {
+          "date": "2022-06-29",
+          "asset_value": 8997.00518358836,
+          "benchmark_value": 11728.506296016762
+        },
+        {
+          "date": "2022-07-08",
+          "asset_value": 8980.21537083071,
+          "benchmark_value": 11504.806180892487
+        },
+        {
+          "date": "2022-07-18",
+          "asset_value": 8879.747872879112,
+          "benchmark_value": 11641.689174847434
+        },
+        {
+          "date": "2022-07-26",
+          "asset_value": 10038.794299221214,
+          "benchmark_value": 12186.790138429631
+        },
+        {
+          "date": "2022-08-03",
+          "asset_value": 10002.566033253557,
+          "benchmark_value": 12541.721160283763
+        },
+        {
+          "date": "2022-08-11",
+          "asset_value": 10096.422026050357,
+          "benchmark_value": 12325.539403429051
+        },
+        {
+          "date": "2022-08-19",
+          "asset_value": 10002.198677381384,
+          "benchmark_value": 12114.865080099999
+        },
+        {
+          "date": "2022-08-29",
+          "asset_value": 10521.869189926569,
+          "benchmark_value": 12383.819927209192
+        },
+        {
+          "date": "2022-09-07",
+          "asset_value": 9645.665895005568,
+          "benchmark_value": 11895.543081103744
+        },
+        {
+          "date": "2022-09-13",
+          "asset_value": 9520.300015793624,
+          "benchmark_value": 12001.724200264267
+        },
+        {
+          "date": "2022-09-21",
+          "asset_value": 9875.16436982503,
+          "benchmark_value": 12049.662905762558
+        },
+        {
+          "date": "2022-09-29",
+          "asset_value": 10255.137545039697,
+          "benchmark_value": 12167.989100612142
+        },
+        {
+          "date": "2022-10-07",
+          "asset_value": 10548.302665349403,
+          "benchmark_value": 11846.16956950582
+        },
+        {
+          "date": "2022-10-17",
+          "asset_value": 10577.12780846791,
+          "benchmark_value": 11944.913530548183
+        },
+        {
+          "date": "2022-10-25",
+          "asset_value": 11072.882072866574,
+          "benchmark_value": 12074.1679543697
+        },
+        {
+          "date": "2022-11-02",
+          "asset_value": 10800.877032611934,
+          "benchmark_value": 12292.936756776118
+        },
+        {
+          "date": "2022-11-10",
+          "asset_value": 10173.526348980997,
+          "benchmark_value": 12036.028088281895
+        },
+        {
+          "date": "2022-11-18",
+          "asset_value": 10362.81880991847,
+          "benchmark_value": 12361.685682701242
+        },
+        {
+          "date": "2022-11-29",
+          "asset_value": 10664.188524536681,
+          "benchmark_value": 12130.41099538967
+        },
+        {
+          "date": "2022-12-07",
+          "asset_value": 10525.771807654943,
+          "benchmark_value": 12074.300800803461
+        },
+        {
+          "date": "2022-12-15",
+          "asset_value": 10453.37071929629,
+          "benchmark_value": 12026.512991576084
+        },
+        {
+          "date": "2022-12-21",
+          "asset_value": 10398.63498207224,
+          "benchmark_value": 12070.252131614463
+        },
+        {
+          "date": "2022-12-30",
+          "asset_value": 11268.277768536918,
+          "benchmark_value": 12728.851626577527
+        },
+        {
+          "date": "2023-01-10",
+          "asset_value": 11459.667815676708,
+          "benchmark_value": 12717.444500081501
+        },
+        {
+          "date": "2023-01-19",
+          "asset_value": 11070.626789533984,
+          "benchmark_value": 12607.390872013957
+        },
+        {
+          "date": "2023-01-27",
+          "asset_value": 10587.354997251303,
+          "benchmark_value": 12738.797385664064
+        },
+        {
+          "date": "2023-02-06",
+          "asset_value": 10926.440122467533,
+          "benchmark_value": 12958.32840822358
+        },
+        {
+          "date": "2023-02-14",
+          "asset_value": 10802.307461269005,
+          "benchmark_value": 13196.53900197947
+        },
+        {
+          "date": "2023-02-23",
+          "asset_value": 10604.169340015576,
+          "benchmark_value": 13042.91115612326
+        },
+        {
+          "date": "2023-03-03",
+          "asset_value": 10689.071086693604,
+          "benchmark_value": 12919.141085153724
+        },
+        {
+          "date": "2023-03-13",
+          "asset_value": 10556.19774328838,
+          "benchmark_value": 12544.134122047126
+        },
+        {
+          "date": "2023-03-21",
+          "asset_value": 11280.52195749239,
+          "benchmark_value": 12354.89461049451
+        },
+        {
+          "date": "2023-03-27",
+          "asset_value": 10896.160559083159,
+          "benchmark_value": 12422.144691932495
+        },
+        {
+          "date": "2023-04-04",
+          "asset_value": 10937.191649994573,
+          "benchmark_value": 12568.1901148189
+        },
+        {
+          "date": "2023-04-13",
+          "asset_value": 10952.499629358379,
+          "benchmark_value": 11964.583820512393
+        },
+        {
+          "date": "2023-04-21",
+          "asset_value": 11672.898485491552,
+          "benchmark_value": 12935.836047314957
+        },
+        {
+          "date": "2023-05-01",
+          "asset_value": 11899.06714644877,
+          "benchmark_value": 12693.781399482968
+        },
+        {
+          "date": "2023-05-09",
+          "asset_value": 12328.079394023558,
+          "benchmark_value": 12800.679368473922
+        },
+        {
+          "date": "2023-05-17",
+          "asset_value": 12896.924328525905,
+          "benchmark_value": 13499.13604148152
+        },
+        {
+          "date": "2023-05-25",
+          "asset_value": 12665.006295890744,
+          "benchmark_value": 13938.882002691389
+        },
+        {
+          "date": "2023-06-05",
+          "asset_value": 12533.378814745916,
+          "benchmark_value": 13850.972578371917
+        },
+        {
+          "date": "2023-06-13",
+          "asset_value": 13681.87208581317,
+          "benchmark_value": 14263.690538186607
+        },
+        {
+          "date": "2023-06-22",
+          "asset_value": 13794.47592888905,
+          "benchmark_value": 14380.127085247139
+        },
+        {
+          "date": "2023-06-30",
+          "asset_value": 13415.934079195564,
+          "benchmark_value": 14069.028648812366
+        },
+        {
+          "date": "2023-07-07",
+          "asset_value": 13217.436911837496,
+          "benchmark_value": 14009.486491811009
+        },
+        {
+          "date": "2023-07-17",
+          "asset_value": 13049.639198007812,
+          "benchmark_value": 13531.236523987342
+        },
+        {
+          "date": "2023-07-25",
+          "asset_value": 13259.512991686082,
+          "benchmark_value": 13535.655659246753
+        },
+        {
+          "date": "2023-08-02",
+          "asset_value": 13158.740301528542,
+          "benchmark_value": 13542.326640358036
+        },
+        {
+          "date": "2023-08-10",
+          "asset_value": 12901.368596246006,
+          "benchmark_value": 12750.203791214066
+        },
+        {
+          "date": "2023-08-18",
+          "asset_value": 12759.496335843485,
+          "benchmark_value": 12814.520411277166
+        },
+        {
+          "date": "2023-08-28",
+          "asset_value": 12525.540466029366,
+          "benchmark_value": 12217.049673443276
+        },
+        {
+          "date": "2023-09-06",
+          "asset_value": 12454.457539412078,
+          "benchmark_value": 12223.48566259222
+        },
+        {
+          "date": "2023-09-14",
+          "asset_value": 13261.974082820267,
+          "benchmark_value": 12577.450939203072
+        },
+        {
+          "date": "2023-09-22",
+          "asset_value": 13312.531589434422,
+          "benchmark_value": 12364.49940094915
+        },
+        {
+          "date": "2023-10-02",
+          "asset_value": 13488.471396986388,
+          "benchmark_value": 12488.803793416295
+        },
+        {
+          "date": "2023-10-10",
+          "asset_value": 13108.066460335063,
+          "benchmark_value": 12087.99072198222
+        },
+        {
+          "date": "2023-10-16",
+          "asset_value": 13871.288411741967,
+          "benchmark_value": 12122.553217648952
+        },
+        {
+          "date": "2023-10-24",
+          "asset_value": 15120.11137069544,
+          "benchmark_value": 12742.50759662487
+        },
+        {
+          "date": "2023-11-01",
+          "asset_value": 14883.554578749847,
+          "benchmark_value": 13120.85496094348
+        },
+        {
+          "date": "2023-11-09",
+          "asset_value": 14508.139055484793,
+          "benchmark_value": 12951.73801011872
+        },
+        {
+          "date": "2023-11-17",
+          "asset_value": 14926.176226297734,
+          "benchmark_value": 13093.074189628625
+        },
+        {
+          "date": "2023-11-28",
+          "asset_value": 14892.859876822633,
+          "benchmark_value": 12489.17235412313
+        },
+        {
+          "date": "2023-12-06",
+          "asset_value": 14420.109036643269,
+          "benchmark_value": 12421.391192103622
+        },
+        {
+          "date": "2023-12-14",
+          "asset_value": 13488.297104094685,
+          "benchmark_value": 12189.275984681442
+        },
+        {
+          "date": "2023-12-22",
+          "asset_value": 14069.706693303757,
+          "benchmark_value": 12494.216954765958
+        },
+        {
+          "date": "2024-01-03",
+          "asset_value": 14930.750153136572,
+          "benchmark_value": 12558.275875191875
+        },
+        {
+          "date": "2024-01-11",
+          "asset_value": 14228.971664051613,
+          "benchmark_value": 12655.63184519873
+        },
+        {
+          "date": "2024-01-18",
+          "asset_value": 15069.414387227305,
+          "benchmark_value": 12910.189044019948
+        },
+        {
+          "date": "2024-01-26",
+          "asset_value": 15238.854846737131,
+          "benchmark_value": 12468.00062665804
+        },
+        {
+          "date": "2024-02-05",
+          "asset_value": 14812.709583425532,
+          "benchmark_value": 12185.93782262532
+        },
+        {
+          "date": "2024-02-13",
+          "asset_value": 15111.191895302216,
+          "benchmark_value": 12741.02681317267
+        },
+        {
+          "date": "2024-02-22",
+          "asset_value": 14473.462314744345,
+          "benchmark_value": 12472.807357096897
+        },
+        {
+          "date": "2024-03-01",
+          "asset_value": 15045.331106216083,
+          "benchmark_value": 12169.407124136324
+        },
+        {
+          "date": "2024-03-11",
+          "asset_value": 15333.093580236258,
+          "benchmark_value": 12427.434796580752
+        },
+        {
+          "date": "2024-03-19",
+          "asset_value": 15002.582799221955,
+          "benchmark_value": 12550.263349671757
+        },
+        {
+          "date": "2024-03-27",
+          "asset_value": 13605.974471379028,
+          "benchmark_value": 12420.892055477783
+        },
+        {
+          "date": "2024-04-05",
+          "asset_value": 12796.937106365009,
+          "benchmark_value": 11830.059237270778
+        },
+        {
+          "date": "2024-04-15",
+          "asset_value": 12967.321477501155,
+          "benchmark_value": 12382.352066081781
+        },
+        {
+          "date": "2024-04-23",
+          "asset_value": 12915.284831463918,
+          "benchmark_value": 12605.754860592311
+        },
+        {
+          "date": "2024-04-29",
+          "asset_value": 13211.721542921123,
+          "benchmark_value": 12626.251193256381
+        },
+        {
+          "date": "2024-05-07",
+          "asset_value": 13519.175973663783,
+          "benchmark_value": 12347.898743961972
+        },
+        {
+          "date": "2024-05-15",
+          "asset_value": 12913.80605745784,
+          "benchmark_value": 11781.057768780774
+        },
+        {
+          "date": "2024-05-23",
+          "asset_value": 12722.030355542054,
+          "benchmark_value": 11410.621148166456
+        },
+        {
+          "date": "2024-06-03",
+          "asset_value": 12434.857549174321,
+          "benchmark_value": 11420.081364348056
+        },
+        {
+          "date": "2024-06-11",
+          "asset_value": 12458.456231001604,
+          "benchmark_value": 11920.290354117047
+        },
+        {
+          "date": "2024-06-20",
+          "asset_value": 12294.211840568503,
+          "benchmark_value": 11888.47490673453
+        },
+        {
+          "date": "2024-06-28",
+          "asset_value": 11951.228526868172,
+          "benchmark_value": 12412.516488676165
+        },
+        {
+          "date": "2024-07-09",
+          "asset_value": 11273.953205002645,
+          "benchmark_value": 12355.97431031656
+        },
+        {
+          "date": "2024-07-17",
+          "asset_value": 10871.776000253982,
+          "benchmark_value": 12189.853075186998
+        },
+        {
+          "date": "2024-07-25",
+          "asset_value": 9959.741887442608,
+          "benchmark_value": 11574.23367449176
+        },
+        {
+          "date": "2024-08-02",
+          "asset_value": 10148.66943635054,
+          "benchmark_value": 11559.579323198259
+        },
+        {
+          "date": "2024-08-08",
+          "asset_value": 10341.801377131193,
+          "benchmark_value": 11576.608787798492
+        },
+        {
+          "date": "2024-08-16",
+          "asset_value": 10276.495780457353,
+          "benchmark_value": 11821.936508492248
+        },
+        {
+          "date": "2024-08-26",
+          "asset_value": 10202.229167177082,
+          "benchmark_value": 11971.82651938897
+        },
+        {
+          "date": "2024-09-04",
+          "asset_value": 10310.395833011717,
+          "benchmark_value": 11784.305983880135
+        },
+        {
+          "date": "2024-09-12",
+          "asset_value": 10591.253332554235,
+          "benchmark_value": 11643.659551242064
+        },
+        {
+          "date": "2024-09-20",
+          "asset_value": 10568.00442495288,
+          "benchmark_value": 11829.08170629711
+        },
+        {
+          "date": "2024-09-30",
+          "asset_value": 10230.530723299336,
+          "benchmark_value": 12144.267727240656
+        },
+        {
+          "date": "2024-10-08",
+          "asset_value": 10555.021115743464,
+          "benchmark_value": 12712.802208345278
+        },
+        {
+          "date": "2024-10-16",
+          "asset_value": 9748.846066959595,
+          "benchmark_value": 12342.887820547461
+        },
+        {
+          "date": "2024-10-24",
+          "asset_value": 10290.277840454803,
+          "benchmark_value": 12825.28707809964
+        },
+        {
+          "date": "2024-11-01",
+          "asset_value": 10382.872858816561,
+          "benchmark_value": 12798.215329923543
+        },
+        {
+          "date": "2024-11-11",
+          "asset_value": 9598.55045426478,
+          "benchmark_value": 13015.749696358364
+        },
+        {
+          "date": "2024-11-15",
+          "asset_value": 10198.956525268854,
+          "benchmark_value": 12998.950067164735
+        },
+        {
+          "date": "2024-11-25",
+          "asset_value": 9930.897414834895,
+          "benchmark_value": 13316.766755043036
+        },
+        {
+          "date": "2024-12-04",
+          "asset_value": 9961.941375204493,
+          "benchmark_value": 13200.133478055785
+        },
+        {
+          "date": "2024-12-12",
+          "asset_value": 10084.49826258058,
+          "benchmark_value": 13467.740651226442
+        },
+        {
+          "date": "2024-12-20",
+          "asset_value": 10502.472579448959,
+          "benchmark_value": 13508.8300677698
+        },
+        {
+          "date": "2024-12-31",
+          "asset_value": 10351.704333969894,
+          "benchmark_value": 12781.59942411141
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "requested_start": "2019-12-31",
+        "start": "2022-01-03",
+        "end": "2024-12-31",
+        "observations": 753
+      }
+    },
+    "10Y": {
+      "period": {
+        "start": "2022-01-03",
+        "end": "2024-12-31"
+      },
+      "performance": {
+        "initial_investment": 10000,
+        "ending_value": 10351.704333969894,
+        "asset": {
+          "total_return": 0.03517043339698933,
+          "cagr": 0.01161774791947634,
+          "annualized_volatility": 0.25875807288650005,
+          "max_drawdown": -0.391879015535311,
+          "current_drawdown": -0.32950131389063053,
+          "max_drawdown_date": "2024-11-08",
+          "recovery_sessions": null,
+          "worst_day": -0.05595929017172352
+        },
+        "benchmark": {
+          "total_return": 0.27815994241114095,
+          "cagr": 0.08546808630689395,
+          "annualized_volatility": 0.15822793761935616,
+          "max_drawdown": -0.21941292080381902,
+          "current_drawdown": -0.11471729628847882,
+          "max_drawdown_date": "2024-07-29",
+          "recovery_sessions": null,
+          "worst_day": -0.027628185357974178
+        },
+        "relative_total_return": -0.24298950901415162,
+        "beta": 0.4618960714913184,
+        "correlation": 0.28244476383394407,
+        "observations": 753,
+        "dividends": "included when supplied by the adjusted-price vendor"
+      },
+      "growth": [
+        {
+          "date": "2022-01-03",
+          "asset_value": 10000,
+          "benchmark_value": 10000
+        },
+        {
+          "date": "2022-01-11",
+          "asset_value": 10126.695919639746,
+          "benchmark_value": 10396.337771018778
+        },
+        {
+          "date": "2022-01-20",
+          "asset_value": 10489.925489744432,
+          "benchmark_value": 10495.73860984456
+        },
+        {
+          "date": "2022-01-28",
+          "asset_value": 9968.231488553609,
+          "benchmark_value": 10596.500528684737
+        },
+        {
+          "date": "2022-02-07",
+          "asset_value": 10263.520009372873,
+          "benchmark_value": 10841.95978149278
+        },
+        {
+          "date": "2022-02-15",
+          "asset_value": 10812.497398813286,
+          "benchmark_value": 10772.471046341656
+        },
+        {
+          "date": "2022-02-22",
+          "asset_value": 10790.1111524048,
+          "benchmark_value": 10876.85085722093
+        },
+        {
+          "date": "2022-03-02",
+          "asset_value": 10408.418940557158,
+          "benchmark_value": 10479.74890845058
+        },
+        {
+          "date": "2022-03-10",
+          "asset_value": 10232.06890952002,
+          "benchmark_value": 10596.754562166974
+        },
+        {
+          "date": "2022-03-18",
+          "asset_value": 10347.359138332857,
+          "benchmark_value": 10882.189960378208
+        },
+        {
+          "date": "2022-03-28",
+          "asset_value": 9759.068583279935,
+          "benchmark_value": 10324.783524275268
+        },
+        {
+          "date": "2022-04-05",
+          "asset_value": 9915.570452085278,
+          "benchmark_value": 10392.592530621152
+        },
+        {
+          "date": "2022-04-13",
+          "asset_value": 9542.266901015197,
+          "benchmark_value": 10120.385613091248
+        },
+        {
+          "date": "2022-04-22",
+          "asset_value": 8756.796767217726,
+          "benchmark_value": 10009.309382632127
+        },
+        {
+          "date": "2022-05-02",
+          "asset_value": 8744.917688332009,
+          "benchmark_value": 10029.373904049395
+        },
+        {
+          "date": "2022-05-10",
+          "asset_value": 9240.465614715404,
+          "benchmark_value": 10128.157481124712
+        },
+        {
+          "date": "2022-05-18",
+          "asset_value": 8989.454585966401,
+          "benchmark_value": 10591.450067208174
+        },
+        {
+          "date": "2022-05-26",
+          "asset_value": 9013.254044081492,
+          "benchmark_value": 10907.363060422496
+        },
+        {
+          "date": "2022-06-02",
+          "asset_value": 9313.732719013316,
+          "benchmark_value": 11222.482822175249
+        },
+        {
+          "date": "2022-06-10",
+          "asset_value": 9530.403296114986,
+          "benchmark_value": 11430.716766886742
+        },
+        {
+          "date": "2022-06-21",
+          "asset_value": 9443.940050119549,
+          "benchmark_value": 11834.132171449832
+        },
+        {
+          "date": "2022-06-29",
+          "asset_value": 8997.00518358836,
+          "benchmark_value": 11728.506296016762
+        },
+        {
+          "date": "2022-07-08",
+          "asset_value": 8980.21537083071,
+          "benchmark_value": 11504.806180892487
+        },
+        {
+          "date": "2022-07-18",
+          "asset_value": 8879.747872879112,
+          "benchmark_value": 11641.689174847434
+        },
+        {
+          "date": "2022-07-26",
+          "asset_value": 10038.794299221214,
+          "benchmark_value": 12186.790138429631
+        },
+        {
+          "date": "2022-08-03",
+          "asset_value": 10002.566033253557,
+          "benchmark_value": 12541.721160283763
+        },
+        {
+          "date": "2022-08-11",
+          "asset_value": 10096.422026050357,
+          "benchmark_value": 12325.539403429051
+        },
+        {
+          "date": "2022-08-19",
+          "asset_value": 10002.198677381384,
+          "benchmark_value": 12114.865080099999
+        },
+        {
+          "date": "2022-08-29",
+          "asset_value": 10521.869189926569,
+          "benchmark_value": 12383.819927209192
+        },
+        {
+          "date": "2022-09-07",
+          "asset_value": 9645.665895005568,
+          "benchmark_value": 11895.543081103744
+        },
+        {
+          "date": "2022-09-13",
+          "asset_value": 9520.300015793624,
+          "benchmark_value": 12001.724200264267
+        },
+        {
+          "date": "2022-09-21",
+          "asset_value": 9875.16436982503,
+          "benchmark_value": 12049.662905762558
+        },
+        {
+          "date": "2022-09-29",
+          "asset_value": 10255.137545039697,
+          "benchmark_value": 12167.989100612142
+        },
+        {
+          "date": "2022-10-07",
+          "asset_value": 10548.302665349403,
+          "benchmark_value": 11846.16956950582
+        },
+        {
+          "date": "2022-10-17",
+          "asset_value": 10577.12780846791,
+          "benchmark_value": 11944.913530548183
+        },
+        {
+          "date": "2022-10-25",
+          "asset_value": 11072.882072866574,
+          "benchmark_value": 12074.1679543697
+        },
+        {
+          "date": "2022-11-02",
+          "asset_value": 10800.877032611934,
+          "benchmark_value": 12292.936756776118
+        },
+        {
+          "date": "2022-11-10",
+          "asset_value": 10173.526348980997,
+          "benchmark_value": 12036.028088281895
+        },
+        {
+          "date": "2022-11-18",
+          "asset_value": 10362.81880991847,
+          "benchmark_value": 12361.685682701242
+        },
+        {
+          "date": "2022-11-29",
+          "asset_value": 10664.188524536681,
+          "benchmark_value": 12130.41099538967
+        },
+        {
+          "date": "2022-12-07",
+          "asset_value": 10525.771807654943,
+          "benchmark_value": 12074.300800803461
+        },
+        {
+          "date": "2022-12-15",
+          "asset_value": 10453.37071929629,
+          "benchmark_value": 12026.512991576084
+        },
+        {
+          "date": "2022-12-21",
+          "asset_value": 10398.63498207224,
+          "benchmark_value": 12070.252131614463
+        },
+        {
+          "date": "2022-12-30",
+          "asset_value": 11268.277768536918,
+          "benchmark_value": 12728.851626577527
+        },
+        {
+          "date": "2023-01-10",
+          "asset_value": 11459.667815676708,
+          "benchmark_value": 12717.444500081501
+        },
+        {
+          "date": "2023-01-19",
+          "asset_value": 11070.626789533984,
+          "benchmark_value": 12607.390872013957
+        },
+        {
+          "date": "2023-01-27",
+          "asset_value": 10587.354997251303,
+          "benchmark_value": 12738.797385664064
+        },
+        {
+          "date": "2023-02-06",
+          "asset_value": 10926.440122467533,
+          "benchmark_value": 12958.32840822358
+        },
+        {
+          "date": "2023-02-14",
+          "asset_value": 10802.307461269005,
+          "benchmark_value": 13196.53900197947
+        },
+        {
+          "date": "2023-02-23",
+          "asset_value": 10604.169340015576,
+          "benchmark_value": 13042.91115612326
+        },
+        {
+          "date": "2023-03-03",
+          "asset_value": 10689.071086693604,
+          "benchmark_value": 12919.141085153724
+        },
+        {
+          "date": "2023-03-13",
+          "asset_value": 10556.19774328838,
+          "benchmark_value": 12544.134122047126
+        },
+        {
+          "date": "2023-03-21",
+          "asset_value": 11280.52195749239,
+          "benchmark_value": 12354.89461049451
+        },
+        {
+          "date": "2023-03-27",
+          "asset_value": 10896.160559083159,
+          "benchmark_value": 12422.144691932495
+        },
+        {
+          "date": "2023-04-04",
+          "asset_value": 10937.191649994573,
+          "benchmark_value": 12568.1901148189
+        },
+        {
+          "date": "2023-04-13",
+          "asset_value": 10952.499629358379,
+          "benchmark_value": 11964.583820512393
+        },
+        {
+          "date": "2023-04-21",
+          "asset_value": 11672.898485491552,
+          "benchmark_value": 12935.836047314957
+        },
+        {
+          "date": "2023-05-01",
+          "asset_value": 11899.06714644877,
+          "benchmark_value": 12693.781399482968
+        },
+        {
+          "date": "2023-05-09",
+          "asset_value": 12328.079394023558,
+          "benchmark_value": 12800.679368473922
+        },
+        {
+          "date": "2023-05-17",
+          "asset_value": 12896.924328525905,
+          "benchmark_value": 13499.13604148152
+        },
+        {
+          "date": "2023-05-25",
+          "asset_value": 12665.006295890744,
+          "benchmark_value": 13938.882002691389
+        },
+        {
+          "date": "2023-06-05",
+          "asset_value": 12533.378814745916,
+          "benchmark_value": 13850.972578371917
+        },
+        {
+          "date": "2023-06-13",
+          "asset_value": 13681.87208581317,
+          "benchmark_value": 14263.690538186607
+        },
+        {
+          "date": "2023-06-22",
+          "asset_value": 13794.47592888905,
+          "benchmark_value": 14380.127085247139
+        },
+        {
+          "date": "2023-06-30",
+          "asset_value": 13415.934079195564,
+          "benchmark_value": 14069.028648812366
+        },
+        {
+          "date": "2023-07-07",
+          "asset_value": 13217.436911837496,
+          "benchmark_value": 14009.486491811009
+        },
+        {
+          "date": "2023-07-17",
+          "asset_value": 13049.639198007812,
+          "benchmark_value": 13531.236523987342
+        },
+        {
+          "date": "2023-07-25",
+          "asset_value": 13259.512991686082,
+          "benchmark_value": 13535.655659246753
+        },
+        {
+          "date": "2023-08-02",
+          "asset_value": 13158.740301528542,
+          "benchmark_value": 13542.326640358036
+        },
+        {
+          "date": "2023-08-10",
+          "asset_value": 12901.368596246006,
+          "benchmark_value": 12750.203791214066
+        },
+        {
+          "date": "2023-08-18",
+          "asset_value": 12759.496335843485,
+          "benchmark_value": 12814.520411277166
+        },
+        {
+          "date": "2023-08-28",
+          "asset_value": 12525.540466029366,
+          "benchmark_value": 12217.049673443276
+        },
+        {
+          "date": "2023-09-06",
+          "asset_value": 12454.457539412078,
+          "benchmark_value": 12223.48566259222
+        },
+        {
+          "date": "2023-09-14",
+          "asset_value": 13261.974082820267,
+          "benchmark_value": 12577.450939203072
+        },
+        {
+          "date": "2023-09-22",
+          "asset_value": 13312.531589434422,
+          "benchmark_value": 12364.49940094915
+        },
+        {
+          "date": "2023-10-02",
+          "asset_value": 13488.471396986388,
+          "benchmark_value": 12488.803793416295
+        },
+        {
+          "date": "2023-10-10",
+          "asset_value": 13108.066460335063,
+          "benchmark_value": 12087.99072198222
+        },
+        {
+          "date": "2023-10-16",
+          "asset_value": 13871.288411741967,
+          "benchmark_value": 12122.553217648952
+        },
+        {
+          "date": "2023-10-24",
+          "asset_value": 15120.11137069544,
+          "benchmark_value": 12742.50759662487
+        },
+        {
+          "date": "2023-11-01",
+          "asset_value": 14883.554578749847,
+          "benchmark_value": 13120.85496094348
+        },
+        {
+          "date": "2023-11-09",
+          "asset_value": 14508.139055484793,
+          "benchmark_value": 12951.73801011872
+        },
+        {
+          "date": "2023-11-17",
+          "asset_value": 14926.176226297734,
+          "benchmark_value": 13093.074189628625
+        },
+        {
+          "date": "2023-11-28",
+          "asset_value": 14892.859876822633,
+          "benchmark_value": 12489.17235412313
+        },
+        {
+          "date": "2023-12-06",
+          "asset_value": 14420.109036643269,
+          "benchmark_value": 12421.391192103622
+        },
+        {
+          "date": "2023-12-14",
+          "asset_value": 13488.297104094685,
+          "benchmark_value": 12189.275984681442
+        },
+        {
+          "date": "2023-12-22",
+          "asset_value": 14069.706693303757,
+          "benchmark_value": 12494.216954765958
+        },
+        {
+          "date": "2024-01-03",
+          "asset_value": 14930.750153136572,
+          "benchmark_value": 12558.275875191875
+        },
+        {
+          "date": "2024-01-11",
+          "asset_value": 14228.971664051613,
+          "benchmark_value": 12655.63184519873
+        },
+        {
+          "date": "2024-01-18",
+          "asset_value": 15069.414387227305,
+          "benchmark_value": 12910.189044019948
+        },
+        {
+          "date": "2024-01-26",
+          "asset_value": 15238.854846737131,
+          "benchmark_value": 12468.00062665804
+        },
+        {
+          "date": "2024-02-05",
+          "asset_value": 14812.709583425532,
+          "benchmark_value": 12185.93782262532
+        },
+        {
+          "date": "2024-02-13",
+          "asset_value": 15111.191895302216,
+          "benchmark_value": 12741.02681317267
+        },
+        {
+          "date": "2024-02-22",
+          "asset_value": 14473.462314744345,
+          "benchmark_value": 12472.807357096897
+        },
+        {
+          "date": "2024-03-01",
+          "asset_value": 15045.331106216083,
+          "benchmark_value": 12169.407124136324
+        },
+        {
+          "date": "2024-03-11",
+          "asset_value": 15333.093580236258,
+          "benchmark_value": 12427.434796580752
+        },
+        {
+          "date": "2024-03-19",
+          "asset_value": 15002.582799221955,
+          "benchmark_value": 12550.263349671757
+        },
+        {
+          "date": "2024-03-27",
+          "asset_value": 13605.974471379028,
+          "benchmark_value": 12420.892055477783
+        },
+        {
+          "date": "2024-04-05",
+          "asset_value": 12796.937106365009,
+          "benchmark_value": 11830.059237270778
+        },
+        {
+          "date": "2024-04-15",
+          "asset_value": 12967.321477501155,
+          "benchmark_value": 12382.352066081781
+        },
+        {
+          "date": "2024-04-23",
+          "asset_value": 12915.284831463918,
+          "benchmark_value": 12605.754860592311
+        },
+        {
+          "date": "2024-04-29",
+          "asset_value": 13211.721542921123,
+          "benchmark_value": 12626.251193256381
+        },
+        {
+          "date": "2024-05-07",
+          "asset_value": 13519.175973663783,
+          "benchmark_value": 12347.898743961972
+        },
+        {
+          "date": "2024-05-15",
+          "asset_value": 12913.80605745784,
+          "benchmark_value": 11781.057768780774
+        },
+        {
+          "date": "2024-05-23",
+          "asset_value": 12722.030355542054,
+          "benchmark_value": 11410.621148166456
+        },
+        {
+          "date": "2024-06-03",
+          "asset_value": 12434.857549174321,
+          "benchmark_value": 11420.081364348056
+        },
+        {
+          "date": "2024-06-11",
+          "asset_value": 12458.456231001604,
+          "benchmark_value": 11920.290354117047
+        },
+        {
+          "date": "2024-06-20",
+          "asset_value": 12294.211840568503,
+          "benchmark_value": 11888.47490673453
+        },
+        {
+          "date": "2024-06-28",
+          "asset_value": 11951.228526868172,
+          "benchmark_value": 12412.516488676165
+        },
+        {
+          "date": "2024-07-09",
+          "asset_value": 11273.953205002645,
+          "benchmark_value": 12355.97431031656
+        },
+        {
+          "date": "2024-07-17",
+          "asset_value": 10871.776000253982,
+          "benchmark_value": 12189.853075186998
+        },
+        {
+          "date": "2024-07-25",
+          "asset_value": 9959.741887442608,
+          "benchmark_value": 11574.23367449176
+        },
+        {
+          "date": "2024-08-02",
+          "asset_value": 10148.66943635054,
+          "benchmark_value": 11559.579323198259
+        },
+        {
+          "date": "2024-08-08",
+          "asset_value": 10341.801377131193,
+          "benchmark_value": 11576.608787798492
+        },
+        {
+          "date": "2024-08-16",
+          "asset_value": 10276.495780457353,
+          "benchmark_value": 11821.936508492248
+        },
+        {
+          "date": "2024-08-26",
+          "asset_value": 10202.229167177082,
+          "benchmark_value": 11971.82651938897
+        },
+        {
+          "date": "2024-09-04",
+          "asset_value": 10310.395833011717,
+          "benchmark_value": 11784.305983880135
+        },
+        {
+          "date": "2024-09-12",
+          "asset_value": 10591.253332554235,
+          "benchmark_value": 11643.659551242064
+        },
+        {
+          "date": "2024-09-20",
+          "asset_value": 10568.00442495288,
+          "benchmark_value": 11829.08170629711
+        },
+        {
+          "date": "2024-09-30",
+          "asset_value": 10230.530723299336,
+          "benchmark_value": 12144.267727240656
+        },
+        {
+          "date": "2024-10-08",
+          "asset_value": 10555.021115743464,
+          "benchmark_value": 12712.802208345278
+        },
+        {
+          "date": "2024-10-16",
+          "asset_value": 9748.846066959595,
+          "benchmark_value": 12342.887820547461
+        },
+        {
+          "date": "2024-10-24",
+          "asset_value": 10290.277840454803,
+          "benchmark_value": 12825.28707809964
+        },
+        {
+          "date": "2024-11-01",
+          "asset_value": 10382.872858816561,
+          "benchmark_value": 12798.215329923543
+        },
+        {
+          "date": "2024-11-11",
+          "asset_value": 9598.55045426478,
+          "benchmark_value": 13015.749696358364
+        },
+        {
+          "date": "2024-11-15",
+          "asset_value": 10198.956525268854,
+          "benchmark_value": 12998.950067164735
+        },
+        {
+          "date": "2024-11-25",
+          "asset_value": 9930.897414834895,
+          "benchmark_value": 13316.766755043036
+        },
+        {
+          "date": "2024-12-04",
+          "asset_value": 9961.941375204493,
+          "benchmark_value": 13200.133478055785
+        },
+        {
+          "date": "2024-12-12",
+          "asset_value": 10084.49826258058,
+          "benchmark_value": 13467.740651226442
+        },
+        {
+          "date": "2024-12-20",
+          "asset_value": 10502.472579448959,
+          "benchmark_value": 13508.8300677698
+        },
+        {
+          "date": "2024-12-31",
+          "asset_value": 10351.704333969894,
+          "benchmark_value": 12781.59942411141
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "requested_start": "2014-12-31",
+        "start": "2022-01-03",
+        "end": "2024-12-31",
+        "observations": 753
+      }
+    }
+  },
+  "latest_filings": [
+    {
+      "accession": "0001000112-24-004326",
+      "form": "8-K",
+      "accepted_at": "2024-12-31T10:05:00-05:00",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "Results of operations (earnings)",
+          "label_zh": "经营业绩(财报)"
+        }
+      ],
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004326/a8k.htm",
+      "novelty": 0.01785714285714224,
+      "key_numbers": [],
+      "entities": [],
+      "passages": [],
+      "comparison": {
+        "comparable_key": "8-K:2.02",
+        "prior_accession": "0001000112-24-004052",
+        "prior_accepted_at": "2024-10-16T07:05:00-04:00",
+        "prior_source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004052/a8k.htm",
+        "changes": [],
+        "counts": {
+          "changed": 0,
+          "added": 0,
+          "removed": 0
+        }
+      },
+      "reaction": null
+    },
+    {
+      "accession": "0001000112-24-004263",
+      "form": "8-K",
+      "accepted_at": "2024-12-17T11:06:00-05:00",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "Director or principal officer change",
+          "label_zh": "董事或主要高管变更"
+        }
+      ],
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004263/a8k.htm",
+      "novelty": 0.017543859649123972,
+      "key_numbers": [],
+      "entities": [],
+      "passages": [],
+      "comparison": {
+        "comparable_key": "8-K:5.02",
+        "prior_accession": "0001000112-24-004036",
+        "prior_accepted_at": "2024-10-10T08:43:00-04:00",
+        "prior_source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004036/a8k.htm",
+        "changes": [],
+        "counts": {
+          "changed": 0,
+          "added": 0,
+          "removed": 0
+        }
+      },
+      "reaction": {
+        "session": "2024-12-18",
+        "asset_open_to_close": 0.01784732149692969,
+        "benchmark_open_to_close": -0.00584077710667541,
+        "benchmark_adjusted_move": 0.0236880986036051,
+        "magnitude_percentile": 0.9402985074626866,
+        "prior_sample_size": 67
+      }
+    },
+    {
+      "accession": "0001000112-24-004113",
+      "form": "8-K",
+      "accepted_at": "2024-11-01T06:06:00-04:00",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "Other events",
+          "label_zh": "其他事项"
+        }
+      ],
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004113/a8k.htm",
+      "novelty": 0,
+      "key_numbers": [],
+      "entities": [],
+      "passages": [],
+      "comparison": {
+        "comparable_key": "8-K:8.01",
+        "prior_accession": "0001000112-24-003964",
+        "prior_accepted_at": "2024-09-23T18:33:00-04:00",
+        "prior_source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224003964/a8k.htm",
+        "changes": [],
+        "counts": {
+          "changed": 0,
+          "added": 0,
+          "removed": 0
+        }
+      },
+      "reaction": {
+        "session": "2024-11-01",
+        "asset_open_to_close": -0.012299973677514897,
+        "benchmark_open_to_close": -0.006274668522727511,
+        "benchmark_adjusted_move": -0.006025305154787386,
+        "magnitude_percentile": 0.3333333333333333,
+        "prior_sample_size": 66
+      }
+    },
+    {
+      "accession": "0001000112-24-004052",
+      "form": "8-K",
+      "accepted_at": "2024-10-16T07:05:00-04:00",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "Results of operations (earnings)",
+          "label_zh": "经营业绩(财报)"
+        },
+        {
+          "code": "9.01",
+          "label": "Financial statements and exhibits",
+          "label_zh": "财务报表与附件"
+        }
+      ],
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004052/a8k.htm",
+      "novelty": 0.03166574320810578,
+      "key_numbers": [],
+      "entities": [],
+      "passages": [],
+      "comparison": {
+        "comparable_key": "8-K:2.02",
+        "prior_accession": "0001000112-24-004040",
+        "prior_accepted_at": "2024-10-11T11:07:00-04:00",
+        "prior_source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004040/a8k.htm",
+        "changes": [],
+        "counts": {
+          "changed": 0,
+          "added": 0,
+          "removed": 0
+        }
+      },
+      "reaction": {
+        "session": "2024-10-16",
+        "asset_open_to_close": -0.01474835148821918,
+        "benchmark_open_to_close": -0.005871539370505108,
+        "benchmark_adjusted_move": -0.008876812117714072,
+        "magnitude_percentile": 0.5076923076923077,
+        "prior_sample_size": 65
+      }
+    },
+    {
+      "accession": "0001000112-24-004044",
+      "form": "8-K",
+      "accepted_at": "2024-10-15T06:54:00-04:00",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "Material agreement entered",
+          "label_zh": "签署重大协议"
+        },
+        {
+          "code": "9.01",
+          "label": "Financial statements and exhibits",
+          "label_zh": "财务报表与附件"
+        }
+      ],
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004044/a8k.htm",
+      "novelty": 0,
+      "key_numbers": [],
+      "entities": [],
+      "passages": [],
+      "comparison": {
+        "comparable_key": "8-K:1.01",
+        "prior_accession": "0001000112-24-003580",
+        "prior_accepted_at": "2024-06-18T06:57:00-04:00",
+        "prior_source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224003580/a8k.htm",
+        "changes": [],
+        "counts": {
+          "changed": 0,
+          "added": 0,
+          "removed": 0
+        }
+      },
+      "reaction": {
+        "session": "2024-10-15",
+        "asset_open_to_close": -0.0019366679521026775,
+        "benchmark_open_to_close": -0.007746564712826642,
+        "benchmark_adjusted_move": 0.005809896760723965,
+        "magnitude_percentile": 0.328125,
+        "prior_sample_size": 64
+      }
+    }
+  ],
+  "explanation": {
+    "mode": "deterministic_fallback",
+    "what_changed": [
+      {
+        "text": "SYN112's latest 8-K is categorized as results of operations (earnings). The cached primary document did not contain a substantive passage that the deterministic extractor could cite.",
+        "text_zh": "SYN112 最新 8-K 归类为经营业绩(财报)。缓存主文档中没有确定性提取器可引用的实质性段落。",
+        "citations": []
+      }
+    ],
+    "why_it_matters": [
+      {
+        "text": "Over the selected historical period, SYN112 returned 3.5% with a maximum drawdown of -39.2%. These are historical observations, not a forecast.",
+        "text_zh": "在所选历史期间, SYN112 累计回报为 3.5%, 最大回撤为 -39.2%。这些是历史观测, 不是预测。",
+        "citations": [
+          "metric:asset.total_return",
+          "metric:asset.max_drawdown"
+        ]
+      }
+    ],
+    "uncertainties": [
+      {
+        "text": "This local snapshot covers SEC disclosures, latest-restated annual Company Facts when available, and adjusted daily prices. It does not establish valuation, future return, or an investment recommendation.",
+        "text_zh": "本地快照覆盖 SEC 披露、可用时的最新重述年度 Company Facts，以及复权日线价格。它不构成估值、未来回报或投资建议。",
+        "citations": []
+      }
+    ]
+  },
+  "provenance": {
+    "source": "synthetic",
+    "written_at": "2026-10-25T08:15:48.851193+00:00",
+    "issuers": 120,
+    "filings": 4328,
+    "note": "generated by filing_triage.synth, seed 20240719",
+    "prices_artifact": "prices.parquet",
+    "events_artifact": "events.parquet",
+    "generated_at": "2026-10-25T08:16:47.194502+00:00",
+    "calculation": "company_lens.v2.0",
+    "filing_reaction": "issuer open-to-close return on the first eligible session after SEC acceptance, less benchmark open-to-close return; magnitude percentile uses only earlier measurable issuer filings",
+    "chart_sampling": "deterministic stride; at most 520 points per period",
+    "fundamentals_status": "not_ingested"
+  },
+  "warnings": [],
+  "filing_timeline": [
+    {
+      "accession": "0001000112-24-003964",
+      "accepted_at": "2024-09-23T18:33:00-04:00",
+      "item_code": "8.01",
+      "item_label": "Other events",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224003964/a8k.htm",
+      "reaction": {
+        "session": "2024-09-24",
+        "asset_open_to_close": -0.007178833892027003,
+        "benchmark_open_to_close": 0.00764468500321569,
+        "benchmark_adjusted_move": -0.014823518895242693,
+        "magnitude_percentile": 0.8032786885245902,
+        "prior_sample_size": 61
+      },
+      "item_label_zh": "其他事项"
+    },
+    {
+      "accession": "0001000112-24-004036",
+      "accepted_at": "2024-10-10T08:43:00-04:00",
+      "item_code": "5.02",
+      "item_label": "Director or principal officer change",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004036/a8k.htm",
+      "reaction": {
+        "session": "2024-10-10",
+        "asset_open_to_close": 0.004207004402380532,
+        "benchmark_open_to_close": -0.006226033207583748,
+        "benchmark_adjusted_move": 0.01043303760996428,
+        "magnitude_percentile": 0.6935483870967742,
+        "prior_sample_size": 62
+      },
+      "item_label_zh": "董事或主要高管变更"
+    },
+    {
+      "accession": "0001000112-24-004040",
+      "accepted_at": "2024-10-11T11:07:00-04:00",
+      "item_code": "2.02",
+      "item_label": "Results of operations (earnings)",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004040/a8k.htm",
+      "reaction": {
+        "session": "2024-10-14",
+        "asset_open_to_close": -0.004845557050242921,
+        "benchmark_open_to_close": 0.004394885408938842,
+        "benchmark_adjusted_move": -0.009240442459181764,
+        "magnitude_percentile": 0.5396825396825397,
+        "prior_sample_size": 63
+      },
+      "item_label_zh": "经营业绩(财报)"
+    },
+    {
+      "accession": "0001000112-24-004044",
+      "accepted_at": "2024-10-15T06:54:00-04:00",
+      "item_code": "1.01",
+      "item_label": "Material agreement entered",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004044/a8k.htm",
+      "reaction": {
+        "session": "2024-10-15",
+        "asset_open_to_close": -0.0019366679521026775,
+        "benchmark_open_to_close": -0.007746564712826642,
+        "benchmark_adjusted_move": 0.005809896760723965,
+        "magnitude_percentile": 0.328125,
+        "prior_sample_size": 64
+      },
+      "item_label_zh": "签署重大协议"
+    },
+    {
+      "accession": "0001000112-24-004052",
+      "accepted_at": "2024-10-16T07:05:00-04:00",
+      "item_code": "2.02",
+      "item_label": "Results of operations (earnings)",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004052/a8k.htm",
+      "reaction": {
+        "session": "2024-10-16",
+        "asset_open_to_close": -0.01474835148821918,
+        "benchmark_open_to_close": -0.005871539370505108,
+        "benchmark_adjusted_move": -0.008876812117714072,
+        "magnitude_percentile": 0.5076923076923077,
+        "prior_sample_size": 65
+      },
+      "item_label_zh": "经营业绩(财报)"
+    },
+    {
+      "accession": "0001000112-24-004113",
+      "accepted_at": "2024-11-01T06:06:00-04:00",
+      "item_code": "8.01",
+      "item_label": "Other events",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004113/a8k.htm",
+      "reaction": {
+        "session": "2024-11-01",
+        "asset_open_to_close": -0.012299973677514897,
+        "benchmark_open_to_close": -0.006274668522727511,
+        "benchmark_adjusted_move": -0.006025305154787386,
+        "magnitude_percentile": 0.3333333333333333,
+        "prior_sample_size": 66
+      },
+      "item_label_zh": "其他事项"
+    },
+    {
+      "accession": "0001000112-24-004263",
+      "accepted_at": "2024-12-17T11:06:00-05:00",
+      "item_code": "5.02",
+      "item_label": "Director or principal officer change",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004263/a8k.htm",
+      "reaction": {
+        "session": "2024-12-18",
+        "asset_open_to_close": 0.01784732149692969,
+        "benchmark_open_to_close": -0.00584077710667541,
+        "benchmark_adjusted_move": 0.0236880986036051,
+        "magnitude_percentile": 0.9402985074626866,
+        "prior_sample_size": 67
+      },
+      "item_label_zh": "董事或主要高管变更"
+    },
+    {
+      "accession": "0001000112-24-004326",
+      "accepted_at": "2024-12-31T10:05:00-05:00",
+      "item_code": "2.02",
+      "item_label": "Results of operations (earnings)",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011224004326/a8k.htm",
+      "reaction": null,
+      "item_label_zh": "经营业绩(财报)"
+    }
+  ],
+  "fundamentals": {
+    "schema_version": "company-lens.fundamentals.v1",
+    "status": "available",
+    "template": "operating_company",
+    "requested_years": 5,
+    "knowledge_at": "2025-02-01T16:31:00-05:00",
+    "series_basis": "latest_restated",
+    "annual_periods": [
+      {
+        "fiscal_year": 2020,
+        "period_end": "2020-12-31",
+        "form": "10-K"
+      },
+      {
+        "fiscal_year": 2021,
+        "period_end": "2021-12-31",
+        "form": "10-K"
+      },
+      {
+        "fiscal_year": 2022,
+        "period_end": "2022-12-31",
+        "form": "10-K"
+      },
+      {
+        "fiscal_year": 2023,
+        "period_end": "2023-12-31",
+        "form": "10-K"
+      },
+      {
+        "fiscal_year": 2024,
+        "period_end": "2024-12-31",
+        "form": "10-K"
+      }
+    ],
+    "reported_series": [
+      {
+        "metric_id": "Revenues",
+        "label": "Revenue",
+        "definition": "Total revenue as filed.",
+        "expected_unit": "USD",
+        "concept_priority": [
+          "Revenues"
+        ],
+        "coverage_status": "complete",
+        "observations": [
+          {
+            "metric_id": "Revenues",
+            "value": 71000000000,
+            "unit": "USD",
+            "period_start": "2020-01-01",
+            "period_end": "2020-12-31",
+            "fiscal_year": 2020,
+            "knowledge_at": "2021-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:Revenues:2020",
+              "taxonomy": "us-gaap",
+              "concept": "Revenues",
+              "accession": "0001000112-21-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2020-01-01",
+              "period_end": "2020-12-31",
+              "filed_date": "2021-02-01",
+              "accepted_at": "2021-02-01T16:31:00-05:00",
+              "fiscal_year": 2020,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "Revenues",
+            "value": 77390000000,
+            "unit": "USD",
+            "period_start": "2021-01-01",
+            "period_end": "2021-12-31",
+            "fiscal_year": 2021,
+            "knowledge_at": "2022-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:Revenues:2021",
+              "taxonomy": "us-gaap",
+              "concept": "Revenues",
+              "accession": "0001000112-22-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2021-01-01",
+              "period_end": "2021-12-31",
+              "filed_date": "2022-02-01",
+              "accepted_at": "2022-02-01T16:31:00-05:00",
+              "fiscal_year": 2021,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "Revenues",
+            "value": 84355100000,
+            "unit": "USD",
+            "period_start": "2022-01-01",
+            "period_end": "2022-12-31",
+            "fiscal_year": 2022,
+            "knowledge_at": "2023-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:Revenues:2022",
+              "taxonomy": "us-gaap",
+              "concept": "Revenues",
+              "accession": "0001000112-23-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2022-01-01",
+              "period_end": "2022-12-31",
+              "filed_date": "2023-02-01",
+              "accepted_at": "2023-02-01T16:31:00-05:00",
+              "fiscal_year": 2022,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "Revenues",
+            "value": 91947059000,
+            "unit": "USD",
+            "period_start": "2023-01-01",
+            "period_end": "2023-12-31",
+            "fiscal_year": 2023,
+            "knowledge_at": "2024-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:Revenues:2023",
+              "taxonomy": "us-gaap",
+              "concept": "Revenues",
+              "accession": "0001000112-24-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2023-01-01",
+              "period_end": "2023-12-31",
+              "filed_date": "2024-02-01",
+              "accepted_at": "2024-02-01T16:31:00-05:00",
+              "fiscal_year": 2023,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "Revenues",
+            "value": 100222294310,
+            "unit": "USD",
+            "period_start": "2024-01-01",
+            "period_end": "2024-12-31",
+            "fiscal_year": 2024,
+            "knowledge_at": "2025-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:Revenues:2024",
+              "taxonomy": "us-gaap",
+              "concept": "Revenues",
+              "accession": "0001000112-25-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2024-01-01",
+              "period_end": "2024-12-31",
+              "filed_date": "2025-02-01",
+              "accepted_at": "2025-02-01T16:31:00-05:00",
+              "fiscal_year": 2024,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          }
+        ]
+      },
+      {
+        "metric_id": "NetIncomeLoss",
+        "label": "Net income",
+        "definition": "Net income after tax, as filed.",
+        "expected_unit": "USD",
+        "concept_priority": [
+          "NetIncomeLoss"
+        ],
+        "coverage_status": "complete",
+        "observations": [
+          {
+            "metric_id": "NetIncomeLoss",
+            "value": 15400000000,
+            "unit": "USD",
+            "period_start": "2020-01-01",
+            "period_end": "2020-12-31",
+            "fiscal_year": 2020,
+            "knowledge_at": "2021-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:NetIncomeLoss:2020",
+              "taxonomy": "us-gaap",
+              "concept": "NetIncomeLoss",
+              "accession": "0001000112-21-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2020-01-01",
+              "period_end": "2020-12-31",
+              "filed_date": "2021-02-01",
+              "accepted_at": "2021-02-01T16:31:00-05:00",
+              "fiscal_year": 2020,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "NetIncomeLoss",
+            "value": 16478000000,
+            "unit": "USD",
+            "period_start": "2021-01-01",
+            "period_end": "2021-12-31",
+            "fiscal_year": 2021,
+            "knowledge_at": "2022-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:NetIncomeLoss:2021",
+              "taxonomy": "us-gaap",
+              "concept": "NetIncomeLoss",
+              "accession": "0001000112-22-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2021-01-01",
+              "period_end": "2021-12-31",
+              "filed_date": "2022-02-01",
+              "accepted_at": "2022-02-01T16:31:00-05:00",
+              "fiscal_year": 2021,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "NetIncomeLoss",
+            "value": 17631460000,
+            "unit": "USD",
+            "period_start": "2022-01-01",
+            "period_end": "2022-12-31",
+            "fiscal_year": 2022,
+            "knowledge_at": "2023-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:NetIncomeLoss:2022",
+              "taxonomy": "us-gaap",
+              "concept": "NetIncomeLoss",
+              "accession": "0001000112-23-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2022-01-01",
+              "period_end": "2022-12-31",
+              "filed_date": "2023-02-01",
+              "accepted_at": "2023-02-01T16:31:00-05:00",
+              "fiscal_year": 2022,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "NetIncomeLoss",
+            "value": 18865662200,
+            "unit": "USD",
+            "period_start": "2023-01-01",
+            "period_end": "2023-12-31",
+            "fiscal_year": 2023,
+            "knowledge_at": "2024-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:NetIncomeLoss:2023",
+              "taxonomy": "us-gaap",
+              "concept": "NetIncomeLoss",
+              "accession": "0001000112-24-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2023-01-01",
+              "period_end": "2023-12-31",
+              "filed_date": "2024-02-01",
+              "accepted_at": "2024-02-01T16:31:00-05:00",
+              "fiscal_year": 2023,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "NetIncomeLoss",
+            "value": 20186258554,
+            "unit": "USD",
+            "period_start": "2024-01-01",
+            "period_end": "2024-12-31",
+            "fiscal_year": 2024,
+            "knowledge_at": "2025-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:NetIncomeLoss:2024",
+              "taxonomy": "us-gaap",
+              "concept": "NetIncomeLoss",
+              "accession": "0001000112-25-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2024-01-01",
+              "period_end": "2024-12-31",
+              "filed_date": "2025-02-01",
+              "accepted_at": "2025-02-01T16:31:00-05:00",
+              "fiscal_year": 2024,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          }
+        ]
+      },
+      {
+        "metric_id": "StockholdersEquity",
+        "label": "Shareholders' equity",
+        "definition": "Total equity attributable to shareholders.",
+        "expected_unit": "USD",
+        "concept_priority": [
+          "StockholdersEquity"
+        ],
+        "coverage_status": "complete",
+        "observations": [
+          {
+            "metric_id": "StockholdersEquity",
+            "value": 48000000000,
+            "unit": "USD",
+            "period_start": "2020-01-01",
+            "period_end": "2020-12-31",
+            "fiscal_year": 2020,
+            "knowledge_at": "2021-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:StockholdersEquity:2020",
+              "taxonomy": "us-gaap",
+              "concept": "StockholdersEquity",
+              "accession": "0001000112-21-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2020-01-01",
+              "period_end": "2020-12-31",
+              "filed_date": "2021-02-01",
+              "accepted_at": "2021-02-01T16:31:00-05:00",
+              "fiscal_year": 2020,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "StockholdersEquity",
+            "value": 49920000000,
+            "unit": "USD",
+            "period_start": "2021-01-01",
+            "period_end": "2021-12-31",
+            "fiscal_year": 2021,
+            "knowledge_at": "2022-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:StockholdersEquity:2021",
+              "taxonomy": "us-gaap",
+              "concept": "StockholdersEquity",
+              "accession": "0001000112-22-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2021-01-01",
+              "period_end": "2021-12-31",
+              "filed_date": "2022-02-01",
+              "accepted_at": "2022-02-01T16:31:00-05:00",
+              "fiscal_year": 2021,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "StockholdersEquity",
+            "value": 51916800000,
+            "unit": "USD",
+            "period_start": "2022-01-01",
+            "period_end": "2022-12-31",
+            "fiscal_year": 2022,
+            "knowledge_at": "2023-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:StockholdersEquity:2022",
+              "taxonomy": "us-gaap",
+              "concept": "StockholdersEquity",
+              "accession": "0001000112-23-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2022-01-01",
+              "period_end": "2022-12-31",
+              "filed_date": "2023-02-01",
+              "accepted_at": "2023-02-01T16:31:00-05:00",
+              "fiscal_year": 2022,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "StockholdersEquity",
+            "value": 53993472000,
+            "unit": "USD",
+            "period_start": "2023-01-01",
+            "period_end": "2023-12-31",
+            "fiscal_year": 2023,
+            "knowledge_at": "2024-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:StockholdersEquity:2023",
+              "taxonomy": "us-gaap",
+              "concept": "StockholdersEquity",
+              "accession": "0001000112-24-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2023-01-01",
+              "period_end": "2023-12-31",
+              "filed_date": "2024-02-01",
+              "accepted_at": "2024-02-01T16:31:00-05:00",
+              "fiscal_year": 2023,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "StockholdersEquity",
+            "value": 56153210880,
+            "unit": "USD",
+            "period_start": "2024-01-01",
+            "period_end": "2024-12-31",
+            "fiscal_year": 2024,
+            "knowledge_at": "2025-02-01T16:31:00-05:00",
+            "citation": {
+              "citation_id": "fact:StockholdersEquity:2024",
+              "taxonomy": "us-gaap",
+              "concept": "StockholdersEquity",
+              "accession": "0001000112-25-000012",
+              "form": "10-K",
+              "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+              "period_start": "2024-01-01",
+              "period_end": "2024-12-31",
+              "filed_date": "2025-02-01",
+              "accepted_at": "2025-02-01T16:31:00-05:00",
+              "fiscal_year": 2024,
+              "fiscal_period": "FY",
+              "unit": "USD"
+            },
+            "quality_flags": []
+          }
+        ]
+      }
+    ],
+    "as_reported_series": [],
+    "derived_series": [
+      {
+        "metric_id": "net_margin",
+        "label": "Net margin",
+        "definition": "Net income divided by revenue, from the two filed figures above.",
+        "unit": "ratio",
+        "observations": [
+          {
+            "metric_id": "net_margin",
+            "value": null,
+            "unit": "ratio",
+            "period_end": "2020-12-31",
+            "fiscal_year": 2020,
+            "status": "missing_input",
+            "formula_version": "v1",
+            "components": {
+              "numerator": null,
+              "denominator": "fact:Revenues:2020"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "net_margin",
+            "value": 0.213,
+            "unit": "ratio",
+            "period_end": "2021-12-31",
+            "fiscal_year": 2021,
+            "status": "available",
+            "formula_version": "v1",
+            "components": {
+              "numerator": "fact:NetIncomeLoss:2021",
+              "denominator": "fact:Revenues:2021"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "net_margin",
+            "value": 0.209,
+            "unit": "ratio",
+            "period_end": "2022-12-31",
+            "fiscal_year": 2022,
+            "status": "available",
+            "formula_version": "v1",
+            "components": {
+              "numerator": "fact:NetIncomeLoss:2022",
+              "denominator": "fact:Revenues:2022"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "net_margin",
+            "value": 0.205,
+            "unit": "ratio",
+            "period_end": "2023-12-31",
+            "fiscal_year": 2023,
+            "status": "available",
+            "formula_version": "v1",
+            "components": {
+              "numerator": "fact:NetIncomeLoss:2023",
+              "denominator": "fact:Revenues:2023"
+            },
+            "quality_flags": []
+          },
+          {
+            "metric_id": "net_margin",
+            "value": 0.201,
+            "unit": "ratio",
+            "period_end": "2024-12-31",
+            "fiscal_year": 2024,
+            "status": "available",
+            "formula_version": "v1",
+            "components": {
+              "numerator": "fact:NetIncomeLoss:2024",
+              "denominator": "fact:Revenues:2024"
+            },
+            "quality_flags": []
+          }
+        ]
+      }
+    ],
+    "coverage": {
+      "years_available": 5,
+      "years_requested": 5
+    },
+    "warnings": [],
+    "provenance": {
+      "source": "SEC Company Facts",
+      "fetched_at": "2025-02-02T03:00:00+00:00"
+    }
+  },
+  "benchmark_comparisons": {
+    "QQQ": {
+      "symbol": "QQQ",
+      "status": "unavailable",
+      "reason": "missing_prices",
+      "periods": {}
+    }
+  },
+  "financial_results": {
+    "form": "10-Q",
+    "period_end": "2024-12-31",
+    "filed": "2025-01-28",
+    "accession": "0001000112-25-000004",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1000112/000100011225000004/syn112-20241231.htm",
+    "status": "available",
+    "period_kind": "quarterly",
+    "basis": "as_reported_same_filing",
+    "reason": null,
+    "financial_issuer": false,
+    "sic": "3571",
+    "sic_description": "Electronic Computers",
+    "cik": "1000112",
+    "metrics": [
+      {
+        "id": "revenue",
+        "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "unit": "USD",
+        "value": 24318000000,
+        "start": "2024-10-01",
+        "end": "2024-12-31",
+        "prior_value": 22104000000,
+        "prior_start": "2023-10-01",
+        "prior_end": "2023-12-31",
+        "change": 2214000000,
+        "yoy": 0.1001,
+        "reference": {
+          "status": "available",
+          "reason": null,
+          "sic_group": "357",
+          "n": 6,
+          "minimum": 5,
+          "as_of": "2025-01-28",
+          "median_yoy": 0.075,
+          "gap_pp": 2.51,
+          "members": [
+            {
+              "ticker": "SYN000",
+              "yoy": 0.061,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN000"
+            },
+            {
+              "ticker": "SYN004",
+              "yoy": 0.088,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN004"
+            },
+            {
+              "ticker": "SYN033",
+              "yoy": 0.102,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN033"
+            },
+            {
+              "ticker": "SYN041",
+              "yoy": 0.044,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN041"
+            },
+            {
+              "ticker": "SYN050",
+              "yoy": 0.075,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN050"
+            },
+            {
+              "ticker": "SYN097",
+              "yoy": 0.118,
+              "period_end": "2024-12-31",
+              "filed": "2025-01-21",
+              "source_url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=SYN097"
+            }
+          ]
+        }
+      },
+      {
+        "id": "net_income",
+        "concept": "NetIncomeLoss",
+        "unit": "USD",
+        "value": 5742000000,
+        "start": "2024-10-01",
+        "end": "2024-12-31",
+        "prior_value": 6015000000,
+        "prior_start": "2023-10-01",
+        "prior_end": "2023-12-31",
+        "change": -273000000,
+        "yoy": null,
+        "reference": {
+          "status": "unavailable",
+          "reason": "no_company_growth",
+          "sic_group": "357",
+          "n": 0,
+          "minimum": 5,
+          "as_of": "2025-01-28",
+          "median_yoy": null,
+          "gap_pp": null,
+          "members": []
+        }
+      },
+      {
+        "id": "eps",
+        "concept": "EarningsPerShareDiluted",
+        "unit": "USD/shares",
+        "value": 1.42,
+        "start": "2024-10-01",
+        "end": "2024-12-31",
+        "prior_value": 1.49,
+        "prior_start": "2023-10-01",
+        "prior_end": "2023-12-31",
+        "change": -0.07,
+        "yoy": null
+      },
+      {
+        "id": "gross_profit",
+        "concept": "GrossProfit",
+        "unit": "USD",
+        "value": 11206000000,
+        "start": "2024-10-01",
+        "end": "2024-12-31",
+        "prior_value": null,
+        "prior_start": null,
+        "prior_end": null,
+        "change": null,
+        "yoy": null
+      }
+    ]
+  },
+  "disclosure_signal": {
+    "state": "read_now",
+    "confidence": "standard",
+    "probability": 0.43,
+    "issuer_base_rate": 0.26,
+    "eligible_history": 38,
+    "reasons": [
+      "pre-filing volume above 84% of its own history",
+      "item mix differs from this issuer's usual 8-K"
+    ],
+    "points": [
+      {
+        "novelty": 0.2,
+        "reaction": 1.4823518895242693,
+        "date": "2024-09-23",
+        "items": "8.01",
+        "current": true
+      },
+      {
+        "novelty": 0.2875,
+        "reaction": 1.043303760996428,
+        "date": "2024-10-10",
+        "items": "5.02",
+        "current": false
+      },
+      {
+        "novelty": 0.375,
+        "reaction": 0.9240442459181764,
+        "date": "2024-10-11",
+        "items": "2.02",
+        "current": false
+      },
+      {
+        "novelty": 0.46249999999999997,
+        "reaction": 0.5809896760723965,
+        "date": "2024-10-15",
+        "items": "1.01",
+        "current": false
+      },
+      {
+        "novelty": 0.55,
+        "reaction": 0.8876812117714072,
+        "date": "2024-10-16",
+        "items": "2.02",
+        "current": false
+      },
+      {
+        "novelty": 0.6375,
+        "reaction": 0.6025305154787386,
+        "date": "2024-11-01",
+        "items": "8.01",
+        "current": false
+      },
+      {
+        "novelty": 0.7249999999999999,
+        "reaction": 2.36880986036051,
+        "date": "2024-12-17",
+        "items": "5.02",
+        "current": false
+      },
+      {
+        "novelty": 0.8125,
+        "reaction": 1,
+        "date": "2024-12-31",
+        "items": "2.02",
+        "current": false
+      }
+    ],
+    "model": {
+      "estimator": "random_forest",
+      "calibration": "isotonic",
+      "evaluated_through": "2024-12-31"
+    }
+  },
+  "volatility_forecast": {
+    "as_of": "2024-12-31",
+    "horizon_sessions": 20,
+    "median": 0.25,
+    "band_low": 0.17,
+    "band_high": 0.38,
+    "issuer_median": 0.24,
+    "vs_issuer": 1.04,
+    "state": "typical for this issuer",
+    "forecaster": "har",
+    "coverage_80": 0.774
+  },
+  "evidence_scope": {
+    "status": "available",
+    "source_types": [
+      "sec_filing",
+      "company_news",
+      "fundamentals"
+    ],
+    "query": "SYN112 recent disclosures",
+    "max_chunks": 12,
+    "selected_chunks": 9,
+    "published_after": "2024-10-01",
+    "generated_at": "2024-12-31T02:00:00+00:00"
+  },
+  "headlines": [
+    {
+      "headline": "SYN112 files fourth-quarter results",
+      "publisher": "Fixture Newswire",
+      "published_at": "2024-12-30T13:02:00+00:00",
+      "fetched_at": "2024-12-31T01:00:00+00:00",
+      "url": "https://example.invalid/fixture/syn112-q4",
+      "source_type": "company_news",
+      "ticker": "SYN112",
+      "topic": null,
+      "citation": "headline:1"
+    },
+    {
+      "headline": "SYN112 names a new chief financial officer",
+      "publisher": "Fixture Wire",
+      "published_at": "2024-12-18T20:45:00+00:00",
+      "fetched_at": "2024-12-19T01:00:00+00:00",
+      "url": "https://example.invalid/fixture/syn112-cfo",
+      "source_type": "company_news",
+      "ticker": "SYN112",
+      "topic": null,
+      "citation": "headline:2"
+    }
+  ],
+  "market_headlines": [
+    {
+      "headline": "Index futures steady before the December reading",
+      "publisher": "Fixture Market Desk",
+      "published_at": "2024-12-30T11:00:00+00:00",
+      "fetched_at": "2024-12-31T01:00:00+00:00",
+      "url": "https://example.invalid/fixture/market-steady",
+      "source_type": "market_news",
+      "ticker": null,
+      "topic": "macro",
+      "citation": "market:1"
+    }
+  ]
+}

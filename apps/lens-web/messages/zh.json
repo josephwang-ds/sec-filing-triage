@@ -1,0 +1,830 @@
+{
+  "meta": {
+    "title": "Company Lens",
+    "description": "有来源可查的公司研究：已申报的 SEC 披露、历史市场背景，以及每一条都附带证据的问答。"
+  },
+  "nav": {
+    "site": "站点导航",
+    "skip": "跳到正文",
+    "find": "查找公司",
+    "overview": "这个项目是什么",
+    "research": "研究方法与审计",
+    "earnings": "财报结果",
+    "onThisPage": "本页内容"
+  },
+  "lang": {
+    "label": "阅读语言"
+  },
+  "footer": {
+    "boundary": "这里提供证据，不提供预测。本站内容均不构成投资建议。",
+    "universe": "公司范围：当前大盘股的便利样本，不是按时点构建的指数。",
+    "snapshot": "快照 {date}",
+    "market": "行情截至 {date}",
+    "sources": "SEC 申报文件与复权日线价格",
+    "fixtures": "开发构建：使用合成测试数据，不是真实行情。"
+  },
+  "home": {
+    "metaTitle": "公司研究，附带来源",
+    "metaDescription": "搜索已覆盖的公司，查看其申报披露、历史回报与风险、近期事件，以及有证据支撑的问答。",
+    "eyebrow": "有来源可查的公司研究",
+    "title": "先看证据，再谈观点。",
+    "lede": "公司页面上的每个数字都来自已申报的 SEC 披露和复权日线价格，并且可以回溯到它所依据的原始文件。",
+    "coverage": "本次构建中有 {companies} 家公司拥有研究快照。不在该范围内的股票代码会明确说明边界，而不会生成页面。",
+    "fixtureBannerTitle": "开发数据。",
+    "fixtureBannerBody": "当前构建读取的是用于测试的合成数据。名为 SYNxxx 的发行人并非真实公司，这些也不是真实市场价格。",
+    "search": {
+      "label": "按股票代码或公司名称搜索",
+      "placeholder": "AAPL、Apple、NVDA…",
+      "results": "匹配的公司",
+      "hint": "已覆盖 {count} 家公司。输入代码后按回车。",
+      "directory": "已覆盖的公司",
+      "showing": "显示第 {from}–{to} 项，共 {total} 项",
+      "pagination": "目录分页",
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第 {page} / {pages} 页",
+      "noMatchTitle": "没有已覆盖的公司匹配“{query}”。",
+      "noMatchBody": "本次构建只持有下列公司的证据。本站不会按需抓取数据，也不会为没有快照的公司生成页面。",
+      "ambiguous": "有 {count} 家公司匹配，请从列表中选择。"
+    },
+    "featured": "示例公司",
+    "featuredNote": "三个可以作为起点的页面。这不是排名、推荐，也不是选股结果。",
+    "featuredRelative": "相对 {benchmark} {value} 个百分点，{start} 至 {end}",
+    "evidenceTitle": "证据是什么",
+    "evidenceNote": "三类来源，各有自己的观察时间。研究方法页说明了每一类是如何处理的。",
+    "evidence": {
+      "filings": {
+        "title": "SEC 披露",
+        "body": "8-K 条目与近期定期报告，自 EDGAR 读取，并保留其受理时间戳。"
+      },
+      "prices": {
+        "title": "复权日线价格",
+        "body": "来自数据供应商的复权日收盘价，用于计算相对指定基准的历史回报、波动率与回撤。"
+      },
+      "fundamentals": {
+        "title": "已申报的财务结果",
+        "body": "Company Facts 中按申报口径的数值，并标明其会计概念、单位与报告期间。"
+      }
+    },
+    "evidenceLink": "查看审计方法"
+  },
+  "notFound": {
+    "eyebrow": "缓存证据边界",
+    "title": "本次构建不包含这家公司。",
+    "body": "本次构建持有 {count} 家公司的研究快照。本站不会按需抓取数据，因此不会凭空生成一份公司档案，而是在这里停下。",
+    "back": "← 返回已覆盖的公司"
+  },
+  "company": {
+    "missing": "本快照中没有该项",
+    "metaDescription": "{name} 的申报披露、历史回报与风险，以及有证据支撑的问答。",
+    "hero": {
+      "eyebrow": "公司概览 · 有来源可查",
+      "close": "最新复权收盘价",
+      "closeOn": "观测于 {date}",
+      "relative": "相对 {benchmark} 的回报差",
+      "between": "{start} 至 {end}",
+      "filings": "快照内的披露数量",
+      "priceHistory": "价格区间 {start} 至 {end}",
+      "priceField": "价格字段：{field}",
+      "secRecord": "SEC 公司记录"
+    },
+    "nav": {
+      "label": "本页内容",
+      "brief": "摘要",
+      "financials": "财报结果",
+      "performance": "历史与风险",
+      "filings": "SEC 披露",
+      "events": "事件",
+      "ask": "AI 问答"
+    }
+  },
+  "brief": {
+    "eyebrow": "摘要",
+    "title": "先读这里，再到下方逐项核对。",
+    "intro": "三句话，并标明各自属于哪一类陈述。其中每个数字都能在本页下方找到来源。",
+    "slot": {
+      "what_changed": "观测到的",
+      "why_it_matters": "计算得出的",
+      "uncertainties": "解读性的"
+    },
+    "mode": "生成方式：{mode}",
+    "sourceLanguage": "此处为英文原文，引擎未提供中文。",
+    "boundary": "这些是历史观测，不是预测。"
+  },
+  "news": {
+    "eyebrow": "背景信息",
+    "title": "近期新闻",
+    "intro": "分成两栏，因为全市场新闻并不是关于这家公司的证据。",
+    "scope": {
+      "available": "证据可用",
+      "empty": "没有匹配条目",
+      "stale": "保留上次成功结果",
+      "not_configured": "来源未配置"
+    },
+    "companyNews": "关于这家公司",
+    "marketNews": "市场与行业",
+    "noCompanyNews": "本快照中没有该公司新闻。",
+    "noMarketNews": "本快照中没有市场新闻。",
+    "empty": {
+      "title": "本快照中没有新闻",
+      "body": "新闻来源已配置，但在该时间窗内没有返回任何内容。上方的披露与价格历史不受影响。"
+    },
+    "generated": "采集于 {time}。",
+    "sourceLanguage": "英文标题原文",
+    "boundary": "新闻标题为发布方原文，保留英文，即其发布时使用的语言。"
+  },
+  "financials": {
+    "eyebrow": "申报结果",
+    "title": "最近财报说了什么",
+    "intro": "来自 {form} 的{kind}数据，报告期截至 {periodEnd}，披露于 {filed}。全部取自同一份报告，因此期间与会计口径始终与数值一致。",
+    "annual": "年度",
+    "quarterly": "季度",
+    "sourceFiling": "查看 {form} 原文",
+    "boundary": "报告列示的合并财务数据。不同公司的会计处理与业务构成仍有差异，已申报的结果也不是预测。",
+    "empty": {
+      "title": "本快照中没有已申报的财报",
+      "body": "尚未缓存到含可用数值的 10-Q 或 10-K，因此不展示任何收入、利润或每股收益数据。",
+      "footnote": "下方的历史回报、风险与 SEC 披露不受影响。"
+    },
+    "metadataOnly": {
+      "title": "已找到报告，但无法提取数值",
+      "body": "报告已定位，但没有数值同时满足本页所需的报告期与会计口径，因此不展示近似值。"
+    },
+    "yoyBadge": "同比 {value}",
+    "yoyUnavailable": "无同比",
+    "yoyWithheld": "变动：{change}。零基数或涉及亏损时不显示增长百分比。",
+    "currentPeriod": "本期：{start} — {end} · {unit}",
+    "priorPeriod": "上年同期：{value}（{start} — {end}）",
+    "noPrior": "该报告中没有可比的上年同期数据。",
+    "metric": {
+      "revenue": {
+        "label": "收入",
+        "definition": "报告列示的收入，未扣除费用；不是股价回报。"
+      },
+      "net_income": {
+        "label": "净利润",
+        "definition": "报告列示的税后净利润；具体 SEC 会计标签见下方。"
+      },
+      "eps": {
+        "label": "稀释每股收益",
+        "definition": "考虑稀释后的每股收益；不是利润总额或增长率。"
+      },
+      "gross_profit": {
+        "label": "毛利润",
+        "definition": "收入减去营业成本的金额；不是毛利率。"
+      }
+    },
+    "reference": {
+      "available": "本站 SIC {group} 类别样本同比中位数：{median}（{n} 家，不含本公司）。差值：{gap} 个百分点。",
+      "unavailable": "暂无类别参考。",
+      "reason": {
+        "no_company_growth": "本公司没有可比的同比增长率。",
+        "missing_classification": "缺少 SEC SIC 分类。",
+        "insufficient_sample": "符合条件的公司仅 {n} 家，至少需要 {minimum} 家。"
+      },
+      "method": "参考口径与来源",
+      "methodBody": "截至 {asOf}。仅使用最新缓存报告，按 CIK 去重同一公司的不同股类；SEC SIC 前三位相同，年度／单季粒度、会计标签与币种相同；期末相差不超过 45 天，期间长度相差不超过 15 天。剔除之后披露、缺少同比以及零基数或亏损的样本。取各公司同比的等权中位数，不是行业汇总增速、全行业统计，也不是严格业务可比公司组。",
+      "members": "样本内的公司"
+    },
+    "conceptLabel": "指标口径",
+    "conceptBody": "同比 = 本期 ÷ 上年同期 − 1，比较的是去年同期而不是上一季度。百分点差 = 公司增速 − 样本中位增速。",
+    "yoyNote": "当上年基数为零或为亏损时不展示增长率，因为此时的百分比没有意义。"
+  },
+  "performance": {
+    "eyebrow": "历史与风险",
+    "title": "过去走成什么样，过程有多颠簸",
+    "periodGroup": "历史区间",
+    "benchmarkGroup": "比较基准",
+    "intro": "所选区间内的复权日线价格，与 {benchmark} 比较。{benchmarkNote}",
+    "benchmarkNote": {
+      "SPY": "SPY 是跟踪标普 500 指数的交易所交易基金。",
+      "QQQ": "QQQ 是跟踪纳斯达克 100 指数的交易所交易基金，该指数不含金融类公司；它不是纯科技指数。"
+    },
+    "comparisonUnavailable": "{symbol} 在 {period} 区间无法比较",
+    "unavailable": {
+      "missing_prices": "本快照中没有 {symbol} 的价格，因此不存在按日期对齐的比较。",
+      "stale_prices": "{symbol} 的价格历史早于本公司结束，两者无法在相同日期上比较。",
+      "insufficient_overlap": "该区间内两者共同的交易日太少，不足以支撑回报、波动率或回撤的计算。",
+      "invalid_values": "对齐后的序列包含非有限数值，因此不展示该比较。"
+    },
+    "backToDefault": "返回 {benchmark}",
+    "endingValue": "期末价值",
+    "endingFrom": "以 {initial} 起始投入，{start} 至 {end}",
+    "relative": "相对 {benchmark} 的回报差（百分点）",
+    "bothReturns": "{ticker} {asset} · {benchmark} {market}",
+    "metric": {
+      "totalReturn": "累计回报",
+      "periodContext": "{start} 至 {end}",
+      "cagr": "年化回报",
+      "cagrContext": "所示区间内的复合增长率",
+      "volatility": "年化波动率",
+      "volatilityContext": "日收益率年化",
+      "maxDrawdown": "最大回撤",
+      "troughOn": "低点 {date}",
+      "beta": "相对 {benchmark} 的 Beta",
+      "betaContext": "对基准波动的敏感度",
+      "correlation": "与 {benchmark} 的相关性",
+      "sessions": "{count} 个对齐交易日"
+    },
+    "notAvailable": "该区间不可用",
+    "riskNote": "该区间内从高点到低点的最大跌幅为 {drawdown}，单日最差为 {worst}。两者都已经发生，也都不构成对未来的上限。",
+    "riskNoteLabel": "实际体验如何",
+    "coveragePartial": "请求的历史起点为 {requested}，但对齐后的价格自 {start} 开始、至 {end} 结束，共 {sessions} 个交易日。最早共同日期之前的数据不做任何填充。",
+    "scopeNote": "只有本节跟随基准选择器。摘要、披露反应与 AI 证据仍使用 {benchmark}；本图当前显示的是 {selected}。",
+    "boundary": "历史回报与风险是对一段已经结束的时期的观测，不是预测，本页内容也不构成投资建议。",
+    "chart": {
+      "basis": "复权日收盘价",
+      "alt": "等额投入 {ticker} 与 {benchmark} 自 {start} 至 {end} 的价值变化，期末分别为 {assetEnd} 与 {benchmarkEnd}。",
+      "caption": "{ticker} 与 {benchmark} 的对比，{start} 至 {end}，期初投入 {initial}。"
+    }
+  },
+  "volatility": {
+    "eyebrow": "预期波动区间",
+    "title": "未来 {sessions} 个交易日可能有多大波动",
+    "state": {
+      "typical_for_this_issuer": "处于该公司常态",
+      "elevated": "偏高",
+      "slightly_elevated": "略偏高",
+      "unusually_calm": "异常平静"
+    },
+    "alt": "预期年化波动率区间为 {low} 至 {high}，最可能为 {median}，该公司常态为 {usual}。",
+    "median": "最可能值，年化",
+    "band": "80% 的时间落在此区间",
+    "usual": "该公司的常态水平",
+    "coverage": "样本外有 {value} 的结果落在 80% 区间内。",
+    "boundary": "只给出区间与时间范围，不给方向：它说明可能有多大波动，而不是往哪个方向走。"
+  },
+  "signal": {
+    "eyebrow": "这份披露与它自身历史的比较",
+    "title": "对这家公司来说，这份披露异常吗？",
+    "intro": "本节所有数字都是把这份披露与同一家公司以往的披露相比，不与其他公司作任何比较。",
+    "probability": "出现异常大幅反应的概率",
+    "base": "该公司自身越过这一门槛的频率",
+    "history": "参与比较的历史披露数量",
+    "why": "依据",
+    "sourceLanguage": "以下依据为英文原文，评分程序以此语言写出。",
+    "boundary": "它估计的是反应可能有多大，而不是方向。这是阅读优先级，不是投资建议。",
+    "model": "{estimator} · 校准方法 {calibration} · 评估截至 {through}",
+    "state": {
+      "read_now": "建议立即阅读",
+      "monitor": "留意观察",
+      "routine": "例行披露",
+      "insufficient_history": "历史数据不足",
+      "withheld": "暂不展示"
+    }
+  },
+  "filings": {
+    "eyebrow": "原始披露",
+    "title": "申报了什么",
+    "intro": "披露文件本身。公司披露的内容与本项目对其所做的测量分开呈现。",
+    "secChecked": "SEC 检查于 {date}",
+    "secCollected": "SEC 缓存采集于 {date}",
+    "empty": {
+      "title": "本快照中没有披露文件",
+      "body": "尚未缓存到该公司的 8-K 文件，因此不列出任何条目，也不对空内容做概括。"
+    },
+    "timeline": "更早的披露",
+    "timelineNote": "每条附带其后首个符合条件交易日相对基准的涨跌幅。这是对幅度的测量，不是因果关系。",
+    "timelineMove": "{session} {move}",
+    "noReaction": "没有可测量的符合条件交易日",
+    "sourceFiling": "原始文件",
+    "sourcePassage": "原文段落",
+    "moveBadge": "披露后 {move}",
+    "passages": "文件原文摘录",
+    "sourceLanguage": "原文为英文（申报文本）",
+    "noPassages": "无法从缓存的主文档中确定性地提取段落，因此不作引用。",
+    "keyNumbers": "文件中的数字",
+    "comparison": "与上一份可比披露的对照",
+    "comparisonAgainst": "与 {date} 受理的那份相比：{changed} 处变更，{added} 处新增，{removed} 处删除。",
+    "changeKind": {
+      "changed": "内容变更",
+      "added": "新增",
+      "removed": "删除",
+      "date": "日期变更"
+    },
+    "textMatch": "文本相似度 {value}",
+    "priorFiling": "上一份披露",
+    "measured": "测量所得，非公司披露",
+    "novelty": "相对该公司过往披露的新颖度：{value}",
+    "reactionSession": "首个符合条件的交易日：{session}",
+    "reactionMove": "相对 {benchmark}，开盘至收盘 {move}",
+    "reactionPercentile": "大于该公司过往 {value} 的披露（样本 {sample} 份）",
+    "reactionBoundary": "仅为幅度。这并不说明该披露导致了此次波动。"
+  },
+  "events": {
+    "eyebrow": "事件与接下来关注",
+    "title": "最近发生了什么，接下来看什么",
+    "titleNotCovered": "公司事件",
+    "recent": "最近发生",
+    "upcoming": "已确认的下一步",
+    "checkedAt": "上次成功检查 {time}",
+    "source": "来源",
+    "untitled": "无标题条目",
+    "titleOnly": "仅有标题",
+    "confirmed": "已确认",
+    "expected": "预计",
+    "dateUnknown": "未公布日期",
+    "windowUnknown": "未公布时间范围",
+    "retry": "重新检查",
+    "technical": "技术细节",
+    "tech": {
+      "version": "已发布的事件源版本",
+      "noVersion": "尚无已发布版本",
+      "storage": "数据来源",
+      "status": "状态码",
+      "unknown": "未知"
+    },
+    "view": {
+      "loading": "正在检查",
+      "events": "已检查",
+      "no_new_events": "没有新条目",
+      "not_covered": "未覆盖",
+      "unavailable": "暂不可用",
+      "stale": "保留上次成功结果",
+      "partial": "覆盖不完整",
+      "initializing": "首轮采集中",
+      "error": "暂不可用"
+    },
+    "notCovered": {
+      "title": "这家公司暂无事件覆盖",
+      "body": "{ticker} 不在实时事件覆盖范围内。动态事件目前只为 AAPL、JPM 和 NVDA 发布，因此不为这家公司展示事件源。",
+      "footnote": "这是覆盖范围的边界，并不表示没有发生任何事情。本页的披露、财报结果与价格历史不受影响。"
+    },
+    "unavailable": {
+      "title": "事件数据暂不可用",
+      "body": "本次请求未能读取已发布的事件源。这与“没有发生事件”并不是一回事。",
+      "footnote": "本页其余内容均由快照构建，不受影响。"
+    },
+    "error": {
+      "title": "事件数据加载失败",
+      "body": "获取这家公司事件的请求没有完成。这里不展示任何内容，也不会展示过期或虚构的列表。"
+    },
+    "initializing": {
+      "title": "首轮采集进行中",
+      "body": "该公司的事件源已创建，但尚未完成一个完整周期，因此暂时没有可展示的已发布内容。"
+    },
+    "noNew": {
+      "title": "自上次检查以来没有新条目",
+      "body": "上次检查成功，没有新内容。旧条目仍保留其原始来源时间。",
+      "footnote": "覆盖截至 {through}。"
+    },
+    "stale": {
+      "title": "正在展示上次成功的结果",
+      "body": "近期的检查没有成功，因此展示的是最近一次成功获取的事件源。",
+      "bodyWithTime": "近期的检查没有成功。当前展示的是 {time} 的事件源。"
+    },
+    "noUpcoming": {
+      "title": "暂无已确认的未来日期。",
+      "body": "目前没有任何未来事项获得公司或申报文件确认的日期。预计日期不会在这里被当作已确认日期展示。"
+    },
+    "partialGaps": "该时间窗内记录到 {count} 处覆盖缺口。",
+    "gap": "覆盖缺口",
+    "initializationNote": "首次只覆盖一段有限的近期窗口，不是全部历史。",
+    "buildSnapshot": "这份内容随站点构建打包，不是盘中实时更新。",
+    "originalTitle": "原始英文标题",
+    "ask": "询问这条事件",
+    "askOff": "在卡片与服务器使用同一已发布版本之前，不启用事件提问。",
+    "asking": "正在按本页显示的版本询问…",
+    "askQuestion": "这条事件的证据写了什么？哪些内容证据没有给出？",
+    "missingVersion": "本页没有已发布的事件版本，因此没有发送提问。没有改用其他版本。",
+    "versionMismatch": "这条事件不属于本页显示的版本，因此没有发送提问。没有改用其他版本。",
+    "askBoundaries": "证据边界",
+    "askEmpty": "没有可显示的回答。",
+    "askError": {
+      "event_version_unavailable": "无法读取这个事件版本。请刷新页面后再问。没有改用其他版本。",
+      "event_not_in_version": "这条事件不在本页已发布的版本中。",
+      "client_evidence_rejected": "事件证据由服务器按版本读取。自行附带证据的提问已被拒绝。",
+      "ask_not_configured": "这里没有配置模型，因此没有发送提问。",
+      "model_not_available": "所选模型不可用。",
+      "grounding_validation_failed": "模型回答未通过证据校验，因此未展示。",
+      "provider_failed": "所选模型暂时不可用。",
+      "question_scope": "请就所提供的证据提问，而不是询问买卖建议或股价预测。",
+      "network": "请求没有完成。没有改试其他版本。",
+      "unknown": "提问没有得到回答。没有改试其他版本。"
+    },
+    "askDisabled": "当卡片与服务器不在同一个已发布事件版本上时，事件相关提问将被停用。",
+    "boundary": "事件条目是已发布的新闻标题与申报索引记录，并附来源链接。它们不是分析，事件源也不是交易信号。"
+  },
+  "ask": {
+    "eyebrow": "有证据支撑的研究",
+    "title": "就这些证据提问",
+    "intro": "回答只依据这家公司的证据包。引用与数字会先对照该证据包校验，未通过校验的答案不会展示。",
+    "validated": "引用与格式检查通过",
+    "advanced": "证据范围、模型与语言",
+    "submit": "提问",
+    "asking": "正在提问…",
+    "stop": "停止",
+    "stopped": "已在返回答案前停止。该请求可能仍在服务端完成，但不会展示任何答案。",
+    "reading": "正在读取受限证据包…",
+    "retry": "重试",
+    "withheld": "未展示任何未经校验的答案。",
+    "validatedAnswer": "引用与格式检查通过",
+    "answerMeta": "{model} · {scope} · 证据截至 {asOf}",
+    "limitations": "这个答案无法证明什么",
+    "originalLanguage": "该答案以其生成语言原样展示。如需当前阅读语言的答案，请重新提问以生成。",
+    "howItWorks": "运作方式",
+    "rate": "本公开演示每小时可提问 {perHour} 次。",
+    "boundary": "不生成投资建议、目标价或方向性预测；提出此类问题会被拒答。",
+    "field": {
+      "question": "你的问题",
+      "questionPlaceholder": "{ticker} 在最新披露中说了什么？",
+      "counter": "{used} / {limit} 字符",
+      "scope": "证据范围",
+      "model": "模型",
+      "answerLanguage": "回答语言",
+      "depth": "读者"
+    },
+    "language": {
+      "chinese": "中文",
+      "english": "英文"
+    },
+    "depth": {
+      "beginner": "通俗表述",
+      "professional": "专业表述"
+    },
+    "suggest": {
+      "latest": "最新披露说了什么？",
+      "history": "历史回报与基准相比如何？",
+      "risk": "最大回撤是多少，发生在什么时候？"
+    },
+    "step": {
+      "evidence": "将一家公司的披露、申报财报与价格历史整理成固定的证据包。",
+      "citations": "每条陈述都必须引用该证据包中的编号，并沿用其中的原始数字。",
+      "refusal": "无法由证据支撑的陈述，以及要求判断买卖或股价的问题，都会被拒答而不是作答。"
+    },
+    "unconfigured": {
+      "title": "本次部署未配置 AI 问答",
+      "body": "此处没有可用的模型提供方密钥，因此无法发送问题，也无法生成答案。",
+      "footnote": "本页的证据内容在没有该功能时依然可读。"
+    },
+    "configError": {
+      "title": "无法连接问答服务",
+      "body": "列出可用模型的接口没有响应，因此不展示表单，以免提供一个无法真正发出的请求。"
+    },
+    "error": {
+      "ask_not_configured": "本次部署没有证据包，因此无法在此生成有证据支撑的答案。",
+      "model_not_available": "所选模型暂不可用。",
+      "ticker_not_available": "证据包中没有这家公司。",
+      "scope_not_available": "该证据范围对这家公司不可用。",
+      "question_length": "请输入 4 到 280 个字符。",
+      "question_scope": "请就所提供的公司证据提问，而不是询问买卖建议或股价预测。",
+      "origin_not_allowed": "该请求来源未被接受。",
+      "rate_limited": "本公开演示每小时只允许少量提问。",
+      "daily_budget_exhausted": "本公开演示今日的提问额度已用完。本页的证据内容仍可正常阅读。",
+      "grounding_validation_failed": "该模型答案未通过证据校验，因此不予展示。",
+      "invalid_json": "无法读取该请求。",
+      "network": "请求没有完成。",
+      "unknown": "该请求没有得到回答。"
+    }
+  },
+  "overview": {
+    "metaTitle": "这个项目是什么",
+    "metaDescription": "一个看起来比实际好一倍的系统，原因是什么，以及把测量修正之后还剩下什么。",
+    "eyebrow": "用平实的语言介绍这个项目",
+    "title": "一个看起来比实际好一倍的系统。",
+    "lede": "这个项目把新披露的 SEC 文件按“有多大可能重要”排序。真正有意思的不是排序本身，而是：早期版本的得分大约是诚实版本的两倍，原因只是对一个时间戳的假设，而这个差异被测量出来并公开发布，而不是悄悄改掉。",
+    "nav": {
+      "label": "本页内容",
+      "problem": "要解决的问题",
+      "sources": "数据来自哪里",
+      "does": "做什么与不做什么",
+      "results": "测出来是多少",
+      "leakage": "那个时间戳",
+      "failures": "哪些没成功",
+      "product": "正在运行的部分"
+    },
+    "problem": {
+      "title": "每天申报的量，没人读得完",
+      "body1": "上市公司持续在申报，而其中大部分并不会改变什么。想要跟上的人，每天早上都要决定当天哪些文件值得打开——这个决定通常只凭标题、凭公司规模，或者干脆不做。",
+      "body2": "所以这个项目问的问题很窄，也可以核对：在今天申报的全部文件里，哪五份应该先读？排序结果可以对照之后实际发生的情况来评分，这也是选择排序而不是任何需要预测价格的做法的原因。",
+      "scale": "评估覆盖 {sessions} 个交易日内的 {filings} 份申报文件，每个交易日的中位数为 {median} 份。"
+    },
+    "sources": {
+      "title": "三类来源，各有自己的观察时间",
+      "filings": {
+        "title": "SEC 申报文件",
+        "body": "来自 EDGAR 的 8-K 披露，并保留受理时间戳——也就是该文件真正对外公开的时刻，而不是文件上印的日期。"
+      },
+      "prices": {
+        "title": "日线价格",
+        "body": "复权后的日开盘价、最高价、最低价与收盘价，用于测量披露之后发生了什么，以及构建公司页上的历史走势。"
+      },
+      "fundamentals": {
+        "title": "Company Facts",
+        "body": "已申报的财务数字，附带其会计概念、单位与报告期间，用于“财报结果”部分，而不是用于排序模型。"
+      },
+      "note": "没有任何数据是购买的、从终端抓取的或人工录入的。全部输入要么是公开申报文件，要么是供应商复权价格序列，评估过程还记录了每一项的行数与内容哈希。"
+    },
+    "does": {
+      "title": "明确的边界",
+      "doesTitle": "它做什么",
+      "does": {
+        "rank": "按“之后出现异常大幅、经基准调整后的波动”的估计概率，对当天的申报文件排序。",
+        "measure": "在模型从未训练过的交易日上，把这个排序与实际发生的情况作对照测量。",
+        "publish": "公开测量结果、失败的尝试，以及支撑两者的证据文件。"
+      },
+      "notTitle": "它不做什么",
+      "not": {
+        "advice": "不提供投资建议、目标价或买卖判断。",
+        "direction": "它估计的是反应的幅度，从不估计方向。大幅波动可能朝任一方向。",
+        "returns": "历史排序结果不等于交易收益。这里没有考虑交易成本、滑点、容量，也没有计入判断错误的代价。"
+      }
+    },
+    "results": {
+      "title": "诚实测量下的得分",
+      "model": "模型每天排在前五的文件中，重要文件的平均占比",
+      "random": "同一指标，但随机选五份",
+      "sessions": "参与测量的交易日",
+      "definitionLabel": "这个数字的含义。",
+      "definition": "它是每天前五名中事后被证明重要的平均占比。它不是“前五名里至少找到一份重要文件”的概率，也不是按天计算的成功率。在一个典型交易日里选五份，它意味着其中大约有一份是重要的。",
+      "interval": "平均精度的 95% 区间为 {low} 至 {high}，来自按交易日聚类的自助重采样，共 {draws} 次抽样。只给点估计而不给这个区间，会让结果显得比样本所能支撑的更精确。"
+    },
+    "leakage": {
+      "title": "对一个时间戳的假设",
+      "body1": "文件在某一分钟被受理，读者只能在那之后行动。最初的流水线却按申报“日期”建仓——对于收盘后受理的文件，这意味着在它存在之前就已建仓。模型的其他部分没有任何改动。",
+      "body2": "在相同的交易日上测量，这条捷径得到 {naive}，而诚实流水线得到 {honest}。下表每一行都再去掉一项模型本不该知道的信息。",
+      "caption": "每一阶段去掉一种“事后才知道”的信息。最后一行就是产生本站全部公开数字的流水线。",
+      "column": {
+        "stage": "阶段",
+        "daily": "每日前五占比",
+        "ap": "平均精度",
+        "impossible": "不可能成立的建仓占比"
+      }
+    },
+    "failures": {
+      "title": "三件尝试过但没有上线的事",
+      "intro": "刻意写成一份“否定清单”。这三项都用与正面结果相同的机制测量，并以相同方式报告。",
+      "text": {
+        "title": "来自申报正文的语言特征",
+        "body": "对正文做情绪分析与变化检测得到的特征，并没有在“到达时间 + 条目代码”已有的信息之外改进排序。"
+      },
+      "selfRelative": {
+        "title": "把“与自身历史比较”用作排序信号",
+        "body": "把一份披露与同一家公司的历史比较，在公司页上是有用的；但它并没有改进横截面的每日排序。"
+      },
+      "volatility": {
+        "title": "波动率预测",
+        "body": "只有通过样本外覆盖率检验的预测器才会出现在公司页上。没有任何预测器通过时，这张卡片是直接不出现，而不是给一个近似值。"
+      }
+    },
+    "product": {
+      "title": "正在运行的部分",
+      "intro": "研究引擎按计划刷新申报文件、价格与已申报财报，并据此重新生成每一个公司页。你正在看的这个网站就是它的输出，页面上的每个数字都链接到其背后的申报文件或价格序列。",
+      "openLens": "打开 Company Lens",
+      "openResearch": "阅读研究方法",
+      "source": "在 GitHub 查看源码"
+    },
+    "noEvidence": {
+      "title": "本次构建不包含证据包",
+      "body": "本页只展示来自导出证据文件的数字。这些文件在此不存在，因此这里不展示任何内容，也不会手工填入数字。"
+    }
+  },
+  "research": {
+    "metaTitle": "研究方法与审计",
+    "metaDescription": "研究问题、时点规则、泄漏审计、带区间的排序指标、基线比较、消融实验与研究局限。",
+    "eyebrow": "研究方法与审计",
+    "title": "这些结果是如何测量的，以及测量本身说明不了什么。",
+    "lede": "本页的每个数字都在构建时从导出的证据包中读取。没有任何数字被写进页面代码，因此也不会与产生它的那次运行发生偏离。",
+    "nav": {
+      "label": "本页内容",
+      "question": "研究问题",
+      "method": "方法",
+      "pit": "时点规则",
+      "leakage": "泄漏审计",
+      "metrics": "指标",
+      "baselines": "基线",
+      "capacity": "阅读容量",
+      "tradability": "可交易性",
+      "models": "模型比较",
+      "calibration": "校准",
+      "volatility": "波动率",
+      "ablations": "消融实验",
+      "limitations": "研究局限",
+      "provenance": "数据来源",
+      "glossary": "术语表"
+    },
+    "question": {
+      "title": "研究问题",
+      "body1": "给定在某个交易日建仓时点之前已受理的全部 8-K 文件，能否对它们排序，使得之后出现异常大幅、经基准调整后波动的那些排在靠前位置？",
+      "body2": "这是一个按交易日评分的排序问题，不是收益问题。它问的是哪些文件值得优先关注，可以用公开数据回答，也可以对照实际发生的情况核对。"
+    },
+    "method": {
+      "title": "标签、窗口与验证",
+      "label": "标签",
+      "labelValue": "事件窗口内经基准调整后的波动达到至少 {threshold} 个标准差。",
+      "window": "事件窗口",
+      "windowValue": "自首个可建仓时点起 {sessions} 个交易日。",
+      "estimation": "估计窗口",
+      "estimationValue": "{sessions} 个交易日的市场模型估计，并在事件前 {gap} 个交易日结束。",
+      "validation": "验证方式",
+      "reaction": "反应测量口径：{convention}"
+    },
+    "pit": {
+      "title": "模型被允许知道什么",
+      "entry": "建仓发生在该文件受理时间戳之后开盘的第一个交易日。收盘后受理的文件在下一个交易日建仓，绝不在当日。",
+      "features": "滚动特征在建仓前一个交易日结束。包含事件当日的滚动波动率窗口，是一个含有答案的窗口。",
+      "universe": "每个日期上的样本范围是当时已知的范围，而不是今天仍然存在的那批公司。",
+      "history": "公司自身历史仅限于在决策时点其结果窗口已经结束的那些披露。"
+    },
+    "leakage": {
+      "title": "泄漏阶梯",
+      "intro": "每一行去掉一种“事后才知道”的信息，并重跑整个评估。第一行是一个看起来很强、实际并不成立的流水线；最后一行则产生本站发布的全部数字。",
+      "caption": "每一阶段去掉一种事后信息，并做端到端重测。",
+      "column": {
+        "stage": "阶段",
+        "events": "事件数",
+        "ap": "平均精度",
+        "auc": "ROC AUC",
+        "daily": "每日前五占比",
+        "lift": "相对随机的提升",
+        "impossible": "不可能成立的建仓"
+      }
+    },
+    "metrics": {
+      "title": "排序指标",
+      "caption": "诚实流水线的主要指标。",
+      "column": {
+        "metric": "指标",
+        "value": "数值",
+        "meaning": "它测量的是什么"
+      },
+      "dailyPrecision": "每日 precision@5",
+      "dailyPrecisionMeaning": "每个交易日前五名中，事后被证明重要的平均占比。",
+      "randomPrecision": "随机 precision@5",
+      "randomPrecisionMeaning": "同一指标，但在同一交易日内随机抽取五份文件。",
+      "averagePrecision": "平均精度",
+      "averagePrecisionMeaning": "全部文件上的精确率-召回率曲线下面积，不是按交易日计算的。",
+      "rocAuc": "ROC AUC",
+      "rocAucMeaning": "随机取一份重要文件，它排在随机一份不重要文件之前的概率。",
+      "baseRate": "基础发生率",
+      "baseRateMeaning": "全部参与评估的文件中，之后出现重大波动的占比。",
+      "definitionLabel": "Precision@5 是平均占比，不是命中率。",
+      "definition": "它是每天前五名中事后被证明重要的平均占比——不是“在其中至少找到一份重要文件”的概率，也不是按天计算的成功率。",
+      "uncertainty": "区间来自{method}，在 {sessions} 个交易日上抽样 {draws} 次。平均精度的 95% 区间：{apLow} 至 {apHigh}。"
+    },
+    "baselines": {
+      "title": "与不需要模型的规则比较",
+      "intro": "一个模型只有相对它本该超越的廉价规则才有意义。下列全部在相同交易日上、以相同方式评分。",
+      "caption": "各选取规则的每日前五占比。",
+      "column": {
+        "rule": "选取规则",
+        "daily": "每日前五占比"
+      },
+      "model": "模型排序",
+      "random": "随机选五份",
+      "arrival": "按最早到达优先",
+      "item202": "条目 2.02（经营业绩）优先",
+      "oracle": "完全预知（上界）"
+    },
+    "ablations": {
+      "title": "每组特征各贡献了什么",
+      "intro": "每一行去掉一组特征并重新评分。没有带来变化的分组，就如实报告为没有变化。",
+      "caption": "特征分组消融实验，端到端重新评分。",
+      "missingTitle": "本次构建不含消融表",
+      "missingBody": "本次构建所暂存的证据包中没有消融导出文件，因此不展示表格。"
+    },
+    "limitations": {
+      "title": "这些结果说明不了什么",
+      "universe": "样本范围是当前上市大盘股的便利样本，没有做幸存者偏差控制，因此无法说明已退市公司的情况。",
+      "costs": "任何环节都没有计入交易成本、价差、滑点或容量假设。排序结果不等于策略结果。",
+      "magnitude": "标签衡量的是波动幅度，不是方向。本页任何内容都不说明价格曾经或将要往哪个方向走。",
+      "coverage": "动态事件目前只为 AAPL、JPM 和 NVDA 发布。其他公司仍有申报文件、已申报财报和价格历史。",
+      "generalisation": "结果是在所评估交易日内、基于美国 8-K 披露测得的，不应假定可以推广到其他文件类型、其他市场或其他时期。"
+    },
+    "provenance": {
+      "title": "数据来源与版本",
+      "exported": "证据导出时间",
+      "schema": "结构版本",
+      "rows": "行"
+    },
+    "glossary": {
+      "title": "方法索引",
+      "precision": {
+        "term": "Precision@k（前 k 名精确率）",
+        "definition": "排名最高的 k 项中，事后被证明重要的占比。按交易日取平均时称为每日 precision@k。"
+      },
+      "averagePrecision": {
+        "term": "平均精度",
+        "definition": "精确率-召回率曲线下面积：用一个数字概括该排序在所有阈值上区分重要与不重要的能力。"
+      },
+      "rocAuc": {
+        "term": "ROC AUC",
+        "definition": "随机取一份重要文件，它排在随机一份不重要文件之前的概率。0.5 表示与随机无异。"
+      },
+      "baseRate": {
+        "term": "基础发生率",
+        "definition": "被预测的事情本身发生的频率。任何精确率数字都必须对照它来理解。"
+      },
+      "walkForward": {
+        "term": "向前滚动验证",
+        "definition": "用过去训练、在未来测试，并沿时间反复向前推进——而不是把所有日期打乱后混在一起。"
+      },
+      "purged": {
+        "term": "清洗与禁用期",
+        "definition": "剔除那些结果窗口与测试期重叠的训练样本，使答案无法通过重叠窗口传递给模型。"
+      },
+      "pointInTime": {
+        "term": "时点一致",
+        "definition": "只使用决策时刻可知的信息：当时的样本范围、当时已经成交的价格，以及当时已经受理的文件。"
+      }
+    },
+    "unavailable": {
+      "title": "这份证据导出里没有",
+      "notInExport": "导出中没有这一项"
+    },
+    "capacity": {
+      "title": "如果读者一次只看得到更多或更少呢？",
+      "intro": "每种阅读容量下的精确率，来自导出的容量表。当天文件数少于 k 的交易日，不进入该 k 的统计。",
+      "caption": "在 k 处的精确率，对照当天打乱的队列和当天最好的排序。",
+      "note": "上界远低于 100%：一天里只有一份重要文件时，前五名里不可能有五份重要文件；有些交易日一份都没有。",
+      "missing": "本次构建没有 capacity_profile.csv，因此不展示容量数字。",
+      "column": {
+        "k": "阅读 k 份",
+        "sessions": "交易日",
+        "random": "随机",
+        "model": "模型",
+        "ceiling": "上界",
+        "lift": "提升",
+        "span": "可实现差距中所占份额"
+      }
+    },
+    "tradability": {
+      "title": "这能拿去交易吗？",
+      "intro": "每份申报的异常波动里，有多少在下一开盘价里已经实现。这是对还剩下多少可行动空间的测量，不是交易规则。",
+      "measured": "收盘后受理、且事后被标为重要的申报，其反应中有 {share} 已经包含在开盘价里。",
+      "caption": "异常波动在下一开盘价中已经实现的中位数份额。",
+      "openAnchored": "把标签改成从开盘起算、而不是从前收盘起算之后，平均精确率是 {precision}。这是一个更难的问题，不是第二个排序器。",
+      "missing": "本次构建没有 reaction_capture.csv，因此不展示可交易性数字。",
+      "column": {
+        "population": "申报",
+        "count": "数量",
+        "share": "已在开盘价中"
+      }
+    },
+    "models": {
+      "title": "换一个模型重要吗？",
+      "intro": "每个模型家族用同一批申报评分。差值表是相对已出货家族的配对比较，不是另一次实验。",
+      "caption": "各模型家族的样本外得分。",
+      "pairedCaption": "相对参照家族的配对差值。负的差值表示落后于参照。",
+      "note": "区间跨过零，并不能说明一个家族领先。出货的家族由嵌套选择决定，不是由这张表的第一行决定。",
+      "missing": "本次构建没有 model_comparison.csv，因此不展示模型比较。",
+      "pairedMissing": "本次构建没有配对差值导出。上面的得分表不能代替它。",
+      "column": {
+        "family": "家族",
+        "ap": "平均精确率",
+        "auc": "ROC AUC",
+        "apInterval": "平均精确率，95%",
+        "reference": "参照",
+        "difference": "差值",
+        "interval": "差值的 95% 区间"
+      }
+    },
+    "calibration": {
+      "title": "分数说的是它实际的意思吗？",
+      "intro": "三种校准方法在同一批留出的折上评分。出货的方法是导出文件写明的那一种，不是看起来最好的那一行。",
+      "shipped": "导出采用的是 {method}。",
+      "caption": "各校准方法的 Brier 分数、期望校准误差和排序指标。",
+      "note": "Brier 分数和期望校准误差越低越好。排序指标放在旁边，是为了避免一种方法靠把排序抹平来取胜。",
+      "missing": "本次构建的校准导出不完整，因此不展示校准数字。",
+      "column": {
+        "method": "方法",
+        "brier": "Brier",
+        "ece": "期望校准误差",
+        "ap": "平均精确率",
+        "auc": "ROC AUC"
+      }
+    },
+    "volatility": {
+      "title": "接下来一个月有多颠簸？",
+      "intro": "未来 20 个交易日的波动率区间。它不是申报排序的输入，也不说明价格往哪边走。",
+      "caption": "Pinball 损失，以及声称的区间实际覆盖了多少结果。",
+      "regime": "出货的预测器是 {shipped}。它的 80% 区间在平静三分位覆盖 {calm}，在动荡三分位覆盖 {turbulent}。",
+      "note": "只有当两个区间的实际覆盖都接近它们声称的覆盖时，预测器才会出货。更宽的区间可以看起来校准得很好，同时几乎什么都没说。",
+      "missing": "本次构建的波动率导出不完整，因此不展示波动率数字。",
+      "yes": "是",
+      "no": "否",
+      "column": {
+        "forecaster": "预测器",
+        "pinball": "Pinball 损失",
+        "coverage80": "80% 区间覆盖",
+        "width": "区间宽度",
+        "calibrated": "通过校准门槛"
+      }
+    },
+    "noEvidence": {
+      "title": "本次构建不包含证据包",
+      "body": "本页只报告来自导出证据文件的数字，而这些文件在此不存在。请先运行证据导出再重新构建。"
+    }
+  },
+  "earnings": {
+    "metaTitle": "财报结果",
+    "metaDescription": "预计财报日历已下线。已申报的财报结果现在位于各公司页面，并附上其来源文件。",
+    "eyebrow": "日历已下线",
+    "title": "财报信息已移至各公司页面。",
+    "body": "预计财报日历已经撤下。现在每个公司页面展示的是最新一份已申报的报告：按申报口径的数值、所覆盖的报告期间、与上年同期的比较，以及通往原始文件的链接。",
+    "why": "撤下的原因是：日历上的日期是根据各公司过往报告节奏推断的，并非公司确认；而日历上的推断日期，读起来就像是已确认的日期。",
+    "boundary": "除非公司或申报文件已经确认，本站任何位置都不会发布未来的报告日期。",
+    "whereTitle": "查看某家公司的已申报财报",
+    "find": "查找其他公司 →"
+  }
+}
