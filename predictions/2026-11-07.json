@@ -1,0 +1,177 @@
+{
+  "schema_version": "1",
+  "date": "2026-11-07",
+  "written_at": "2026-11-07T15:41:13.943512+00:00",
+  "predicts_session": "2026-11-09",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12225,
+    "last_session_in_panel": "2026-11-06",
+    "inputs": {
+      "events": {
+        "rows": 12260,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "d634f9c1d056c520260e4f99d37abcf8d2d37c082498a5ef7af9deb57ef72787"
+      },
+      "prices": {
+        "rows": 2016594,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "0c60532f5e2a883124e0ff3d13454ab120cf76f6c8c8fad34c9d58c17ca61918",
+        "first_session": "1962-01-02",
+        "last_session": "2026-11-06"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.16",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "packages": {
+        "pandas": "3.1.1",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.1",
+        "yfinance": "1.8.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0001091667-26-000072",
+      "cik": 1091667,
+      "ticker": "CHTR",
+      "issuer": "CHARTER COMMUNICATIONS, INC. /MO/",
+      "acceptance_time": "2026-11-06T12:00:54-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 1,
+      "score": 0.167467
+    },
+    {
+      "accession": "0000049071-26-000064",
+      "cik": 49071,
+      "ticker": "HUM",
+      "issuer": "HUMANA INC",
+      "acceptance_time": "2026-11-06T11:09:28-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 2,
+      "score": 0.10316
+    },
+    {
+      "accession": "0001193125-26-451940",
+      "cik": 27904,
+      "ticker": "DAL",
+      "issuer": "DELTA AIR LINES, INC.",
+      "acceptance_time": "2026-11-06T21:32:08-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 3,
+      "score": 0.063379
+    },
+    {
+      "accession": "0001193125-26-450781",
+      "cik": 36104,
+      "ticker": "USB",
+      "issuer": "US BANCORP DE",
+      "acceptance_time": "2026-11-06T13:00:19-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 4,
+      "score": 0.057371
+    },
+    {
+      "accession": "0001193125-26-451826",
+      "cik": 1393311,
+      "ticker": "PSA",
+      "issuer": "Public Storage",
+      "acceptance_time": "2026-11-06T21:05:23-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 5,
+      "score": 0.05599
+    },
+    {
+      "accession": "0001193125-26-451824",
+      "cik": 319201,
+      "ticker": "KLAC",
+      "issuer": "KLA CORP",
+      "acceptance_time": "2026-11-06T21:05:07-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 6,
+      "score": 0.055826
+    },
+    {
+      "accession": "0000783325-26-000109",
+      "cik": 783325,
+      "ticker": "WEC",
+      "issuer": "WEC ENERGY GROUP, INC.",
+      "acceptance_time": "2026-11-06T21:15:47-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 7,
+      "score": 0.051944
+    },
+    {
+      "accession": "0000726728-26-000063",
+      "cik": 726728,
+      "ticker": "O",
+      "issuer": "REALTY INCOME CORP",
+      "acceptance_time": "2026-11-06T21:06:07-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 8,
+      "score": 0.044261
+    },
+    {
+      "accession": "0001193125-26-451864",
+      "cik": 788784,
+      "ticker": "PEG",
+      "issuer": "PUBLIC SERVICE ENTERPRISE GROUP INC",
+      "acceptance_time": "2026-11-06T21:15:51-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 9,
+      "score": 0.038954
+    },
+    {
+      "accession": "0001104659-26-123878",
+      "cik": 86312,
+      "ticker": "TRV",
+      "issuer": "TRAVELERS COMPANIES, INC.",
+      "acceptance_time": "2026-11-06T21:15:20-05:00",
+      "entry_session": "2026-11-09",
+      "rank": 10,
+      "score": 0.031212
+    }
+  ]
+}
