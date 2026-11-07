@@ -161,6 +161,24 @@ def save_financial_results(payload: dict, root: str | Path, ticker: str) -> None
     temporary.replace(target)
 
 
+def filed_figures_status(report: dict | None) -> str:
+    """Separate a filing, displayable figures, and an absence.
+
+    ``numbers`` is a structured available report with at least one metric.
+    ``filing_only`` is a filing whose figures were not extracted.
+    ``display_fallback`` is rounded text read back from a published page.
+    ``unavailable`` means no current report.
+    """
+    if not report or report.get("status") in {None, "unavailable"}:
+        return "unavailable"
+    if report.get("extraction") == "published_html_fallback":
+        return "display_fallback"
+    metrics = report.get("metrics") or []
+    if report.get("status") == "available" and metrics:
+        return "numbers"
+    return "filing_only"
+
+
 def load_financial_results(root: str | Path, ticker: str) -> dict | None:
     path = report_path(root, ticker)
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None

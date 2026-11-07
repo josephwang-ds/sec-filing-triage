@@ -71,6 +71,51 @@ class ExplodingFactsClient(FakeFactsClient):
         raise RuntimeError("Authorization: Bearer SUPER_SECRET_TOKEN failed")
 
 
+def test_offline_refresh_uses_cached_facts_and_does_not_call_the_client(tmp_path) -> None:
+    build = tmp_path / "build"
+    build.mkdir()
+    pd.DataFrame(
+        [{"ticker": "AAPL", "cik": 320193, "name": "Apple Inc."}]
+    ).to_csv(build / "universe.csv", index=False)
+    cache = tmp_path / "edgar"
+    (cache / "companyfacts").mkdir(parents=True)
+    (cache / "submissions").mkdir()
+    (cache / "companyfacts" / "CIK0000320193.json").write_text(
+        (FIXTURES / "aapl_companyfacts_2016_2025.json").read_text()
+    )
+    (cache / "submissions" / "CIK0000320193.json").write_text(
+        (FIXTURES / "aapl_submissions_fundamentals.json").read_text()
+    )
+
+    result = refresh_fundamentals(
+        data_dir=build, offline=True, cache_dir=cache, client=ExplodingFactsClient()
+    )
+
+    assert result.status == "current"
+    report = json.loads((build / "financial_results" / "aapl.json").read_text())
+    assert report["extraction"] == "company_facts"
+    assert report["status"] == "available"
+    assert report["metrics"]
+    assert report["source_url"].startswith("https://www.sec.gov/Archives/")
+
+
+def test_offline_cache_miss_is_not_a_network_fetch(tmp_path) -> None:
+    build = tmp_path / "build"
+    build.mkdir()
+    pd.DataFrame(
+        [{"ticker": "AAPL", "cik": 320193, "name": "Apple Inc."}]
+    ).to_csv(build / "universe.csv", index=False)
+
+    result = refresh_fundamentals(
+        data_dir=build, offline=True, cache_dir=tmp_path / "empty", client=ExplodingFactsClient()
+    )
+
+    assert result.status == "partial"
+    assert result.failures[0]["exception_type"] == "CacheMiss"
+    assert "SUPER_SECRET" not in result.failures[0]["message"]
+    assert not (build / "financial_results" / "aapl.json").exists()
+
+
 def test_refresh_fundamentals_records_safe_per_company_failures(tmp_path, capsys) -> None:
     pd.DataFrame(
         [{"ticker": "AAPL", "cik": 320193, "name": "Apple Inc."}]

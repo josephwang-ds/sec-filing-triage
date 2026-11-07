@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/**
+ * Company Lens design tokens.
+ *
+ * The palette is the one the Python site already uses -- ivory paper, deep
+ * forest ink, a low-saturation green accent -- lifted from
+ * `src/company_lens/web/page.py` so the migration does not quietly restyle a
+ * site people recognise. What changes is the system around it: these are the
+ * only colours, spacing steps and type sizes components may use, so a card in
+ * Financials and a card in Events cannot drift apart the way two hand-written
+ * CSS blocks did.
+ */
+@theme {
+  --color-paper: #f5f4ec;
+  --color-panel: #ffffff;
+  --color-panel-muted: #fafaf5;
+  --color-ink: #183c35;
+  --color-ink-soft: #2b4f46;
+  --color-muted: #657567;
+  --color-line: #d8ddd3;
+  --color-line-strong: #c3ccbd;
+  --color-accent: #426b50;
+  --color-accent-soft: #e9efdf;
+  --color-positive: #14765d;
+  --color-positive-soft: #eaf6f0;
+  --color-caution: #a96418;
+  --color-caution-soft: #fff5e8;
+  --color-critical: #a4322a;
+  --color-critical-soft: #fbeceb;
+
+  --font-sans:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: Georgia, "Times New Roman", "Songti SC", serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-float: 0 18px 50px rgba(24, 42, 53, 0.08);
+
+  --radius-card: 14px;
+  --radius-panel: 20px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchored sections must clear the sticky header. */
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    /* The one rule that makes a horizontal-overflow bug visible in testing
+       instead of scrollable in production. Fix the child, never hide it. */
+    overflow-x: clip;
+  }
+
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+    outline-offset: 2px;
+  }
+
+  /* Long tickers, long Chinese headlines and long publisher names all end up
+     inside grid children. Without this they set the column's minimum width and
+     push the page sideways. */
+  .lens-grid > * {
+    min-width: 0;
+  }
+}
+
+@layer components {
+  .lens-shell {
+    width: 100%;
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .lens-shell {
+      padding-inline: 28px;
+    }
+  }
+
+  .lens-eyebrow {
+    color: var(--color-accent);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .lens-serif {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  /* Tabular figures, so a column of returns lines up and a changing value in
+     a toggled period does not shift the layout under the reader's eye. */
+  .lens-figure {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+}
