@@ -272,6 +272,43 @@ gh secret list
 - Each page separately displays the latest filing date and the last SEC check time.
 - The cache is saved on failure, so a partial crawl is not paid for twice.
 
+## Reading an events refresh failure
+
+`scripts/refresh_events.py` and `scripts/events_monitor.py` exit **3** when the
+durable checkpoint could not be read or when a compare-and-swap lost the
+generation. Three is deliberate: a read failure is not an empty store, so the
+run refuses to refetch from zero and overwrite a checkpoint it never saw. A red
+run here means the published feed is genuinely not advancing. It is supposed to
+be red.
+
+The log line names the cause:
+
+```
+checkpoint_read=failed blob_status=403 path=blob-url detail=Your store is blocked
+```
+
+- `path=blob-url` -- the listing on `vercel.com/api/blob` succeeded and the GET
+  of the object's own `*.private.blob.vercel-storage.com` URL failed. The token
+  is therefore fine; the store's data plane is not.
+- `path=lens-events/commit.json` -- the listing itself failed, which does point
+  at `BLOB_READ_WRITE_TOKEN`.
+- `detail=Your store is blocked` -- Vercel has blocked the Blob store. The
+  metadata API keeps answering 200 while every content read returns 403, with
+  or without the token, so no credential rotation and no code change clears it.
+  Check the store under Storage in the Vercel dashboard, and the plan's usage
+  and spend limits. This is account state, not repository state.
+
+A blocked store also shows up on the deployed reader, which is an independent
+implementation and a useful second opinion:
+
+```
+curl -s 'https://company-lens-josephjwang.vercel.app/api/events?view=health'
+```
+
+`{"overall":"read_error"}` there as well means both readers are shut out and the
+fault is the store. `naive_http_ok` in that payload is a literal in the
+short-circuit, not a probe; it is not evidence of anything.
+
 ## What this replaced, and what it cost
 
 A Vultr worker in Tokyo -- Ubuntu 24.04, 1 vCPU, 1 GB RAM -- held the code and

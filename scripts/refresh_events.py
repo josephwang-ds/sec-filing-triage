@@ -131,7 +131,8 @@ def main(argv: list[str] | None = None) -> int:
             f"tickers={len(report.outcomes)} redeployed={report.redeployed}"
         )
     if result.status == "read_error":
-        print("checkpoint_read=failed")
+        detail = f" {result.reason}" if result.reason else ""
+        print(f"checkpoint_read=failed{detail}")
         return 3
     if result.status == "stale_writer":
         print("checkpoint_write=stale")
