@@ -292,11 +292,39 @@ checkpoint_read=failed blob_status=403 path=blob-url detail=Your store is blocke
   is therefore fine; the store's data plane is not.
 - `path=lens-events/commit.json` -- the listing itself failed, which does point
   at `BLOB_READ_WRITE_TOKEN`.
-- `detail=Your store is blocked` -- Vercel has blocked the Blob store. The
+- `detail=Your store is blocked` -- Vercel has paused the Blob store. The
   metadata API keeps answering 200 while every content read returns 403, with
   or without the token, so no credential rotation and no code change clears it.
-  Check the store under Storage in the Vercel dashboard, and the plan's usage
-  and spend limits. This is account state, not repository state.
+
+This happened on 2026-10-28. The store passed the Hobby plan's **1 GB Storage
+Size** allowance and Vercel paused data access for 30 days:
+
+```
+75% of Vercel Blob Storage Size   2026-10-28 12:34Z
+last green refresh run            2026-10-28 21:52Z
+100%, "store access will be paused for 30 days"   2026-10-28 22:35Z
+first exit 3                      2026-10-29 01:43Z
+```
+
+A census of the store while it was paused -- listing still works -- said what
+filled it:
+
+```
+124 objects, 976.6 MiB total
+ 18 objects  944.7 MiB  52.5 MiB each  lens-events/checkpoints/<hash>.json
+106 objects   31.9 MiB     308 KiB each  feeds and evidence
+```
+
+So 97% of the allowance is eighteen checkpoint snapshots. Every commit writes
+`store.export_workspace(...)` -- the whole event store as one JSON document --
+to a new content-hashed, immutable pathname, and nothing ever deletes the
+previous one. Keeping only the committed snapshot and one prior would be about
+105 MiB rather than 945 MiB. Deletes are free on every plan, so the store has
+no retention policy and needs one; this refills a gigabyte in roughly four days
+whatever the plan, and on Pro it becomes unbounded growth rather than a block.
+
+Clearing it is account work, not repository work: upgrade the plan or wait out
+the pause, and prune the old checkpoint objects.
 
 A blocked store also shows up on the deployed reader, which is an independent
 implementation and a useful second opinion:
