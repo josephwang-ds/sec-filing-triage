@@ -9,8 +9,8 @@ jobs:
   events-browser:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The whole history, which the default shallow checkout does not give.
           # tests/test_prediction_log.py asks git what each published prediction
@@ -35,7 +35,7 @@ jobs:
           # committed beside the file it pins can be moved by the same commit.
           # Without history the test skips and the weaker check carries the build.
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -56,10 +56,10 @@ jobs:
   locked-environment:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # the prediction log's git check; see the job above
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -72,8 +72,8 @@ jobs:
     # starts leaking, this fails before anything reaches main.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
