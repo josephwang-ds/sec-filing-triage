@@ -11,6 +11,8 @@ import hashlib
 import json
 import os
 import re
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
@@ -18,6 +20,8 @@ import requests
 
 BLOB_API = "https://vercel.com/api/blob"
 BLOB_API_VERSION = "12"
+LIST_PAGE_CAP = 50
+DELETE_BATCH = 100
 PUBLIC_PREFIX = "lens-events/public"
 
 
@@ -34,6 +38,10 @@ class BlobTransport(Protocol):
     def get_prefix(self, prefix: str) -> list[dict]: ...
 
     def read_url(self, url: str) -> tuple[bytes, str]: ...
+
+    def list_prefix(self, prefix: str) -> list[dict]: ...
+
+    def delete(self, urls: list[str]) -> None: ...
 
 
 class BlobRequestError(RuntimeError):
@@ -138,6 +146,47 @@ class HttpBlobTransport:
         blobs = payload.get("blobs") if isinstance(payload, dict) else None
         return [item for item in blobs or [] if isinstance(item, dict)]
 
+    def list_prefix(self, prefix: str) -> list[dict]:
+        """Every object under a prefix. ``get_prefix`` is one page of twenty.
+
+        Each page is one Advanced Operation on the Blob bill, so this is for
+        the retention sweep, not for a read on the refresh path.
+        """
+        found: list[dict] = []
+        cursor: str | None = None
+        for _page in range(LIST_PAGE_CAP):
+            params = {"limit": "1000", "prefix": prefix}
+            if cursor:
+                params["cursor"] = cursor
+            response = self._session.get(BLOB_API, params=params, headers=self._headers(), timeout=60)
+            if response.status_code >= 400:
+                raise BlobRequestError(response.status_code, prefix, self._detail(response))
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise BlobRequestError(502, prefix) from exc
+            if not isinstance(payload, dict):
+                raise BlobRequestError(502, prefix)
+            found.extend(item for item in payload.get("blobs") or [] if isinstance(item, dict))
+            cursor = payload.get("cursor") if payload.get("hasMore") else None
+            if not cursor:
+                return found
+        # A listing that never ends is not a complete listing. Deleting from a
+        # partial one is safe, but reporting it as complete would not be.
+        raise BlobRequestError(502, prefix, "listing did not finish")
+
+    def delete(self, urls: list[str]) -> None:
+        """The SDK's ``del``: POST /delete with the object URLs. Deletes are not billed."""
+        for start in range(0, len(urls), DELETE_BATCH):
+            response = self._session.post(
+                f"{BLOB_API}/delete",
+                data=json.dumps({"urls": urls[start : start + DELETE_BATCH]}),
+                headers=self._headers({"content-type": "application/json"}),
+                timeout=60,
+            )
+            if response.status_code >= 400:
+                raise BlobRequestError(response.status_code, "delete", self._detail(response))
+
     def read_url(self, url: str) -> tuple[bytes, str]:
         # Match the official SDK's useCache=False for private Blob reads.
         # Cache-Control alone does not select the origin representation/ETag.
@@ -203,9 +252,10 @@ class MemoryBlob:
     untouched. This is the SDK's documented put behavior, not a live store call.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, clock: Callable[[], datetime] | None = None) -> None:
         self.objects: dict[str, dict] = {}
         self._serial = 0
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     def put(self, pathname: str, body: bytes, *, if_match: str | None, overwrite: bool) -> dict:
         current = self.objects.get(pathname)
@@ -221,6 +271,7 @@ class MemoryBlob:
             "body": body,
             "etag": etag,
             "pathname": pathname,
+            "uploadedAt": self._clock().isoformat(),
             "url": f"https://blob.test/{pathname}",
         }
         self.objects[pathname] = stored
@@ -232,6 +283,24 @@ class MemoryBlob:
             for path, item in self.objects.items()
             if path.startswith(prefix)
         ]
+
+    def list_prefix(self, prefix: str) -> list[dict]:
+        return [
+            {
+                "etag": item["etag"],
+                "pathname": path,
+                "size": len(item["body"]),
+                "uploadedAt": item["uploadedAt"],
+                "url": item["url"],
+            }
+            for path, item in self.objects.items()
+            if path.startswith(prefix)
+        ]
+
+    def delete(self, urls: list[str]) -> None:
+        doomed = set(urls)
+        for path in [path for path, item in self.objects.items() if item["url"] in doomed]:
+            del self.objects[path]
 
     def read_url(self, url: str) -> tuple[bytes, str]:
         for item in self.objects.values():
@@ -473,3 +542,115 @@ def publish_releases(
         releases=releases,
     )
 
+
+
+DEFAULT_CHECKPOINT_MIN_AGE = timedelta(hours=24)
+
+
+def _uploaded_at(item: dict) -> datetime | None:
+    raw = item.get("uploadedAt")
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def prune_checkpoints(
+    transport: BlobTransport,
+    *,
+    now: datetime,
+    min_age: timedelta = DEFAULT_CHECKPOINT_MIN_AGE,
+    keep_newest: int | None = None,
+    apply: bool = False,
+) -> dict:
+    """Delete superseded checkpoint objects. Nothing else wrote a retention rule.
+
+    Every commit stores its checkpoint at a new content-hashed pathname and
+    moves the pointer; the object it replaced stayed forever. This sweep is the
+    other half. It only ever touches ``<prefix>/checkpoints/``: feeds and
+    evidence stay, because the commit record still lists older versions and
+    Ask resolves evidence through it.
+
+    Kept, always: the checkpoint the commit record points at; anything
+    uploaded within ``min_age``, which covers a candidate whose pointer has not
+    moved yet and a reader holding the previous generation; anything whose
+    upload time cannot be read. If the commit record is missing, names no
+    checkpoint, or names one the listing does not contain, nothing is deleted:
+    the sweep does not guess which object is live. A commit that lands during
+    the sweep also cancels it.
+
+    ``keep_newest`` is for a store whose content reads are refused (a paused
+    store still lists). The commit record cannot be read then, so the newest
+    ``keep_newest`` objects by upload time stand in for the pointer. That is an
+    inference, not a read, which is why it is never the default.
+
+    ``apply`` false reports what would go and deletes nothing.
+    """
+    if keep_newest is not None and keep_newest < 1:
+        raise ValueError("keep_newest must be at least 1")
+    prefix = f"{checkpoint_prefix()}/"
+    report: dict[str, Any] = {
+        "applied": False,
+        "deleted": [],
+        "freed_bytes": 0,
+        "kept": [],
+        "listed": 0,
+        "listed_bytes": 0,
+        "mode": "pointer" if keep_newest is None else "newest",
+    }
+    current: str | None = None
+    etag: str | None = None
+    if keep_newest is None:
+        commit, etag = read_commit(transport)
+        current = commit.get("checkpoint_pathname") if commit else None
+        if not current:
+            return {**report, "status": "no_commit"}
+    listed = [
+        item
+        for item in transport.list_prefix(prefix)
+        if item.get("pathname") and item.get("url")
+    ]
+    report["listed"] = len(listed)
+    report["listed_bytes"] = sum(int(item.get("size") or 0) for item in listed)
+    if current is not None and current not in {item["pathname"] for item in listed}:
+        return {**report, "status": "pointer_not_listed"}
+    newest: set[str] = set()
+    if keep_newest is not None:
+        dated = [(stamp, item["pathname"]) for item in listed if (stamp := _uploaded_at(item))]
+        newest = {path for _stamp, path in sorted(dated, reverse=True)[:keep_newest]}
+    doomed: list[dict] = []
+    for item in sorted(listed, key=lambda entry: str(entry.get("uploadedAt") or "")):
+        uploaded = _uploaded_at(item)
+        if item["pathname"] == current:
+            reason = "current"
+        elif item["pathname"] in newest:
+            reason = "newest"
+        elif uploaded is None:
+            reason = "undated"
+        elif now - uploaded < min_age:
+            reason = "recent"
+        else:
+            reason = None
+        row = {
+            "pathname": item["pathname"],
+            "size": int(item.get("size") or 0),
+            "uploaded_at": item.get("uploadedAt"),
+        }
+        if reason is None:
+            doomed.append(item)
+            report["deleted"].append(row)
+            report["freed_bytes"] += row["size"]
+        else:
+            report["kept"].append({**row, "reason": reason})
+    if not apply:
+        return {**report, "status": "dry_run"}
+    if doomed:
+        if keep_newest is None:
+            _again, etag_now = read_commit(transport)
+            if etag_now != etag:
+                return {**report, "deleted": [], "freed_bytes": 0, "status": "commit_moved"}
+        transport.delete([str(item["url"]) for item in doomed])
+    return {**report, "applied": True, "status": "pruned"}

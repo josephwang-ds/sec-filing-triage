@@ -287,7 +287,8 @@ class FileEventStore:
         """Snapshot the working copy, including datasets this round did not refresh.
 
         Monitor metadata is part of the checkpoint. A news-only pass must not
-        drop SEC watermarks, versions, failures, or a cooldown already stored.
+        drop SEC watermarks, current versions, failures, or a cooldown already
+        stored. Versions no manifest or state refers to are left out.
         """
         names: list[str] = []
         seen: set[str] = set()
@@ -304,13 +305,26 @@ class FileEventStore:
             if state_dir.exists():
                 for path in sorted(state_dir.glob("*.json")):
                     states[path.stem] = _read_json(path)
+            # Only versions something still points at. A superseded version is
+            # never read back -- refresh, publish and the release builder all go
+            # through the manifest pointer -- and carrying every one of them made
+            # each checkpoint larger than the last: 52 MiB on average after four
+            # days, which is what filled the Blob store.
+            referenced = {
+                str(pointer["version_id"])
+                for pointer in (manifest.get("tickers") or {}).values()
+                if isinstance(pointer, dict) and pointer.get("version_id")
+            }
+            referenced.update(
+                str(state["version_id"])
+                for state in states.values()
+                if isinstance(state, dict) and state.get("version_id")
+            )
             versions = {}
-            version_dir = self.root / "versions" / dataset
-            if version_dir.exists():
-                for path in sorted(version_dir.glob("*.json")):
-                    document = _read_json(path)
-                    if document is not None:
-                        versions[path.stem] = document
+            for version_id in sorted(referenced):
+                document = self.read_version(dataset, version_id)
+                if document is not None:
+                    versions[version_id] = document
             failure_dir = self.root / "failures" / dataset
             failures = {}
             if failure_dir.exists():
