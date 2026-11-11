@@ -56,9 +56,12 @@ def main(argv: list[str] | None = None) -> int:
     monitor = MonitorDurable(transport)
     pulled = durable.pull()
     if pulled.status == "read_error":
+        # "read_error" alone cannot be acted on. The reason sits outside
+        # "health" so the published health contract is unchanged.
         print(json.dumps({
             "health": {"naive_http_ok": True, "ok": False, "overall": "read_error"},
             "note": "checkpoint read failed; this run did not assume an empty store",
+            "reason": pulled.reason,
         }, sort_keys=True))
         return 3
     if pulled.status != "ok" or pulled.payload is None:

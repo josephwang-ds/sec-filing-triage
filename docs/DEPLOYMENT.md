@@ -272,6 +272,72 @@ gh secret list
 - Each page separately displays the latest filing date and the last SEC check time.
 - The cache is saved on failure, so a partial crawl is not paid for twice.
 
+## Reading an events refresh failure
+
+`scripts/refresh_events.py` and `scripts/events_monitor.py` exit **3** when the
+durable checkpoint could not be read or when a compare-and-swap lost the
+generation. Three is deliberate: a read failure is not an empty store, so the
+run refuses to refetch from zero and overwrite a checkpoint it never saw. A red
+run here means the published feed is genuinely not advancing. It is supposed to
+be red.
+
+The log line names the cause:
+
+```
+checkpoint_read=failed blob_status=403 path=blob-url detail=Your store is blocked
+```
+
+- `path=blob-url` -- the listing on `vercel.com/api/blob` succeeded and the GET
+  of the object's own `*.private.blob.vercel-storage.com` URL failed. The token
+  is therefore fine; the store's data plane is not.
+- `path=lens-events/commit.json` -- the listing itself failed, which does point
+  at `BLOB_READ_WRITE_TOKEN`.
+- `detail=Your store is blocked` -- Vercel has paused the Blob store. The
+  metadata API keeps answering 200 while every content read returns 403, with
+  or without the token, so no credential rotation and no code change clears it.
+
+This happened on 2026-10-28. The store passed the Hobby plan's **1 GB Storage
+Size** allowance and Vercel paused data access for 30 days:
+
+```
+75% of Vercel Blob Storage Size   2026-10-28 12:34Z
+last green refresh run            2026-10-28 21:52Z
+100%, "store access will be paused for 30 days"   2026-10-28 22:35Z
+first exit 3                      2026-10-29 01:43Z
+```
+
+A census of the store while it was paused -- listing still works -- said what
+filled it:
+
+```
+124 objects, 976.6 MiB total
+ 18 objects  944.7 MiB  52.5 MiB each  lens-events/checkpoints/<hash>.json
+106 objects   31.9 MiB     308 KiB each  feeds and evidence
+```
+
+So 97% of the allowance is eighteen checkpoint snapshots. Every commit writes
+`store.export_workspace(...)` -- the whole event store as one JSON document --
+to a new content-hashed, immutable pathname, and nothing ever deletes the
+previous one. The snapshots also grow: the first was 10.9 MB and the last, four
+days later, 131 MB, so the committed one and its predecessor alone are 249 MB
+of the 991 MB. Deletes are free on every plan, so the store has
+no retention policy and needs one; this refills a gigabyte in roughly four days
+whatever the plan, and on Pro it becomes unbounded growth rather than a block.
+
+Clearing it is account work, not repository work: upgrade the plan or wait out
+the pause, and prune the old checkpoint objects.
+
+A blocked store also shows up on the deployed reader, which is an independent
+implementation and a useful second opinion:
+
+```
+curl -s 'https://company-lens-josephjwang.vercel.app/api/events?view=health'
+```
+
+`{"overall":"read_error"}` there as well means both readers are shut out and the
+fault is the store. `naive_http_ok` in that payload is a literal in the
+short-circuit, not a probe; it is not evidence of anything.
+
 ## What this replaced, and what it cost
 
 A Vultr worker in Tokyo -- Ubuntu 24.04, 1 vCPU, 1 GB RAM -- held the code and

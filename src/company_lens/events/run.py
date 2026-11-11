@@ -31,12 +31,30 @@ class DurablePull:
         etag: str | None = None,
         tickers: dict | None = None,
         checkpoint_ref: dict | None = None,
+        reason: str | None = None,
     ) -> None:
         self.status = status
         self.payload = payload
         self.etag = etag
         self.tickers = {} if tickers is None else tickers
         self.checkpoint_ref = {} if checkpoint_ref is None else checkpoint_ref
+        self.reason = reason
+
+
+def read_failure_reason(exc: BaseException) -> str:
+    """Name a failed checkpoint read without printing the token or a URL.
+
+    A bare ``read_error`` is not a diagnosis. The blob token travels in a
+    header and blob URLs carry the store id, so neither is echoed: the HTTP
+    status and the object path are what distinguish a revoked credential from
+    a deleted store or a malformed body.
+    """
+    if isinstance(exc, BlobRequestError):
+        detail = f" detail={exc.detail}" if exc.detail else ""
+        return f"blob_status={exc.status} path={exc.pathname}{detail}"
+    if isinstance(exc, ValueError):
+        return f"malformed_json error_class={type(exc).__name__}"
+    return f"transport_error error_class={type(exc).__name__}"
 
 
 class DurableStore(Protocol):
@@ -54,8 +72,8 @@ class BlobDurable:
     def pull(self) -> DurablePull:
         try:
             payload, etag, commit = read_generation(self.transport)
-        except (BlobRequestError, OSError, ValueError):
-            return DurablePull("read_error")
+        except (BlobRequestError, OSError, ValueError) as exc:
+            return DurablePull("read_error", reason=read_failure_reason(exc))
         if payload is None and etag is None:
             return DurablePull("missing")
         if payload is None:
@@ -84,8 +102,8 @@ class MonitorDurable:
     def pull(self) -> DurablePull:
         try:
             payload, etag = pull_monitor(self.transport)
-        except (BlobRequestError, OSError, ValueError):
-            return DurablePull("read_error")
+        except (BlobRequestError, OSError, ValueError) as exc:
+            return DurablePull("read_error", reason=read_failure_reason(exc))
         if payload is None:
             return DurablePull("missing", {}, None)
         return DurablePull("ok", payload, etag)
@@ -106,6 +124,7 @@ class UnconfiguredDurable:
 class RunResult:
     status: str
     durable: str
+    reason: str | None = None
     reports: list[RefreshReport] = field(default_factory=list)
     skipped: list[dict[str, str]] = field(default_factory=list)
     redeployed: bool = False
@@ -157,7 +176,7 @@ def run_refresh_entry(
     """
     pulled = durable.pull()
     if pulled.status == "read_error":
-        return RunResult(status="read_error", durable="read_error")
+        return RunResult(status="read_error", durable="read_error", reason=pulled.reason)
     store = FileEventStore(local_root)
     if pulled.status == "ok" and pulled.payload is not None:
         store.restore_workspace(pulled.payload)
