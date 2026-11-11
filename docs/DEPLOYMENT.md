@@ -318,8 +318,9 @@ filled it:
 So 97% of the allowance is eighteen checkpoint snapshots. Every commit writes
 `store.export_workspace(...)` -- the whole event store as one JSON document --
 to a new content-hashed, immutable pathname, and nothing ever deletes the
-previous one. Keeping only the committed snapshot and one prior would be about
-105 MiB rather than 945 MiB. Deletes are free on every plan, so the store has
+previous one. The snapshots also grow: the first was 10.9 MB and the last, four
+days later, 131 MB, so the committed one and its predecessor alone are 249 MB
+of the 991 MB. Deletes are free on every plan, so the store has
 no retention policy and needs one; this refills a gigabyte in roughly four days
 whatever the plan, and on Pro it becomes unbounded growth rather than a block.
 
