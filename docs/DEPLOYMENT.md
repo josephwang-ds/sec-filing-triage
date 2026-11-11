@@ -315,17 +315,35 @@ filled it:
 106 objects   31.9 MiB     308 KiB each  feeds and evidence
 ```
 
-So 97% of the allowance is eighteen checkpoint snapshots. Every commit writes
-`store.export_workspace(...)` -- the whole event store as one JSON document --
-to a new content-hashed, immutable pathname, and nothing ever deletes the
-previous one. The snapshots also grow: the first was 10.9 MB and the last, four
-days later, 131 MB, so the committed one and its predecessor alone are 249 MB
-of the 991 MB. Deletes are free on every plan, so the store has
-no retention policy and needs one; this refills a gigabyte in roughly four days
-whatever the plan, and on Pro it becomes unbounded growth rather than a block.
+So 97% of the allowance was eighteen checkpoint snapshots. Two things
+compounded. Every commit wrote `store.export_workspace(...)` to a new
+content-hashed, immutable pathname and nothing deleted the previous one; and
+each snapshot carried every version document the workspace had ever held, so
+each was larger than the last: 10.9 MB on 2026-10-25, 131 MB on 2026-10-28.
+At that rate a single snapshot passes a gigabyte in about a month, so deleting
+old objects alone would only have postponed this.
 
-Clearing it is account work, not repository work: upgrade the plan or wait out
-the pause, and prune the old checkpoint objects.
+Both are closed:
+
+- A checkpoint now carries only the versions a manifest or a state still
+  points at. Nothing ever read the others back.
+- `scripts/prune_event_blobs.py`, run daily by `events-prune.yml`, deletes
+  superseded objects under `lens-events/checkpoints/`. It keeps the checkpoint
+  the commit record points at and anything uploaded in the last 24 hours, and
+  deletes nothing if it cannot read the commit record or the record moves
+  mid-sweep. It is a dry run unless given `--apply`.
+
+Feeds and evidence are not pruned. The commit record lists older versions and
+Ask resolves evidence through it, so how long those must stay is a product
+decision. They were 32 MiB after four days -- about a gigabyte in four months
+at that rate -- and are the next thing to fill the store.
+
+Lifting the pause itself is account work: upgrade the plan or wait it out. While
+the store is paused the commit record cannot be read, so the daily sweep exits
+3 with the same reason line as the refresh. To clear the backlog before reads
+return, run `Events prune` by hand with `keep_newest` set: it lists, keeps the
+newest N checkpoints by upload time, and needs no content read. Look at the
+dry run first.
 
 A blocked store also shows up on the deployed reader, which is an independent
 implementation and a useful second opinion:

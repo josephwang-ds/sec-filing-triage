@@ -1,0 +1,69 @@
+name: Events prune
+
+# Deletes superseded checkpoint objects from the event Blob store. Every commit
+# writes its checkpoint to a new immutable pathname and nothing else removes the
+# one it replaced; eighteen of them filled the Hobby plan's gigabyte in four
+# days. This is the retention half. It touches lens-events/checkpoints/ only.
+#
+# One listing a day. A listing is an Advanced Operation on the Blob bill, so
+# this is not a step on the half-hourly refresh. Deletes are not billed.
+#
+# The scheduled run deletes. A manual run reports and deletes nothing unless
+# "apply" is ticked. "keep_newest" is for a store whose content reads are
+# refused: the commit record cannot be read then, so the newest N checkpoints
+# by upload time are kept in its place.
+
+on:
+  schedule:
+    - cron: "22 5 * * *"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Delete. Unticked, the run only reports what it would remove."
+        type: boolean
+        default: false
+      keep_newest:
+        description: "Paused store only: keep the N newest checkpoints instead of reading the commit record."
+        type: string
+        default: ""
+      min_age_hours:
+        description: "Never delete a checkpoint uploaded more recently than this."
+        type: string
+        default: "24"
+
+permissions:
+  contents: read
+
+# The refresh's group, so a sweep never overlaps a commit. The script also
+# stands down if the commit record moves while it is listing.
+concurrency:
+  group: events-refresh
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -e .
+
+      - name: Prune superseded checkpoints
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          EVENTS_BLOB_PREFIX: lens-events
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+          KEEP_NEWEST: ${{ inputs.keep_newest }}
+          MIN_AGE_HOURS: ${{ inputs.min_age_hours || '24' }}
+        run: |
+          set -euo pipefail
+          args=(--min-age-hours "${MIN_AGE_HOURS}")
+          if [ "${APPLY}" = "true" ]; then args+=(--apply); fi
+          if [ -n "${KEEP_NEWEST}" ]; then args+=(--keep-newest "${KEEP_NEWEST}"); fi
+          python scripts/prune_event_blobs.py "${args[@]}"
