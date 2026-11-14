@@ -1,0 +1,127 @@
+{
+  "schema_version": "1",
+  "date": "2026-11-14",
+  "written_at": "2026-11-14T14:27:36.903599+00:00",
+  "predicts_session": "2026-11-16",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12278,
+    "last_session_in_panel": "2026-11-13",
+    "inputs": {
+      "events": {
+        "rows": 12295,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "39f7c59808768c4ee1afc003269827542428c84e095f8c23cca668304b1a05f3"
+      },
+      "prices": {
+        "rows": 2017574,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "403e9cad4376780d44c7b7586304ae59d4887795e26ee2751d051df12067b807",
+        "first_session": "1962-01-02",
+        "last_session": "2026-11-13"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "dca3ca16cb48509ed16660b7823ee73a03287ed45b0a5be8529ede5e259f9f1b"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.16",
+      "platform": "Linux-7.0.0-1016-aws-x86_64-with-glibc2.43",
+      "packages": {
+        "pandas": "3.1.1",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.1",
+        "yfinance": "1.8.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0001104659-26-127223",
+      "cik": 1075531,
+      "ticker": "BKNG",
+      "issuer": "Booking Holdings Inc.",
+      "acceptance_time": "2026-11-13T22:12:18-05:00",
+      "entry_session": "2026-11-16",
+      "rank": 1,
+      "score": 0.062443
+    },
+    {
+      "accession": "0001104659-26-127163",
+      "cik": 804328,
+      "ticker": "QCOM",
+      "issuer": "QUALCOMM INC/DE",
+      "acceptance_time": "2026-11-13T21:48:24-05:00",
+      "entry_session": "2026-11-16",
+      "rank": 2,
+      "score": 0.054097
+    },
+    {
+      "accession": "0001193125-26-460610",
+      "cik": 1053507,
+      "ticker": "AMT",
+      "issuer": "AMERICAN TOWER CORP /MA/",
+      "acceptance_time": "2026-11-13T21:05:56-05:00",
+      "entry_session": "2026-11-16",
+      "rank": 3,
+      "score": 0.053064
+    },
+    {
+      "accession": "0001193125-26-460732",
+      "cik": 886982,
+      "ticker": "GS",
+      "issuer": "GOLDMAN SACHS GROUP INC",
+      "acceptance_time": "2026-11-13T21:24:39-05:00",
+      "entry_session": "2026-11-16",
+      "rank": 4,
+      "score": 0.051763
+    },
+    {
+      "accession": "0001140361-26-043782",
+      "cik": 32604,
+      "ticker": "EMR",
+      "issuer": "EMERSON ELECTRIC CO",
+      "acceptance_time": "2026-11-13T21:37:13-05:00",
+      "entry_session": "2026-11-16",
+      "rank": 5,
+      "score": 0.047793
+    }
+  ]
+}

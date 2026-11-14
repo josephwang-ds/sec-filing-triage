@@ -34,6 +34,11 @@
       "records": 10,
       "sha256": "2e20771d0d0e2217d385cf523da3364b5938ffe0dd9e210750bd1b44927c5df1",
       "written_at": "2026-11-07T15:41:13.943512+00:00"
+    },
+    "2026-11-14.json": {
+      "records": 5,
+      "sha256": "ec0d5391f3a2c0bcdef104e21be0382fbec14cf62af7eb53541331fd2ec2e008",
+      "written_at": "2026-11-14T14:27:36.903599+00:00"
     }
   },
   "schema_version": "1"
