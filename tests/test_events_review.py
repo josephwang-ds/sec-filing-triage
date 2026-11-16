@@ -657,3 +657,53 @@ def test_checkpoint_export_keeps_only_published_versions(tmp_path):
     workspace = store.export_workspace(("news",))
     assert set(workspace["datasets"]["news"]["versions"]) == {"current"}
     assert store.read_version("news", "old") is not None
+
+
+
+def test_checkpoint_cleanup_keeps_current_previous_and_recent(monkeypatch):
+    from types import SimpleNamespace
+
+    from company_lens.events import blob_store
+
+    prefix = blob_store.checkpoint_prefix() + "/"
+    current, previous, orphan, candidate = [
+        prefix + character * 20 + ".json" for character in "abcd"
+    ]
+    old = "2020-01-01T00:00:00Z"
+    future = "2099-01-01T00:00:00Z"
+    paths = [
+        {"pathname": current, "uploadedAt": old},
+        {"pathname": previous, "uploadedAt": old},
+        {"pathname": orphan, "uploadedAt": old},
+        {"pathname": candidate, "uploadedAt": future},
+        {"pathname": prefix + "manual.json", "uploadedAt": old},
+    ]
+    deleted = []
+    session = SimpleNamespace(
+        get=lambda *args, **kwargs: SimpleNamespace(
+            status_code=200, json=lambda: {"blobs": paths, "hasMore": False},
+        ),
+        post=lambda *args, **kwargs: deleted.extend(kwargs["json"]["urls"]) or SimpleNamespace(status_code=200),
+    )
+    manifest = {"checkpoint_pathname": current, "previous_checkpoint_pathname": previous}
+    monkeypatch.setattr(blob_store, "read_commit", lambda transport: (manifest, "current-etag"))
+    transport = blob_store.HttpBlobTransport("test-token", session=session)
+    assert transport.retire_checkpoints("stale-etag") == 0
+    assert not deleted
+    assert transport.retire_checkpoints("current-etag") == 1
+    assert deleted == [orphan]
+
+
+def test_checkpoint_commit_rotates_backup_only_on_change():
+    from company_lens.events.blob_store import commit_generation
+
+    blob = MemoryBlob()
+    first = commit_generation(blob, expected_etag=None, checkpoint_payload={"datasets": {}})
+    payload = {"datasets": {}, "expected_tickers": ["AAPL"]}
+    second = commit_generation(blob, expected_etag=first["etag"], checkpoint_payload=payload)
+    same = commit_generation(blob, expected_etag=second["etag"], checkpoint_payload=payload)
+    assert same["manifest"]["checkpoint_pathname"] == second["manifest"]["checkpoint_pathname"]
+    assert same["manifest"]["previous_checkpoint_pathname"] == first["manifest"]["checkpoint_pathname"]
+    third = commit_generation(blob, expected_etag=same["etag"], checkpoint_payload={"datasets": {}})
+    assert third["manifest"]["checkpoint_pathname"] != first["manifest"]["checkpoint_pathname"]
+    assert third["manifest"]["previous_checkpoint_pathname"] == second["manifest"]["checkpoint_pathname"]
