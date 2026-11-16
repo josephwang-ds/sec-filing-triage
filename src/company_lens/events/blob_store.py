@@ -143,6 +143,8 @@ class HttpBlobTransport:
             seen_cursors.add(next_cursor)
             cursor = next_cursor
 
+        if not candidates:
+            return 0
         manifest, etag = read_commit(self)
         current = manifest.get("checkpoint_pathname")
         previous = manifest.get("previous_checkpoint_pathname")
@@ -428,6 +430,21 @@ def _checkpoint_health(payload: dict) -> dict:
     return {"datasets": datasets, "expected_tickers": payload.get("expected_tickers") or []}
 
 
+def _release_object_url(
+    transport: BlobTransport,
+    pathname: str,
+    body: bytes,
+    published: dict,
+    kind: str,
+) -> str | None:
+    # The pathname includes the body digest. Reuse only a committed reference
+    # to these same bytes; candidates from failed commits still use the PUT path.
+    url = published.get(f"{kind}_url")
+    if published.get(f"{kind}_pathname") == pathname and isinstance(url, str) and url:
+        return url
+    return _put_immutable(transport, pathname, body).get("url")
+
+
 def commit_generation(
     transport: BlobTransport,
     *,
@@ -489,19 +506,21 @@ def commit_generation(
             f"{hashlib.sha256(evidence_body).hexdigest()[:20]}.json"
         )
         feed_path = f"{feed_prefix()}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
-        feed_meta = _put_immutable(transport, feed_path, feed_body)
-        evidence_meta = _put_immutable(transport, evidence_path, evidence_body)
         previous = tickers.get(symbol) if isinstance(tickers.get(symbol), dict) else {}
         versions = dict(previous.get("versions") or {})
+        feed_url = _release_object_url(transport, feed_path, feed_body, previous, "feed")
+        evidence_url = _release_object_url(
+            transport, evidence_path, evidence_body, versions.get(version_id) or {}, "evidence",
+        )
         versions[version_id] = {
             "evidence_pathname": evidence_path,
-            "evidence_url": evidence_meta.get("url"),
+            "evidence_url": evidence_url,
         }
         tickers[symbol] = {
             "evidence_pathname": evidence_path,
-            "evidence_url": evidence_meta.get("url"),
+            "evidence_url": evidence_url,
             "feed_pathname": feed_path,
-            "feed_url": feed_meta.get("url"),
+            "feed_url": feed_url,
             "version_id": version_id,
             "versions": versions,
         }

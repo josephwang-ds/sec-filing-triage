@@ -707,3 +707,33 @@ def test_checkpoint_commit_rotates_backup_only_on_change():
     third = commit_generation(blob, expected_etag=same["etag"], checkpoint_payload={"datasets": {}})
     assert third["manifest"]["checkpoint_pathname"] != first["manifest"]["checkpoint_pathname"]
     assert third["manifest"]["previous_checkpoint_pathname"] == second["manifest"]["checkpoint_pathname"]
+
+
+
+def test_unchanged_release_reuses_published_blob_objects():
+    from company_lens.events.blob_store import commit_generation, commit_path
+
+    class CountingBlob(MemoryBlob):
+        def __init__(self):
+            super().__init__()
+            self.writes = []
+
+        def put(self, pathname, body, *, if_match, overwrite):
+            self.writes.append(pathname)
+            return super().put(pathname, body, if_match=if_match, overwrite=overwrite)
+
+    blob = CountingBlob()
+    release = {"version_id": "v1", "feed": {"events": []}, "evidence": {"text": "original"}}
+    initial = commit_generation(blob, expected_etag=None, releases={"AAPL": release})
+    blob.writes.clear()
+
+    unchanged = commit_generation(blob, expected_etag=initial["etag"], releases={"AAPL": release})
+    assert blob.writes == [commit_path()]
+    assert unchanged["manifest"]["tickers"] == initial["manifest"]["tickers"]
+
+    blob.writes.clear()
+    changed = {**release, "evidence": {"text": "updated"}}
+    updated = commit_generation(blob, expected_etag=unchanged["etag"], releases={"AAPL": changed})
+    entry = updated["manifest"]["tickers"]["AAPL"]
+    assert blob.writes == [entry["evidence_pathname"], commit_path()]
+    assert entry["feed_url"] == initial["manifest"]["tickers"]["AAPL"]["feed_url"]
