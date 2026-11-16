@@ -72,6 +72,8 @@ PYTHONPATH=src "$PYTHON_BIN" scripts/build_earnings_calendar.py || status=$?
 PYTHONPATH=src "$PYTHON_BIN" scripts/build_vercel_output.py || status=$?
 
 if [[ "${VERCEL_DEPLOY_ENABLED:-0}" == "1" ]]; then
+  # Python static site only. deploy_vercel_frontend.sh refuses project lens-web.
+  # scripts/stage_lens_web.sh is the separate Next.js build and does not deploy.
   scripts/deploy_vercel_frontend.sh || status=$?
 fi
 

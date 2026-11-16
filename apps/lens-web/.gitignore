@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+# Build inputs copied out of the Python engine; reproducible, never committed.
+.lens/
+public/report.html
+next-env.d.ts
+playwright-report/
+test-results/
+.vercel/
+*.tsbuildinfo
+.vercel

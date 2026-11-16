@@ -1,0 +1,11 @@
+# Uploaded for a preview deployment that builds outside the repository.
+#
+# `.lens/` is this app's build input: snapshots, the Ask evidence bundle and the
+# research evidence package, all produced by the Python engine. It is not
+# committed, because it is reproducible -- but a preview that builds from this
+# directory alone cannot reproduce it, so it is uploaded and the build is told
+# to keep it with LENS_USE_STAGED.
+node_modules
+.next
+playwright-report
+test-results
