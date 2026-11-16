@@ -52,6 +52,20 @@ jobs:
           listed = probe("list_commit", lambda: transport.get_prefix(commit_path()))
           if listed is not None:
               print(f"commit_listed={any(item.get('pathname') == commit_path() for item in listed)}")
+          if listed:
+              import requests
+              from urllib.parse import urlsplit
+              for item in listed:
+                  if item.get("pathname") != commit_path():
+                      continue
+                  url = item.get("url", "")
+                  parsed = urlsplit(url)
+                  host = parsed.hostname or ""
+                  print(f"commit_private_host={host.endswith('.private.blob.vercel-storage.com')}")
+                  if parsed.scheme == "https" and host.endswith(".blob.vercel-storage.com"):
+                      for label, params in [("plain", {}), ("origin", {"cache": "0"})]:
+                          response = requests.get(url, params=params, headers={"Authorization": f"Bearer {token}"}, timeout=15, allow_redirects=False)
+                          print(f"direct_{label}_status={response.status_code} etag_present={bool(response.headers.get('etag'))}")
           commit_result = probe("read_commit", lambda: read_commit(transport))
           if commit_result:
               commit, etag = commit_result
