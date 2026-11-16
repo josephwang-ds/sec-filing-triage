@@ -1,0 +1,29 @@
+name: Blob cleanup inventory
+on:
+  push:
+    branches: [codex/blob-checkpoint-diagnosis]
+    paths: [.github/workflows/blob-cleanup.yml]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os, requests, json
+          token = os.environ["BLOB_READ_WRITE_TOKEN"]
+          r = requests.get("https://vercel.com/api/blob", params={"limit":1000}, headers={"authorization":f"Bearer {token}","x-api-version":"12"}, timeout=30)
+          print("list_status",r.status_code)
+          r.raise_for_status()
+          data=r.json()
+          print(json.dumps({"hasMore":data.get("hasMore"),"blobs":[{k:b.get(k) for k in ("pathname","size","uploadedAt")} for b in data.get("blobs",[])]}))
+          
+          PY
