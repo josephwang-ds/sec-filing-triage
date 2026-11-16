@@ -375,9 +375,9 @@ def test_public_health_matches_the_python_monitor_judgment(tmp_path):
         "    return { ok: true, status: 200, json: async () => ({ blobs: [{ pathname: 'lens-events/commit.json', url: 'https://blob.test/commit' }] }) };\n"
         "  }\n"
         "  if (text === 'https://blob.test/commit') {\n"
-        "    return { ok: true, status: 200, json: async () => stale.checkpoint };\n"
+        "    return { ok: true, status: 200, json: async () => ({ health: stale.checkpoint, checkpoint_url: 'https://blob.test/large' }) };\n"
         "  }\n"
-        "  return { ok: false, status: 404, json: async () => ({}) };\n"
+        "  throw new Error('health must not fetch the full checkpoint');\n"
         "};\n"
         "const response = { statusCode: 0, setHeader() {}, end(text) { this.body = text; } };\n"
         "handler({ method: 'GET', url: '/api/events?view=health', headers: {}, query: { view: 'health' } }, response)\n"
@@ -550,6 +550,9 @@ def test_monitor_claim_during_fetch_leaves_page_and_checkpoint_on_one_commit(tmp
     assert page["events"][0]["title"] == "committed headline"
     assert commit["tickers"]["AAPL"]["version_id"] == version
     assert commit["checkpoint_url"]
+    summary = commit["health"]["datasets"]["news"]["states"]["AAPL"]
+    assert summary["last_successful_check_at"] == saved["datasets"]["news"]["states"]["AAPL"]["last_successful_check_at"]
+    assert "versions" not in commit["health"]["datasets"]["news"]
     restarted = FileEventStore(tmp_path / "restart")
     restarted.restore_workspace(BlobDurable(blob).pull().payload)
     assert restarted.read_state("news", "AAPL")["version_id"] == version
@@ -639,3 +642,98 @@ def test_candidates_remain_unpublished_until_the_commit_and_a_restart_matches(tm
     assert page["manifest_version"] == version
     assert commit["tickers"]["AAPL"]["version_id"] == version
     assert "second headline" not in json.dumps(page)
+
+
+
+def test_checkpoint_export_keeps_only_published_versions(tmp_path):
+    store = FileEventStore(tmp_path)
+    store.restore_workspace({
+        "schema_version": 1,
+        "datasets": {"news": {
+            "manifest": {"tickers": {"AAPL": {"version_id": "current"}}, "fence": 2},
+            "versions": {"current": {"events": []}, "old": {"events": [{"title": "old"}]}},
+        }},
+    })
+    workspace = store.export_workspace(("news",))
+    assert set(workspace["datasets"]["news"]["versions"]) == {"current"}
+    assert store.read_version("news", "old") is not None
+
+
+
+def test_checkpoint_cleanup_keeps_current_previous_and_recent(monkeypatch):
+    from types import SimpleNamespace
+
+    from company_lens.events import blob_store
+
+    prefix = blob_store.checkpoint_prefix() + "/"
+    current, previous, orphan, candidate = [
+        prefix + character * 20 + ".json" for character in "abcd"
+    ]
+    old = "2020-01-01T00:00:00Z"
+    future = "2099-01-01T00:00:00Z"
+    paths = [
+        {"pathname": current, "uploadedAt": old},
+        {"pathname": previous, "uploadedAt": old},
+        {"pathname": orphan, "uploadedAt": old},
+        {"pathname": candidate, "uploadedAt": future},
+        {"pathname": prefix + "manual.json", "uploadedAt": old},
+    ]
+    deleted = []
+    session = SimpleNamespace(
+        get=lambda *args, **kwargs: SimpleNamespace(
+            status_code=200, json=lambda: {"blobs": paths, "hasMore": False},
+        ),
+        post=lambda *args, **kwargs: deleted.extend(kwargs["json"]["urls"]) or SimpleNamespace(status_code=200),
+    )
+    manifest = {"checkpoint_pathname": current, "previous_checkpoint_pathname": previous}
+    monkeypatch.setattr(blob_store, "read_commit", lambda transport: (manifest, "current-etag"))
+    transport = blob_store.HttpBlobTransport("test-token", session=session)
+    assert transport.retire_checkpoints("stale-etag") == 0
+    assert not deleted
+    assert transport.retire_checkpoints("current-etag") == 1
+    assert deleted == [orphan]
+
+
+def test_checkpoint_commit_rotates_backup_only_on_change():
+    from company_lens.events.blob_store import commit_generation
+
+    blob = MemoryBlob()
+    first = commit_generation(blob, expected_etag=None, checkpoint_payload={"datasets": {}})
+    payload = {"datasets": {}, "expected_tickers": ["AAPL"]}
+    second = commit_generation(blob, expected_etag=first["etag"], checkpoint_payload=payload)
+    same = commit_generation(blob, expected_etag=second["etag"], checkpoint_payload=payload)
+    assert same["manifest"]["checkpoint_pathname"] == second["manifest"]["checkpoint_pathname"]
+    assert same["manifest"]["previous_checkpoint_pathname"] == first["manifest"]["checkpoint_pathname"]
+    third = commit_generation(blob, expected_etag=same["etag"], checkpoint_payload={"datasets": {}})
+    assert third["manifest"]["checkpoint_pathname"] != first["manifest"]["checkpoint_pathname"]
+    assert third["manifest"]["previous_checkpoint_pathname"] == second["manifest"]["checkpoint_pathname"]
+
+
+
+def test_unchanged_release_reuses_published_blob_objects():
+    from company_lens.events.blob_store import commit_generation, commit_path
+
+    class CountingBlob(MemoryBlob):
+        def __init__(self):
+            super().__init__()
+            self.writes = []
+
+        def put(self, pathname, body, *, if_match, overwrite):
+            self.writes.append(pathname)
+            return super().put(pathname, body, if_match=if_match, overwrite=overwrite)
+
+    blob = CountingBlob()
+    release = {"version_id": "v1", "feed": {"events": []}, "evidence": {"text": "original"}}
+    initial = commit_generation(blob, expected_etag=None, releases={"AAPL": release})
+    blob.writes.clear()
+
+    unchanged = commit_generation(blob, expected_etag=initial["etag"], releases={"AAPL": release})
+    assert blob.writes == [commit_path()]
+    assert unchanged["manifest"]["tickers"] == initial["manifest"]["tickers"]
+
+    blob.writes.clear()
+    changed = {**release, "evidence": {"text": "updated"}}
+    updated = commit_generation(blob, expected_etag=unchanged["etag"], releases={"AAPL": changed})
+    entry = updated["manifest"]["tickers"]["AAPL"]
+    assert blob.writes == [entry["evidence_pathname"], commit_path()]
+    assert entry["feed_url"] == initial["manifest"]["tickers"]["AAPL"]["feed_url"]

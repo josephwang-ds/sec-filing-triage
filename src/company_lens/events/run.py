@@ -66,7 +66,9 @@ class BlobDurable:
             etag,
             tickers=dict(commit.get("tickers") or {}),
             checkpoint_ref={
+                "health": commit.get("health"),
                 "pathname": commit.get("checkpoint_pathname"),
+                "previous": commit.get("previous_checkpoint_pathname"),
                 "url": commit.get("checkpoint_url"),
             },
         )
