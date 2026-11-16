@@ -375,9 +375,9 @@ def test_public_health_matches_the_python_monitor_judgment(tmp_path):
         "    return { ok: true, status: 200, json: async () => ({ blobs: [{ pathname: 'lens-events/commit.json', url: 'https://blob.test/commit' }] }) };\n"
         "  }\n"
         "  if (text === 'https://blob.test/commit') {\n"
-        "    return { ok: true, status: 200, json: async () => stale.checkpoint };\n"
+        "    return { ok: true, status: 200, json: async () => ({ health: stale.checkpoint, checkpoint_url: 'https://blob.test/large' }) };\n"
         "  }\n"
-        "  return { ok: false, status: 404, json: async () => ({}) };\n"
+        "  throw new Error('health must not fetch the full checkpoint');\n"
         "};\n"
         "const response = { statusCode: 0, setHeader() {}, end(text) { this.body = text; } };\n"
         "handler({ method: 'GET', url: '/api/events?view=health', headers: {}, query: { view: 'health' } }, response)\n"
@@ -550,6 +550,9 @@ def test_monitor_claim_during_fetch_leaves_page_and_checkpoint_on_one_commit(tmp
     assert page["events"][0]["title"] == "committed headline"
     assert commit["tickers"]["AAPL"]["version_id"] == version
     assert commit["checkpoint_url"]
+    summary = commit["health"]["datasets"]["news"]["states"]["AAPL"]
+    assert summary["last_successful_check_at"] == saved["datasets"]["news"]["states"]["AAPL"]["last_successful_check_at"]
+    assert "versions" not in commit["health"]["datasets"]["news"]
     restarted = FileEventStore(tmp_path / "restart")
     restarted.restore_workspace(BlobDurable(blob).pull().payload)
     assert restarted.read_state("news", "AAPL")["version_id"] == version
@@ -639,3 +642,18 @@ def test_candidates_remain_unpublished_until_the_commit_and_a_restart_matches(tm
     assert page["manifest_version"] == version
     assert commit["tickers"]["AAPL"]["version_id"] == version
     assert "second headline" not in json.dumps(page)
+
+
+
+def test_checkpoint_export_keeps_only_published_versions(tmp_path):
+    store = FileEventStore(tmp_path)
+    store.restore_workspace({
+        "schema_version": 1,
+        "datasets": {"news": {
+            "manifest": {"tickers": {"AAPL": {"version_id": "current"}}, "fence": 2},
+            "versions": {"current": {"events": []}, "old": {"events": [{"title": "old"}]}},
+        }},
+    })
+    workspace = store.export_workspace(("news",))
+    assert set(workspace["datasets"]["news"]["versions"]) == {"current"}
+    assert store.read_version("news", "old") is not None

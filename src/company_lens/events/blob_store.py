@@ -18,6 +18,7 @@ import requests
 
 BLOB_API = "https://vercel.com/api/blob"
 BLOB_API_VERSION = "12"
+MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 PUBLIC_PREFIX = "lens-events/public"
 
 
@@ -346,6 +347,22 @@ def _put_immutable(transport: BlobTransport, pathname: str, body: bytes) -> dict
         return {"etag": found.get("etag"), "pathname": pathname, "url": found.get("url")}
 
 
+def _checkpoint_health(payload: dict) -> dict:
+    fields = (
+        "key", "last_attempt_at", "last_error_class", "last_successful_check_at",
+        "pending", "quota_degraded", "status",
+    )
+    datasets = {}
+    for name, dataset in (payload.get("datasets") or {}).items():
+        states = {}
+        for ticker, state in (dataset.get("states") or {}).items():
+            summary = {field: state[field] for field in fields if field in state}
+            summary["has_coverage_gaps"] = bool(state.get("coverage_gaps"))
+            states[ticker] = summary
+        datasets[name] = {"states": states}
+    return {"datasets": datasets, "expected_tickers": payload.get("expected_tickers") or []}
+
+
 def commit_generation(
     transport: BlobTransport,
     *,
@@ -370,14 +387,19 @@ def commit_generation(
             raise BlobRequestError(412, commit_path())
         base_tickers = current.get("tickers") or {}
         base_checkpoint = {
+            "health": current.get("health"),
             "pathname": current.get("checkpoint_pathname"),
             "url": current.get("checkpoint_url"),
         }
     tickers = json.loads(json.dumps(base_tickers or {}))
     checkpoint_pathname = (base_checkpoint or {}).get("pathname")
     checkpoint_url = (base_checkpoint or {}).get("url")
+    health = (base_checkpoint or {}).get("health")
     if checkpoint_payload is not None:
         raw = checkpoint_document(checkpoint_payload)
+        if len(raw) > MAX_CHECKPOINT_BYTES:
+            raise ValueError(f"checkpoint exceeds {MAX_CHECKPOINT_BYTES} bytes ({len(raw)} bytes)")
+        health = _checkpoint_health(checkpoint_payload)
         digest = hashlib.sha256(raw).hexdigest()[:20]
         checkpoint_pathname = f"{checkpoint_prefix()}/{digest}.json"
         stored = _put_immutable(transport, checkpoint_pathname, raw)
@@ -417,6 +439,8 @@ def commit_generation(
         "schema_version": "company-lens.events-commit.v1",
         "tickers": tickers,
     }
+    if health is not None:
+        manifest["health"] = health
     if before_commit is not None:
         before_commit()
     body = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()
