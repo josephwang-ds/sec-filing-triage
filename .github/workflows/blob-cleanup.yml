@@ -1,4 +1,4 @@
-name: Blob cleanup inventory
+name: Blob historical checkpoint cleanup
 on:
   push:
     branches: [codex/blob-checkpoint-diagnosis]
@@ -6,24 +6,38 @@ on:
 permissions:
   contents: read
 jobs:
-  inventory:
+  cleanup:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-      - run: pip install requests
+          node-version: "22"
+      - run: npm install --no-package-lock @vercel/blob
       - env:
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
-          python - <<'PY'
-          import os, requests, json
-          token = os.environ["BLOB_READ_WRITE_TOKEN"]
-          r = requests.get("https://vercel.com/api/blob", params={"limit":1000}, headers={"authorization":f"Bearer {token}","x-api-version":"12"}, timeout=30)
-          print("list_status",r.status_code)
-          r.raise_for_status()
-          data=r.json()
-          print(json.dumps({"hasMore":data.get("hasMore"),"blobs":[{k:b.get(k) for k in ("pathname","size","uploadedAt")} for b in data.get("blobs",[])]}))
-          
-          PY
+          node --input-type=module <<'JS'
+          import {list, del} from '@vercel/blob';
+          const targets = new Set([
+            "lens-events/checkpoints/3a9d8194671f711897a2.json",
+            "lens-events/checkpoints/679ba5edd36de89bfcda.json",
+            "lens-events/checkpoints/b142ba8bbca2db3211c2.json",
+            "lens-events/checkpoints/f965cfea0c006c28fb3a.json",
+          ]);
+          const before = await list({limit:1000});
+          if (before.hasMore) throw new Error("Unexpected pagination");
+          const selected = before.blobs.filter(b => targets.has(b.pathname));
+          console.log("delete_count", selected.length, "delete_bytes", selected.reduce((n,b)=>n+b.size,0));
+          await del(selected.map(b=>b.url));
+          const after = await list({limit:1000});
+          if (after.blobs.some(b=>targets.has(b.pathname))) throw new Error("Deletion verification failed");
+          console.log("remaining_count",after.blobs.length,"remaining_bytes",after.blobs.reduce((n,b)=>n+b.size,0));
+          const commit = after.blobs.find(b=>b.pathname==="lens-events/commit.json");
+          const response = await fetch(commit.url+"?cache=0",{headers:{Authorization:"Bearer "+process.env.BLOB_READ_WRITE_TOKEN}});
+          console.log("commit_read_status",response.status);
+          if(response.ok){
+            const data=await response.json();
+            console.log("checkpoint_preserved",after.blobs.some(b=>b.url===data.checkpoint_url));
+          }
+          JS
