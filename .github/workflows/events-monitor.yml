@@ -3,11 +3,9 @@ name: Events monitor
 # Reads task checkpoints. A page that returns HTTP 200 is not a pass.
 # Without both rerun credentials this job reports health only.
 # This GitHub workflow is not an independent wake or a notification channel.
-# Production health checks run every fifteen minutes for the released scope.
+# Scheduled health checks are paused after checkpoint read failures.
 
 on:
-  schedule:
-    - cron: "4,19,34,49 * * * *"
   workflow_dispatch:
 
 permissions:
