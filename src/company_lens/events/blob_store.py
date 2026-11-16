@@ -15,7 +15,6 @@ import re
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
-
 from uuid import uuid4
 
 import requests
