@@ -25,10 +25,13 @@ jobs:
           python - <<'PY'
           import json
           import os
+          from runpy import run_path
 
-          from company_lens.events.blob_store import (
-              BlobRequestError, HttpBlobTransport, commit_path, read_commit,
-          )
+          module = run_path('src/company_lens/events/blob_store.py')
+          BlobRequestError = module['BlobRequestError']
+          HttpBlobTransport = module['HttpBlobTransport']
+          commit_path = module['commit_path']
+          read_commit = module['read_commit']
 
           def probe(label, read):
               try:
