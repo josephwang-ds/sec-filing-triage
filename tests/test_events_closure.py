@@ -440,3 +440,55 @@ def test_monitor_does_not_treat_empty_as_healthy_and_calls_the_executor_once():
     assert 'cron: "4,19,34,49 * * * *"' in workflow
     assert 'cron: "7,37 * * * *"' in refresh
     assert "independent wake" in workflow
+
+
+def test_a_blocked_store_is_named_in_the_log_not_just_exit_3(tmp_path):
+    """A read failure must say which failure. "read_error" alone is unactionable.
+
+    This is the shape that left the scheduled refresh red for ten days: the
+    status and the store's own refusal were discarded, so the only signal was
+    exit code 3.
+    """
+    blocked = BlobRequestError(403, "blob-url", "Your store is blocked")
+
+    class Blocked(MemoryBlob):
+        def get_prefix(self, prefix):
+            return [{"etag": "e1", "pathname": prefix, "url": f"https://blob.test/{prefix}"}]
+
+        def read_url(self, url):
+            raise blocked
+
+    pulled = BlobDurable(Blocked()).pull()
+    assert pulled.status == "read_error"
+    assert pulled.reason == "blob_status=403 path=blob-url detail=Your store is blocked"
+
+    result = run_refresh_entry(
+        local_root=tmp_path / "runner",
+        durable=BlobDurable(Blocked()),
+        datasets=("news",),
+        tickers=["AAPL"],
+        now=NOW,
+        sources={"news": _source({"AAPL": [_row("AAPL", 1)]})},
+        supported={"AAPL"},
+        sleep=lambda _seconds: None,
+        publish_transport=MemoryBlob(),
+    )
+    # The run still fails. Naming the cause does not turn red into green.
+    assert result.status == "read_error"
+    assert result.reason == "blob_status=403 path=blob-url detail=Your store is blocked"
+
+
+def test_a_read_failure_detail_never_carries_the_token():
+    from company_lens.events.blob_store import HttpBlobTransport
+
+    class Response:
+        status_code = 403
+        text = "denied for vercel_blob_rw_SECRET_abc"
+
+        def json(self):
+            raise ValueError("not json")
+
+    transport = HttpBlobTransport("vercel_blob_rw_SECRET_abc")
+    detail = transport._detail(Response())
+    assert "vercel_blob_rw_SECRET_abc" not in detail
+    assert "REDACTED" in detail

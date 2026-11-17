@@ -37,10 +37,12 @@ class BlobTransport(Protocol):
 
 
 class BlobRequestError(RuntimeError):
-    def __init__(self, status: int, pathname: str) -> None:
-        super().__init__(f"blob request failed status={status} path={pathname}")
+    def __init__(self, status: int, pathname: str, detail: str = "") -> None:
+        suffix = f" detail={detail}" if detail else ""
+        super().__init__(f"blob request failed status={status} path={pathname}{suffix}")
         self.status = status
         self.pathname = pathname
+        self.detail = detail
 
 
 class HttpBlobTransport:
@@ -49,6 +51,30 @@ class HttpBlobTransport:
             raise ValueError("BLOB_READ_WRITE_TOKEN is empty")
         self._token = token.strip()
         self._session = session or requests.Session()
+
+    def _detail(self, response: requests.Response) -> str:
+        """One short line from the store's own refusal.
+
+        "Your store is blocked" is a different failure from a missing object
+        or a revoked token, and all three arrive as a bare status code. A
+        scheduled job nobody watches has only its log, so the store's own
+        words are kept. The token lives in a header, not in a body, and is
+        redacted anyway.
+        """
+        text = ""
+        try:
+            payload = response.json()
+        except ValueError:
+            text = response.text or ""
+        else:
+            if isinstance(payload, dict):
+                error = payload.get("error")
+                if isinstance(error, dict):
+                    text = str(error.get("code") or error.get("message") or "")
+                elif error:
+                    text = str(error)
+        text = " ".join(text.split())[:120]
+        return text.replace(self._token, "REDACTED") if self._token else text
 
     def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {
@@ -88,9 +114,9 @@ class HttpBlobTransport:
             timeout=30,
         )
         if response.status_code == 412:
-            raise BlobRequestError(412, pathname)
+            raise BlobRequestError(412, pathname, self._detail(response))
         if response.status_code >= 400:
-            raise BlobRequestError(response.status_code, pathname)
+            raise BlobRequestError(response.status_code, pathname, self._detail(response))
         try:
             payload = response.json()
         except ValueError as exc:
@@ -107,7 +133,7 @@ class HttpBlobTransport:
             timeout=30,
         )
         if response.status_code >= 400:
-            raise BlobRequestError(response.status_code, prefix)
+            raise BlobRequestError(response.status_code, prefix, self._detail(response))
         payload = response.json()
         blobs = payload.get("blobs") if isinstance(payload, dict) else None
         return [item for item in blobs or [] if isinstance(item, dict)]
@@ -126,7 +152,7 @@ class HttpBlobTransport:
             timeout=30,
         )
         if response.status_code >= 400:
-            raise BlobRequestError(response.status_code, "blob-url")
+            raise BlobRequestError(response.status_code, "blob-url", self._detail(response))
         etag = response.headers.get("etag") or response.headers.get("ETag") or ""
         return response.content, etag
 
