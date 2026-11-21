@@ -81,7 +81,16 @@
       "acceptance_time": "2026-11-13T22:12:18-05:00",
       "entry_session": "2026-11-16",
       "rank": 1,
-      "score": 0.062443
+      "score": 0.062443,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-11-21T16:27:34.597414+00:00",
+        "label_end_session": "2026-11-17",
+        "car": -0.018838,
+        "reaction": 0.565631,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001104659-26-127163",
@@ -91,7 +100,16 @@
       "acceptance_time": "2026-11-13T21:48:24-05:00",
       "entry_session": "2026-11-16",
       "rank": 2,
-      "score": 0.054097
+      "score": 0.054097,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-11-21T16:27:34.597414+00:00",
+        "label_end_session": "2026-11-17",
+        "car": 0.051318,
+        "reaction": 0.977876,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001193125-26-460610",
@@ -101,7 +119,16 @@
       "acceptance_time": "2026-11-13T21:05:56-05:00",
       "entry_session": "2026-11-16",
       "rank": 3,
-      "score": 0.053064
+      "score": 0.053064,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-11-21T16:27:34.597414+00:00",
+        "label_end_session": "2026-11-17",
+        "car": -0.054054,
+        "reaction": 1.999425,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001193125-26-460732",
@@ -111,7 +138,16 @@
       "acceptance_time": "2026-11-13T21:24:39-05:00",
       "entry_session": "2026-11-16",
       "rank": 4,
-      "score": 0.051763
+      "score": 0.051763,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-11-21T16:27:34.597414+00:00",
+        "label_end_session": "2026-11-17",
+        "car": 0.012296,
+        "reaction": 0.54074,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     },
     {
       "accession": "0001140361-26-043782",
@@ -121,7 +157,24 @@
       "acceptance_time": "2026-11-13T21:37:13-05:00",
       "entry_session": "2026-11-16",
       "rank": 5,
-      "score": 0.047793
+      "score": 0.047793,
+      "outcome": {
+        "measured": true,
+        "measured_at": "2026-11-21T16:27:34.597414+00:00",
+        "label_end_session": "2026-11-17",
+        "car": -0.002014,
+        "reaction": 0.090853,
+        "material": false,
+        "reaction_threshold": 2.0
+      }
     }
-  ]
+  ],
+  "scoring": {
+    "scored_at": "2026-11-21T16:27:34.597414+00:00",
+    "records": 5,
+    "scored": 5,
+    "unmeasurable": 0,
+    "pending": 0,
+    "price_panel_last_session": "2026-11-20"
+  }
 }

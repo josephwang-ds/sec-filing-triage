@@ -1,0 +1,147 @@
+{
+  "schema_version": "1",
+  "date": "2026-11-21",
+  "written_at": "2026-11-21T16:27:57.812657+00:00",
+  "predicts_session": "2026-11-23",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12341,
+    "last_session_in_panel": "2026-11-20",
+    "inputs": {
+      "events": {
+        "rows": 12360,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "37f9a42584d090b2f47c2e1d260bf12fa9d32b5ede45f93cb39def990f8f7221"
+      },
+      "prices": {
+        "rows": 2018554,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "92139ce5c2649f5c2e25419116581ed26c15e487cbcde89c929133ac6fc5af79",
+        "first_session": "1962-01-02",
+        "last_session": "2026-11-20"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "3d27695e518dab7784646cd7075b8438281f80363500c28375e0166267be6158"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.16",
+      "platform": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
+      "packages": {
+        "pandas": "3.1.1",
+        "numpy": "2.5.5",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.1",
+        "yfinance": "1.8.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0000002488-26-000218",
+      "cik": 2488,
+      "ticker": "AMD",
+      "issuer": "ADVANCED MICRO DEVICES INC",
+      "acceptance_time": "2026-11-20T21:19:32-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 1,
+      "score": 0.092266
+    },
+    {
+      "accession": "0001193125-26-470351",
+      "cik": 1341439,
+      "ticker": "ORCL",
+      "issuer": "ORACLE CORP",
+      "acceptance_time": "2026-11-20T21:30:15-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 2,
+      "score": 0.088
+    },
+    {
+      "accession": "0000070858-26-000608",
+      "cik": 70858,
+      "ticker": "BAC",
+      "issuer": "BANK OF AMERICA CORP /DE/",
+      "acceptance_time": "2026-11-20T21:45:43-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 3,
+      "score": 0.075302
+    },
+    {
+      "accession": "0000895421-26-000358",
+      "cik": 895421,
+      "ticker": "MS",
+      "issuer": "MORGAN STANLEY",
+      "acceptance_time": "2026-11-20T21:01:02-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 4,
+      "score": 0.062713
+    },
+    {
+      "accession": "0000885725-26-000076",
+      "cik": 885725,
+      "ticker": "BSX",
+      "issuer": "BOSTON SCIENTIFIC CORP",
+      "acceptance_time": "2026-11-20T21:06:04-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 5,
+      "score": 0.058783
+    },
+    {
+      "accession": "0000783325-26-000112",
+      "cik": 783325,
+      "ticker": "WEC",
+      "issuer": "WEC ENERGY GROUP, INC.",
+      "acceptance_time": "2026-11-20T21:46:30-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 6,
+      "score": 0.052325
+    },
+    {
+      "accession": "0001193125-26-469339",
+      "cik": 715957,
+      "ticker": "D",
+      "issuer": "DOMINION ENERGY, INC",
+      "acceptance_time": "2026-11-20T13:00:17-05:00",
+      "entry_session": "2026-11-23",
+      "rank": 7,
+      "score": 0.050067
+    }
+  ]
+}
