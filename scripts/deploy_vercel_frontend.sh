@@ -58,6 +58,15 @@ else
   echo "deploying to $VERCEL_PROJECT_ID (bundle carries no project link)"
 fi
 
+# This script publishes the Python static bundle with --prod. lens-web is the
+# Next.js project. A matching id is not enough: the bundle must not be the
+# target that replaces that front end.
+if [[ "${linked_name:-}" == "lens-web" || "$VERCEL_PROJECT_ID" == "prj_FZTMwbFl4fVES1HqAXn8LjvwnDpG" ]]; then
+  echo "Refusing to publish the Python static bundle to the Next.js project (lens-web)." >&2
+  echo "The scheduled refresh keeps publishing the Python site. The Next.js app is deployed separately." >&2
+  exit 1
+fi
+
 vercel deploy \
   --cwd "$BUNDLE_ROOT" \
   --global-config "$GLOBAL_CONFIG" \

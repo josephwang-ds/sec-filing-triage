@@ -59,6 +59,16 @@ def test_missing_financials_have_a_citable_explanation():
     assert 'metrics' not in packet
 
 
+def test_a_missing_change_is_not_invented(tmp_path):
+    seed(tmp_path)
+    report = with_financial_context(tmp_path, 'COMPANY')
+    metric = report['metrics'][0]
+    metric['change'] = None
+    packet = financial_results_packet(report, 'COMPANY', {})['metrics'][0]
+    assert 'absolute_change' not in packet
+    assert packet['prior']['display_value']
+
+
 def test_loss_base_does_not_create_growth_or_reference(tmp_path):
     seed(tmp_path)
     report = with_financial_context(tmp_path, 'COMPANY')
