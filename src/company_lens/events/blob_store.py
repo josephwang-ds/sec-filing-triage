@@ -9,15 +9,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
+from uuid import uuid4
 
 import requests
 
 BLOB_API = "https://vercel.com/api/blob"
 BLOB_API_VERSION = "12"
+MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
+CHECKPOINT_GRACE = timedelta(hours=24)
+LOGGER = logging.getLogger(__name__)
 PUBLIC_PREFIX = "lens-events/public"
 
 
@@ -111,6 +117,51 @@ class HttpBlobTransport:
         payload = response.json()
         blobs = payload.get("blobs") if isinstance(payload, dict) else None
         return [item for item in blobs or [] if isinstance(item, dict)]
+
+    def retire_checkpoints(self, expected_etag: str) -> int:
+        prefix = checkpoint_prefix() + "/"
+        cutoff = datetime.now(UTC) - CHECKPOINT_GRACE
+        candidates = {}
+        cursor = None
+        seen_cursors = set()
+        while True:
+            params = {"prefix": prefix, "limit": "1000"}
+            if cursor:
+                params["cursor"] = cursor
+            response = self._session.get(
+                BLOB_API, params=params, headers=self._headers(), timeout=30,
+            )
+            if response.status_code >= 400:
+                raise BlobRequestError(response.status_code, prefix)
+            page = response.json()
+            candidates.update(_expired_checkpoints(page["blobs"], prefix, cutoff))
+            if not page.get("hasMore"):
+                break
+            next_cursor = page.get("cursor")
+            if not next_cursor or next_cursor in seen_cursors:
+                raise ValueError("missing or repeated checkpoint list cursor")
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
+
+        if not candidates:
+            return 0
+        manifest, etag = read_commit(self)
+        current = manifest.get("checkpoint_pathname")
+        previous = manifest.get("previous_checkpoint_pathname")
+        if etag != expected_etag or not current or not current.startswith(prefix):
+            return 0
+
+        paths = [path for path in candidates if path not in (current, previous)]
+        # Limit each run's cleanup so a large backlog does not delay refresh.
+        paths = sorted(paths, key=candidates.__getitem__)[:20]
+        if paths:
+            response = self._session.post(
+                f"{BLOB_API}/delete", json={"urls": paths},
+                headers=self._headers(), timeout=30,
+            )
+            if response.status_code >= 400:
+                raise BlobRequestError(response.status_code, prefix)
+        return len(paths)
 
     def read_url(self, url: str) -> tuple[bytes, str]:
         # Match the official SDK's useCache=False for private Blob reads.
@@ -346,6 +397,54 @@ def _put_immutable(transport: BlobTransport, pathname: str, body: bytes) -> dict
         return {"etag": found.get("etag"), "pathname": pathname, "url": found.get("url")}
 
 
+def _expired_checkpoints(items: list[dict], prefix: str, cutoff: datetime) -> dict[str, datetime]:
+    expired = {}
+    for item in items:
+        path = item.get("pathname", "")
+        if not isinstance(path, str) or not path.startswith(prefix) or not re.fullmatch(
+            r"[0-9a-f]{20}(?:-[0-9a-f]{32})?\.json", path[len(prefix):],
+        ):
+            continue
+        try:
+            uploaded = datetime.fromisoformat(item.get("uploadedAt", ""))
+        except (TypeError, ValueError):
+            continue
+        if uploaded.tzinfo is not None and uploaded < cutoff:
+            expired[path] = uploaded
+    return expired
+
+
+def _checkpoint_health(payload: dict) -> dict:
+    fields = (
+        "key", "last_attempt_at", "last_error_class", "last_successful_check_at",
+        "pending", "quota_degraded", "status",
+    )
+    datasets = {}
+    for name, dataset in (payload.get("datasets") or {}).items():
+        states = {}
+        for ticker, state in (dataset.get("states") or {}).items():
+            summary = {field: state[field] for field in fields if field in state}
+            summary["has_coverage_gaps"] = bool(state.get("coverage_gaps"))
+            states[ticker] = summary
+        datasets[name] = {"states": states}
+    return {"datasets": datasets, "expected_tickers": payload.get("expected_tickers") or []}
+
+
+def _release_object_url(
+    transport: BlobTransport,
+    pathname: str,
+    body: bytes,
+    published: dict,
+    kind: str,
+) -> str | None:
+    # The pathname includes the body digest. Reuse only a committed reference
+    # to these same bytes; candidates from failed commits still use the PUT path.
+    url = published.get(f"{kind}_url")
+    if published.get(f"{kind}_pathname") == pathname and isinstance(url, str) and url:
+        return url
+    return _put_immutable(transport, pathname, body).get("url")
+
+
 def commit_generation(
     transport: BlobTransport,
     *,
@@ -370,18 +469,30 @@ def commit_generation(
             raise BlobRequestError(412, commit_path())
         base_tickers = current.get("tickers") or {}
         base_checkpoint = {
+            "health": current.get("health"),
             "pathname": current.get("checkpoint_pathname"),
+            "previous": current.get("previous_checkpoint_pathname"),
             "url": current.get("checkpoint_url"),
         }
     tickers = json.loads(json.dumps(base_tickers or {}))
     checkpoint_pathname = (base_checkpoint or {}).get("pathname")
     checkpoint_url = (base_checkpoint or {}).get("url")
+    health = (base_checkpoint or {}).get("health")
+    previous_checkpoint = (base_checkpoint or {}).get("previous")
     if checkpoint_payload is not None:
         raw = checkpoint_document(checkpoint_payload)
+        if len(raw) > MAX_CHECKPOINT_BYTES:
+            raise ValueError(f"checkpoint exceeds {MAX_CHECKPOINT_BYTES} bytes ({len(raw)} bytes)")
+        health = _checkpoint_health(checkpoint_payload)
         digest = hashlib.sha256(raw).hexdigest()[:20]
-        checkpoint_pathname = f"{checkpoint_prefix()}/{digest}.json"
-        stored = _put_immutable(transport, checkpoint_pathname, raw)
-        checkpoint_url = stored.get("url")
+        # Reuse only the current generation. Reusing an older name would race
+        # with a cleanup that has already classified it as unreferenced.
+        current_name = (checkpoint_pathname or "").rsplit("/", 1)[-1]
+        if not checkpoint_url or not re.fullmatch(rf"{digest}(?:-[0-9a-f]{{32}})?\.json", current_name):
+            previous_checkpoint = checkpoint_pathname
+            checkpoint_pathname = f"{checkpoint_prefix()}/{digest}-{uuid4().hex}.json"
+            stored = _put_immutable(transport, checkpoint_pathname, raw)
+            checkpoint_url = stored.get("url")
     for ticker, release in sorted((releases or {}).items()):
         symbol = ticker.upper()
         version_id = str(release["version_id"])
@@ -395,19 +506,21 @@ def commit_generation(
             f"{hashlib.sha256(evidence_body).hexdigest()[:20]}.json"
         )
         feed_path = f"{feed_prefix()}/{symbol}/{version_id}/{hashlib.sha256(feed_body).hexdigest()[:20]}.json"
-        feed_meta = _put_immutable(transport, feed_path, feed_body)
-        evidence_meta = _put_immutable(transport, evidence_path, evidence_body)
         previous = tickers.get(symbol) if isinstance(tickers.get(symbol), dict) else {}
         versions = dict(previous.get("versions") or {})
+        feed_url = _release_object_url(transport, feed_path, feed_body, previous, "feed")
+        evidence_url = _release_object_url(
+            transport, evidence_path, evidence_body, versions.get(version_id) or {}, "evidence",
+        )
         versions[version_id] = {
             "evidence_pathname": evidence_path,
-            "evidence_url": evidence_meta.get("url"),
+            "evidence_url": evidence_url,
         }
         tickers[symbol] = {
             "evidence_pathname": evidence_path,
-            "evidence_url": evidence_meta.get("url"),
+            "evidence_url": evidence_url,
             "feed_pathname": feed_path,
-            "feed_url": feed_meta.get("url"),
+            "feed_url": feed_url,
             "version_id": version_id,
             "versions": versions,
         }
@@ -417,6 +530,10 @@ def commit_generation(
         "schema_version": "company-lens.events-commit.v1",
         "tickers": tickers,
     }
+    if previous_checkpoint:
+        manifest["previous_checkpoint_pathname"] = previous_checkpoint
+    if health is not None:
+        manifest["health"] = health
     if before_commit is not None:
         before_commit()
     body = json.dumps(manifest, ensure_ascii=False, sort_keys=True).encode()
@@ -431,7 +548,15 @@ def commit_generation(
         if exc.status in {409, 412}:
             raise BlobRequestError(exc.status, commit_path()) from None
         raise
-    return {"etag": pointer.get("etag"), "manifest": manifest}
+    published_etag = pointer.get("etag")
+    if checkpoint_payload is not None and published_etag and isinstance(transport, HttpBlobTransport):
+        try:
+            retired = transport.retire_checkpoints(published_etag)
+        except (BlobRequestError, OSError, ValueError, KeyError, TypeError) as exc:
+            LOGGER.warning("checkpoint_cleanup=failed error_type=%s", type(exc).__name__)
+        else:
+            LOGGER.info("checkpoint_cleanup=complete removed=%d", retired)
+    return {"etag": published_etag, "manifest": manifest}
 
 
 def publish_releases(

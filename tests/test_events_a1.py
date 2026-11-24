@@ -569,8 +569,8 @@ def test_config_presence_reports_names_only_and_scheduled_refresh_does_not_deplo
     root = Path(__file__).resolve().parents[1]
     refresh = (root / ".github/workflows/events-refresh.yml").read_text()
     monitor = (root / ".github/workflows/events-monitor.yml").read_text()
-    assert 'cron: "7,37 * * * *"' in refresh
-    assert 'cron: "4,19,34,49 * * * *"' in monitor
+    assert "  workflow_dispatch:" in refresh
+    assert "  workflow_dispatch:" in monitor
     assert "deploy_vercel" not in refresh
     assert "build_vercel_output" not in refresh
     weekly = (root / ".github/workflows/refresh.yml").read_text()

@@ -287,8 +287,8 @@ def test_drill_workflow_prepares_three_names_on_a_separate_blob_prefix(monkeypat
     assert commit_path() == "lens-events-drill/commit.json"
     refresh = (ROOT / ".github/workflows/events-refresh.yml").read_text()
     monitor = (ROOT / ".github/workflows/events-monitor.yml").read_text()
-    assert 'cron: "7,37 * * * *"' in refresh
-    assert 'cron: "4,19,34,49 * * * *"' in monitor
+    assert "  workflow_dispatch:" in refresh
+    assert "  workflow_dispatch:" in monitor
     assert "deploy_vercel" not in refresh
     assert "prepare_events_universe.py" in refresh
     assert "build_demo_universe.py" not in refresh

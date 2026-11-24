@@ -305,12 +305,13 @@ class FileEventStore:
                 for path in sorted(state_dir.glob("*.json")):
                     states[path.stem] = _read_json(path)
             versions = {}
-            version_dir = self.root / "versions" / dataset
-            if version_dir.exists():
-                for path in sorted(version_dir.glob("*.json")):
-                    document = _read_json(path)
+            # Recovery only needs the versions referenced by the current manifest.
+            for pointer in (manifest.get("tickers") or {}).values():
+                version_id = pointer.get("version_id")
+                if version_id:
+                    document = self.read_version(dataset, version_id)
                     if document is not None:
-                        versions[path.stem] = document
+                        versions[version_id] = document
             failure_dir = self.root / "failures" / dataset
             failures = {}
             if failure_dir.exists():

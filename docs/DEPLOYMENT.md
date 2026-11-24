@@ -259,6 +259,26 @@ gh run view --log-failed
 gh secret list
 ```
 
+## Event Blob retention and recovery
+
+The refresh and monitor workflows can be run manually while their schedules
+are paused. Before enabling either schedule, check the production Blob store's
+quota status and verify that its commit object is readable. A successful list
+request alone does not prove that object reads work.
+
+A successful refresh keeps the current and previous checkpoint. It also
+retires up to 20 managed checkpoints older than 24 hours after rechecking the
+commit ETag. The cleanup scope is the checkpoint directory. Feed objects and
+historical evidence are separate, and earlier event versions can still use the
+evidence recorded in the commit's `tickers.*.versions` map.
+
+If the store is suspended, keep scheduled refresh paused until reads work.
+A deletion can reduce the stored bytes immediately while the quota suspension
+is still in effect. Do not infer reachability from an object's age while the
+commit cannot be read. When reads are restored, run the drill refresh first,
+then a manual production refresh. Inspect the new checkpoint size, health
+summary and cleanup log before restoring the schedules.
+
 ## Failure behavior
 
 - Accessions are unique keys, so running the job twice does not duplicate filings.

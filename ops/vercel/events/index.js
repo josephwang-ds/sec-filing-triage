@@ -44,17 +44,13 @@ async function readExact(pathname) {
   }
 }
 
-async function readCommittedCheckpoint() {
+async function readCommittedHealth() {
   const commit = await readExact(COMMIT_PATH);
-  if (!commit.configured || commit.error || commit.missing || !commit.body) return commit;
-  if (!commit.body.checkpoint_url) return commit;
-  try {
-    const body = await fetch(commit.body.checkpoint_url, { headers: blobHeaders() });
-    if (!body.ok) return { configured: true, error: true };
-    return { configured: true, body: await body.json() };
-  } catch (error) {
-    return { configured: true, error: true };
+  if (!commit.configured || commit.error || commit.missing) return commit;
+  if (!commit.body || !commit.body.health) {
+    return { configured: true, missing: !commit.body || !commit.body.checkpoint_url, summaryPending: true };
   }
+  return { configured: true, body: commit.body.health };
 }
 
 async function readPointerFeed(ticker) {
@@ -285,7 +281,7 @@ function sourceLevel(dataset, ticker, state, nowMs, tier) {
   const missed = missedWindows(dataset, tier, last, nowMs, Boolean(record.quota_degraded));
   const failed = Boolean(record.last_error_class) || record.status === "stale";
   let level = freshness(missed, failed, false);
-  const gaps = Array.isArray(record.coverage_gaps) && record.coverage_gaps.length > 0;
+  const gaps = record.has_coverage_gaps || (Array.isArray(record.coverage_gaps) && record.coverage_gaps.length > 0);
   if (level === "current" && (record.pending || gaps || record.status === "partial")) level = "partial";
   return {
     dataset,
@@ -378,13 +374,16 @@ async function handler(request, response) {
   }
   const view = param(request, "view");
   if (view === "health") {
-    const checkpoint = await readCommittedCheckpoint();
+    const checkpoint = await readCommittedHealth();
     if (!checkpoint.configured) {
       const health = BUNDLED.health || { naive_http_ok: true, ok: false, overall: "not_configured", sources: [] };
       return send(response, 200, health);
     }
     if (checkpoint.error) {
       return send(response, 200, { naive_http_ok: true, ok: false, overall: "read_error", sources: [] });
+    }
+    if (!checkpoint.missing && checkpoint.summaryPending) {
+      return send(response, 200, { naive_http_ok: true, ok: false, overall: "summary_pending", sources: [] });
     }
     if (checkpoint.missing || !checkpoint.body) {
       return send(response, 200, { naive_http_ok: true, ok: false, overall: "never_run", sources: [] });

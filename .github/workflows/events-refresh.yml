@@ -20,7 +20,10 @@ on:
         default: "AAPL JPM NVDA"
       tier:
         description: "high_frequency or ordinary. Ignored when tickers is set."
-        type: string
+        type: choice
+        options:
+          - high_frequency
+          - ordinary
         default: high_frequency
 
 permissions:
@@ -63,6 +66,7 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
           EVENT_TICKERS: ${{ inputs.tickers || 'AAPL JPM NVDA' }}
+          EVENT_TIER: ${{ inputs.tier || 'high_frequency' }}
           EVENTS_BLOB_PREFIX: lens-events-drill
           EVENTS_DRILL_BLOB_READ_WRITE_TOKEN: ${{ secrets.EVENTS_DRILL_BLOB_READ_WRITE_TOKEN }}
         run: |
@@ -74,7 +78,7 @@ jobs:
           python scripts/refresh_events.py \
             --drill \
             --dataset all \
-            --tier "${{ inputs.tier || 'high_frequency' }}" \
+            --tier "$EVENT_TIER" \
             --universe "${{ runner.temp }}/events-universe.csv" \
             --tickers "${symbols[@]}" \
             --root "${{ runner.temp }}/events-store" \
@@ -86,6 +90,7 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           EDGAR_USER_AGENT: ${{ secrets.EDGAR_USER_AGENT }}
           EVENT_TICKERS: ${{ inputs.tickers || 'AAPL JPM NVDA' }}
+          EVENT_TIER: ${{ inputs.tier || 'high_frequency' }}
           EVENTS_BLOB_PREFIX: lens-events
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
         run: |
@@ -94,7 +99,7 @@ jobs:
           python scripts/refresh_events.py --check-config --require-blob
           python scripts/refresh_events.py \
             --dataset all \
-            --tier "${{ inputs.tier || 'high_frequency' }}" \
+            --tier "$EVENT_TIER" \
             --universe "${{ runner.temp }}/events-universe.csv" \
             --tickers "${symbols[@]}" \
             --root "${{ runner.temp }}/events-store" \
