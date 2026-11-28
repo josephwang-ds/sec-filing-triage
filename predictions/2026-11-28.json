@@ -1,0 +1,97 @@
+{
+  "schema_version": "1",
+  "date": "2026-11-28",
+  "written_at": "2026-11-28T16:26:26.717606+00:00",
+  "predicts_session": "2026-11-30",
+  "model": {
+    "estimator": "random_forest",
+    "switches": "trailing features shifted=yes, point-in-time entry=yes, point-in-time universe=yes, purged CV=yes, resolved-only issuer history=yes, open-anchored returns=NO, estimator=random_forest",
+    "reaction_threshold": 2.0,
+    "event_window_sessions": 2,
+    "trained_on_events": 12383,
+    "last_session_in_panel": "2026-11-27",
+    "inputs": {
+      "events": {
+        "rows": 12390,
+        "columns": [
+          "acceptance_time",
+          "accession",
+          "cik",
+          "event_id",
+          "filing_date",
+          "form",
+          "items",
+          "period_of_report",
+          "primary_document",
+          "text",
+          "ticker"
+        ],
+        "sha256": "19515f7b87fa2182fe90868b2ca5d12edaa2ee211ec0a7669df2d738563f6560"
+      },
+      "prices": {
+        "rows": 2019338,
+        "columns": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "ticker",
+          "volume"
+        ],
+        "sha256": "be215d4c4d7198bb751c606b40f9672a8b6232a073c448855077ddf7e7d61cd8",
+        "first_session": "1962-01-02",
+        "last_session": "2026-11-27"
+      },
+      "membership": {
+        "rows": 194,
+        "columns": [
+          "cik",
+          "end_date",
+          "name",
+          "start_date",
+          "ticker"
+        ],
+        "sha256": "3d27695e518dab7784646cd7075b8438281f80363500c28375e0166267be6158"
+      },
+      "note": "Digests are over canonicalised content, not file bytes, so a pandas or pyarrow upgrade does not change them. Vendor prices are adjusted as of the pull date: a later split rewrites history without adding a row, which shows up here as an unchanged row count and a changed digest."
+    },
+    "environment": {
+      "python": "3.12.16",
+      "platform": "Linux-7.0.0-1020-azure-x86_64-with-glibc2.43",
+      "packages": {
+        "pandas": "3.1.1",
+        "numpy": "2.5.5",
+        "scipy": "1.18.1",
+        "scikit-learn": "1.9.1",
+        "pyarrow": "26.0.1",
+        "yfinance": "1.8.0",
+        "torch": null,
+        "transformers": null,
+        "chronos-forecasting": null
+      }
+    }
+  },
+  "predictions": [
+    {
+      "accession": "0001193125-26-480258",
+      "cik": 831001,
+      "ticker": "C",
+      "issuer": "CITIGROUP INC",
+      "acceptance_time": "2026-11-27T21:05:36-05:00",
+      "entry_session": "2026-11-30",
+      "rank": 1,
+      "score": 0.064923
+    },
+    {
+      "accession": "0000815097-26-000117",
+      "cik": 815097,
+      "ticker": "CCL",
+      "issuer": "Carnival Corp Ltd.",
+      "acceptance_time": "2026-11-27T18:09:27-05:00",
+      "entry_session": "2026-11-30",
+      "rank": 2,
+      "score": 0.054317
+    }
+  ]
+}
